@@ -1,0 +1,22 @@
+[project]
+name = "ymir"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "kodalli",email = "surya.kodali@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "langchain (>=0.3.18,<0.4.0)",
+    "langchain-ollama (>=0.2.3,<0.3.0)",
+    "langchain-openai (>=0.3.5,<0.4.0)",
+    "langchain-google-genai (>=2.0.9,<3.0.0)",
+    "gradio (>=5.16.0,<6.0.0)",
+    "langchain-huggingface (>=0.1.2,<0.2.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

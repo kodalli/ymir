@@ -1,0 +1,64 @@
+name: Release (Alpha)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          # Add Poetry's bin directory to PATH
+          echo "${HOME}/.local/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Run semantic-release in pre-release (alpha) mode
+        id: semantic_release
+        run: |
+          # The --pre-release alpha flag ensures that the version bump remains in alpha mode.
+          # This command inspects your conventional commit messages, bumps the version in pyproject.toml
+          # (appending an alpha identifier), commits the change, and creates a tag.
+          semantic-release publish --pre-release alpha || true
+
+      - name: Fetch tags
+        run: git fetch --tags
+
+      - name: Get new version tag
+        id: get_tag
+        run: |
+          # Get the most recent tag (expected to be in the format v<version>)
+          NEW_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          # Determine the previous tag (if it exists)
+          PREV_TAG=$(git describe --tags --abbrev=0 $(git rev-list --tags --skip=1 --max-count=1) 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+              echo "No previous tag found. Generating release notes from the beginning."
+              NOTES=$(git log --pretty=format:"- %s")
+          else
+              NOTES=$(git log "$PREV_TAG"..HEAD --pretty=format:"- %s")
+          fi
+          echo "notes=$NOTES" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.get_tag.outputs.new_tag }}
+          release_name: "Release ${{ steps.get_tag.outputs.new_tag }}"
+          body: ${{ steps.release_notes.outputs.notes }}

@@ -1,11 +1,14 @@
 [project]
 name = "ymir"
-version = "0.1.0"
-description = ""
+version = "0.1.0a0"
+description = "Ymir is a synthetic data generation tool for LLMs."
 authors = [
-    {name = "kodalli",email = "surya.kodali@gmail.com"}
+    {name = "kodalli",email = "surya.kodali@gmail.com"},
+    {name = "LAMICS, Inc."}
 ]
 readme = "README.md"
+license = {text = "Apache 2"}
+packages = [{ include = "ymir" }]
 requires-python = ">=3.11,<3.14"
 dependencies = [
     "langchain (>=0.3.18,<0.4.0)",
@@ -13,10 +16,21 @@ dependencies = [
     "langchain-openai (>=0.3.5,<0.4.0)",
     "langchain-google-genai (>=2.0.9,<3.0.0)",
     "gradio (>=5.16.0,<6.0.0)",
-    "langchain-huggingface (>=0.1.2,<0.2.0)"
+    "langchain-deepseek (>=0.1.2,<0.2.0)",
+    "loguru (>=0.7.3,<0.8.0)",
 ]
 
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.9.6"
+pre-commit = "^4.1.0"
+python-semantic-release = "^9.19.1"
+
+[tool.semantic_release]
+version_source = "pyproject"
+branch = "master"
+upload_to_pypi = false

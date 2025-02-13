@@ -3,6 +3,7 @@ from .openai_llm import (
     OPENAI_CHAT_MODELS,
     REASONING_EFFORT,
     get_openai_config_components,
+    OpenAIBatchProcessor,
 )
 from .google_llm import get_google_llm, GOOGLE_CHAT_MODELS, get_google_config_components
 from .deepseek_llm import (
@@ -18,6 +19,7 @@ __all__ = [
     "OPENAI_CHAT_MODELS",
     "REASONING_EFFORT",
     "get_openai_config_components",
+    "OpenAIBatchProcessor",
     "get_google_llm",
     "GOOGLE_CHAT_MODELS",
     "get_google_config_components",

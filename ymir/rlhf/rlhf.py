@@ -1,10 +1,12 @@
 import json
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union
 
 
 class RLHFDatasetBuilder:
-    def __init__(self):
+    def __init__(self, filename: Union[str, None] = None):
         self.rlhf_data: List[Dict[str, Any]] = []
+        if filename is not None:
+            self.load_rlhf_data(filename)
 
     def save_rlhf_entry(
         self,
@@ -38,6 +40,11 @@ class RLHFDatasetBuilder:
         }
         self.rlhf_data.append(entry)
         return "RLHF entry saved!"
+
+    def load_rlhf_data(self, filename: str):
+        with open(filename, "r", encoding="utf-8") as f:
+            for line in f:
+                self.rlhf_data.append(json.loads(line))
 
     def download_rlhf_dataset(self, filename: str = "rlhf_dataset.jsonl"):
         """

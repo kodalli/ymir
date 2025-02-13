@@ -1,43 +1,10 @@
 import json
 from typing import List, Dict, Any
-from langchain.prompts import ChatPromptTemplate
-from ymir.llm import get_llm
 
 
 class RLHFDatasetBuilder:
     def __init__(self):
         self.rlhf_data: List[Dict[str, Any]] = []
-
-    def chat_arena(
-        self,
-        system_prompt: str,
-        user_prompt: str,
-        llm1_name: str,
-        llm2_name: str,
-        llm1_config: Dict = None,
-        llm2_config: Dict = None,
-    ):
-        """
-        Send the same system and user prompt to two different LLMs.
-        """
-        messages = ChatPromptTemplate.from_messages(
-            [("system", system_prompt), ("user", user_prompt)]
-        )
-
-        llm1 = get_llm(llm1_name)
-        llm2 = get_llm(llm2_name)
-
-        if llm1_config:
-            response1 = llm1.invoke(messages, **llm1_config).content
-        else:
-            response1 = llm1.invoke(messages).content
-
-        if llm2_config:
-            response2 = llm2.invoke(messages, **llm2_config).content
-        else:
-            response2 = llm2.invoke(messages).content
-
-        return response1, response2
 
     def save_rlhf_entry(
         self,
@@ -49,9 +16,12 @@ class RLHFDatasetBuilder:
         response2,
         rating,
         notes,
+        conversation=None,  # new parameter for full conversation in OpenAI format
     ):
         """
-        Save an entry containing the prompts, the two model responses, a rating, and any notes.
+        Save an RLHF entry containing the prompts, the two model responses, a rating indicating which response was chosen,
+        and any notes. Additionally, save the conversation in OpenAI conversational format.
+        The 'rating' parameter should be either "LLM1" or "LLM2", indicating the chosen response.
         """
         entry = {
             "system_prompt": system_prompt,
@@ -62,6 +32,9 @@ class RLHFDatasetBuilder:
             "response2": response2,
             "rating": rating,
             "notes": notes,
+            "conversation": conversation if conversation is not None else [],
+            "chosen": response1 if rating == "LLM1" else response2,
+            "rejected": response2 if rating == "LLM1" else response1,
         }
         self.rlhf_data.append(entry)
         return "RLHF entry saved!"

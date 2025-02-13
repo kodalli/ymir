@@ -40,14 +40,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Get the latest tag
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0-alpha.0")
+
           # Run semantic release and capture its output
-          VERSION=$(poetry run semantic-release version --prerelease --prerelease-token alpha)
+          VERSION=$(SEMANTIC_RELEASE_LAST_VERSION=$LATEST_TAG poetry run semantic-release version --prerelease --prerelease-token alpha)
           if [ $? -eq 0 ]; then
             # Extract version number from semantic-release output
             NEW_VERSION=$(echo "$VERSION" | grep "New version: " | cut -d' ' -f3)
             echo "new_version=v${NEW_VERSION}" >> $GITHUB_OUTPUT
-            # Now publish
-            poetry run semantic-release publish --prerelease --prerelease-token alpha
+            # Now publish with the same version awareness
+            SEMANTIC_RELEASE_LAST_VERSION=$LATEST_TAG poetry run semantic-release publish --prerelease --prerelease-token alpha
           else
             echo "No new version to be released"
             exit 0

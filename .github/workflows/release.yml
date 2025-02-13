@@ -53,7 +53,7 @@ jobs:
           LATEST_VERSION=${LATEST_TAG#v}
 
           # Run semantic release and capture its output
-          VERSION=$(SEMANTIC_RELEASE_LAST_VERSION=$LATEST_VERSION poetry run semantic-release version --prerelease --prerelease-token alpha -vv)
+          VERSION=$(SEMANTIC_RELEASE_LAST_VERSION=$LATEST_VERSION poetry run semantic-release version --prerelease --prerelease-token alpha)
           if [ $? -eq 0 ]; then
             # Extract version number from semantic-release output
             NEW_VERSION=$(echo "$VERSION" | grep "New version: " | cut -d' ' -f3)

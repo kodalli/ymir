@@ -38,10 +38,15 @@ jobs:
       - name: Run semantic-release in pre-release (alpha) mode
         id: semantic_release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY_NAME: ${{ github.repository }}
         run: |
           # Get the latest tag
           LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0-alpha.0")
+
+          # Configure git for semantic-release
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
 
           # Run semantic release and capture its output
           VERSION=$(SEMANTIC_RELEASE_LAST_VERSION=$LATEST_TAG poetry run semantic-release version --prerelease --prerelease-token alpha)

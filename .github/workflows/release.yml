@@ -70,12 +70,6 @@ jobs:
             exit 0
           fi
 
-      - name: Create Git Tag
-        if: steps.semantic_release.outputs.new_version != ''
-        run: |
-          git tag ${{ steps.semantic_release.outputs.new_version }}
-          git push origin ${{ steps.semantic_release.outputs.new_version }}
-
       - name: Generate release notes
         id: release_notes
         if: steps.semantic_release.outputs.new_version != ''

@@ -31,6 +31,6 @@ pre-commit = "^4.1.0"
 python-semantic-release = "^9.19.1"
 
 [tool.semantic_release]
-version_source = "pyproject"
+version_source = "pep621"
 branch = "master"
 upload_to_pypi = false

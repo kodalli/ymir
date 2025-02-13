@@ -1,6 +1,6 @@
 [project]
 name = "ymir"
-version = "0.1.0a0"
+version = "0.0.0a0"
 description = "Ymir is a synthetic data generation tool for LLMs."
 authors = [
     {name = "kodalli",email = "surya.kodali@gmail.com"},

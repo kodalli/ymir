@@ -2,9 +2,19 @@ name: Release (Alpha)
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - master
 
 jobs:
   release:
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
     runs-on: ubuntu-latest
 
     steps:

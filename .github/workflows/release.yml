@@ -41,13 +41,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Run semantic release and capture its output
-          VERSION=$(poetry run semantic-release version --prerelease alpha)
+          VERSION=$(poetry run semantic-release version --prerelease --prerelease-token alpha)
           if [ $? -eq 0 ]; then
             # Extract version number from semantic-release output
             NEW_VERSION=$(echo "$VERSION" | grep "New version: " | cut -d' ' -f3)
             echo "new_version=v${NEW_VERSION}" >> $GITHUB_OUTPUT
             # Now publish
-            poetry run semantic-release publish --prerelease alpha
+            poetry run semantic-release publish --prerelease --prerelease-token alpha
           else
             echo "No new version to be released"
             exit 0

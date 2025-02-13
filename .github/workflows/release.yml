@@ -41,6 +41,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY_NAME: ${{ github.repository }}
         run: |
+          # Fetch all tags to ensure we have the complete history
+          git fetch --tags
+
           # Get the latest tag and ensure it's used as the base version
           LATEST_TAG=$(git tag --sort=-v:refname | head -n 1 || echo "v0.1.0-alpha.0")
           echo "Latest tag found: $LATEST_TAG"
@@ -53,16 +56,16 @@ jobs:
           LATEST_VERSION=${LATEST_TAG#v}
 
           # Run semantic release and capture its output
-          VERSION=$(SEMANTIC_RELEASE_LAST_VERSION=$LATEST_VERSION poetry run semantic-release version --prerelease --prerelease-token alpha)
+          VERSION=$(SEMANTIC_RELEASE_LAST_VERSION=$LATEST_VERSION poetry run semantic-release version --prerelease --prerelease-token alpha --retry)
           if [ $? -eq 0 ]; then
             # Extract version number from semantic-release output
             NEW_VERSION=$(echo "$VERSION" | grep "New version: " | cut -d' ' -f3)
-            if [ -n "$NEW_VERSION" ]; then
+            if [ -n "$NEW_VERSION" ] && [ "$NEW_VERSION" != "$LATEST_VERSION" ]; then
               echo "new_version=v${NEW_VERSION}" >> $GITHUB_OUTPUT
               # Now publish with the same version awareness
-              SEMANTIC_RELEASE_LAST_VERSION=$LATEST_VERSION poetry run semantic-release publish --prerelease --prerelease-token alpha
+              SEMANTIC_RELEASE_LAST_VERSION=$LATEST_VERSION poetry run semantic-release publish --prerelease --prerelease-token alpha --retry
             else
-              echo "No new version detected"
+              echo "No new version detected or version already exists"
               exit 0
             fi
           else

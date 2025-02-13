@@ -37,24 +37,26 @@ jobs:
 
       - name: Run semantic-release in pre-release (alpha) mode
         id: semantic_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # The --pre-release alpha flag ensures that the version bump remains in alpha mode.
-          # This command inspects your conventional commit messages, bumps the version in pyproject.toml
-          # (appending an alpha identifier), commits the change, and creates a tag.
-          semantic-release publish --pre-release alpha || true
+          # Remove the || true and let it fail if there's an error
+          poetry run semantic-release version --pre-release alpha
+          poetry run semantic-release publish --pre-release alpha
 
-      - name: Fetch tags
-        run: git fetch --tags
+          # Get the new version and set it as output
+          NEW_VERSION=$(poetry version -s)
+          echo "new_version=v${NEW_VERSION}" >> $GITHUB_OUTPUT
 
-      - name: Get new version tag
-        id: get_tag
+      - name: Create Git Tag
+        if: steps.semantic_release.outputs.new_version != ''
         run: |
-          # Get the most recent tag (expected to be in the format v<version>)
-          NEW_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          git tag ${{ steps.semantic_release.outputs.new_version }}
+          git push origin ${{ steps.semantic_release.outputs.new_version }}
 
       - name: Generate release notes
         id: release_notes
+        if: steps.semantic_release.outputs.new_version != ''
         run: |
           # Determine the previous tag (if it exists)
           PREV_TAG=$(git describe --tags --abbrev=0 $(git rev-list --tags --skip=1 --max-count=1) 2>/dev/null || echo "")
@@ -64,11 +66,17 @@ jobs:
           else
               NOTES=$(git log "$PREV_TAG"..HEAD --pretty=format:"- %s")
           fi
+          # Properly escape the notes for GitHub Actions
+          NOTES="${NOTES//'%'/'%25'}"
+          NOTES="${NOTES//$'\n'/'%0A'}"
+          NOTES="${NOTES//$'\r'/'%0D'}"
           echo "notes=$NOTES" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
+        if: steps.semantic_release.outputs.new_version != ''
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ steps.get_tag.outputs.new_tag }}
-          release_name: "Release ${{ steps.get_tag.outputs.new_tag }}"
+          tag: ${{ steps.semantic_release.outputs.new_version }}
+          name: "Release ${{ steps.semantic_release.outputs.new_version }}"
           body: ${{ steps.release_notes.outputs.notes }}
+          token: ${{ secrets.GITHUB_TOKEN }}

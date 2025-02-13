@@ -41,21 +41,30 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY_NAME: ${{ github.repository }}
         run: |
-          # Get the latest tag
+          # Get the latest tag and ensure it's used as the base version
           LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0-alpha.0")
+          echo "Latest tag found: $LATEST_TAG"
 
           # Configure git for semantic-release
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
 
+          # Remove the v prefix for semantic-release
+          LATEST_VERSION=${LATEST_TAG#v}
+
           # Run semantic release and capture its output
-          VERSION=$(SEMANTIC_RELEASE_LAST_VERSION=$LATEST_TAG poetry run semantic-release version --prerelease --prerelease-token alpha)
+          VERSION=$(SEMANTIC_RELEASE_LAST_VERSION=$LATEST_VERSION poetry run semantic-release version --prerelease --prerelease-token alpha -vv)
           if [ $? -eq 0 ]; then
             # Extract version number from semantic-release output
             NEW_VERSION=$(echo "$VERSION" | grep "New version: " | cut -d' ' -f3)
-            echo "new_version=v${NEW_VERSION}" >> $GITHUB_OUTPUT
-            # Now publish with the same version awareness
-            SEMANTIC_RELEASE_LAST_VERSION=$LATEST_TAG poetry run semantic-release publish --prerelease --prerelease-token alpha
+            if [ -n "$NEW_VERSION" ]; then
+              echo "new_version=v${NEW_VERSION}" >> $GITHUB_OUTPUT
+              # Now publish with the same version awareness
+              SEMANTIC_RELEASE_LAST_VERSION=$LATEST_VERSION poetry run semantic-release publish --prerelease --prerelease-token alpha
+            else
+              echo "No new version detected"
+              exit 0
+            fi
           else
             echo "No new version to be released"
             exit 0

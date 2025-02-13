@@ -1,6 +1,6 @@
 import json
 from typing import List, Dict, Any
-from langchain.schema import ChatPromptTemplate
+from langchain.prompts import ChatPromptTemplate
 from ymir.llm import get_llm
 
 

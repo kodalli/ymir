@@ -1,271 +1,166 @@
-import json
 import gradio as gr
 from ymir.llm import (
     get_llm,
-    ALL_CHAT_MODELS,
-    get_openai_config_components,
-    get_google_config_components,
-    get_deepseek_config_components,
-    get_ollama_config_components,
+    get_supported_configurations,
+    OLLAMA_CHAT_MODELS,
+    OPENAI_CHAT_MODELS,
+    GOOGLE_CHAT_MODELS,
+    DEEPSEEK_CHAT_MODELS,
 )
 from ymir.rlhf import RLHFDatasetBuilder
+from langchain_core.messages import convert_to_openai_messages
+from loguru import logger
+import re
 
-# Create global RLHF dataset builder
 rlhf_builder = RLHFDatasetBuilder()
 
 
-##############################################
-# Chat Arena Function (for RLHF)
-##############################################
-def chat_arena(system_prompt: str, user_prompt: str, llm1_name: str, llm2_name: str):
-    """
-    Send the same system and user prompt to two different LLMs.
-    """
-    return rlhf_builder.chat_arena(system_prompt, user_prompt, llm1_name, llm2_name)
-
-
-# ------------------------------
-# Conversation Dataset Functions
-# ------------------------------
-
-
-def initialize_conversation(system_prompt: str):
-    """
-    Start a conversation using the provided system prompt.
-    Returns the conversation (a list of message dicts) and a formatted text representation.
-    """
-    conversation = []
-    text_display = ""
-    if system_prompt.strip():
-        conversation.append({"role": "system", "content": system_prompt})
-        text_display += f"System: {system_prompt}\n"
-    return conversation, text_display
-
-
-def conversation_send(conversation, user_message, conv_model_name):
-    """
-    Append a user message, get the assistant response using the chosen model,
-    and return the updated conversation list and formatted conversation text.
-    """
-
-    conversation.append({"role": "user", "content": user_message})
-
-    # Convert our conversation (list of dicts) into LangChain message objects.
+def to_langchain_messages(message, history):
     messages = []
-    for msg in conversation:
-        messages.append((msg["role"], msg["content"]))
-
-    llm = get_llm(conv_model_name)
-    assistant_response = llm(messages).content
-    conversation.append({"role": "assistant", "content": assistant_response})
-
-    # Format the conversation for display.
-    text_display = ""
-    for msg in conversation:
-        text_display += f"{msg['role'].capitalize()}: {msg['content']}\n"
-    return conversation, text_display
+    for m in history:
+        messages.append((m["role"], m["content"]))
+    messages.append(("user", message))
+    return messages
 
 
-def download_conversation(conversation):
-    """
-    Write the conversation (in OpenAI chat format) to a JSON file and return its filename.
-    """
-    filename = "conversation_dataset.json"
-    with open(filename, "w", encoding="utf-8") as f:
-        json.dump({"messages": conversation}, f, indent=2)
-    return filename
+def convert_reasoning_to_markdown(message):
+    match = re.search(r"<think>.*?</think>", message, flags=re.DOTALL)
+    if match:
+        think_content = match.group(0).strip()
+        think_md = "```think\n" + think_content + "\n```\n"
+        message = re.sub(r"<think>.*?</think>", think_md, message, flags=re.DOTALL)
+    return message
 
 
-# ------------------------------
-# Gradio Interface
-# ------------------------------
+def generate_response(llm, message, history):
+    langchain_messages = to_langchain_messages(message, history)
+    response = llm.invoke(langchain_messages)
+    openai_message = convert_to_openai_messages(response)
+    final_message = convert_reasoning_to_markdown(openai_message["content"])
+    return final_message
 
-# Define available model options.
 
-model_options = ALL_CHAT_MODELS
+history_1 = [
+    gr.ChatMessage(role="assistant", content="How can I help you?"),
+    gr.ChatMessage(role="user", content="What is the capital of France?"),
+    gr.ChatMessage(role="assistant", content="The capital of France is Paris."),
+]
+
+history_2 = [
+    gr.ChatMessage(role="assistant", content="How can I help you?"),
+    gr.ChatMessage(role="user", content="What is the capital of France?"),
+    gr.ChatMessage(role="assistant", content="The capital of France is Paris."),
+]
+
+provider_map = {
+    "Ollama": OLLAMA_CHAT_MODELS,
+    "OpenAI": OPENAI_CHAT_MODELS,
+    "Google": GOOGLE_CHAT_MODELS,
+    "DeepSeek": DEEPSEEK_CHAT_MODELS,
+}
 
 
-def create_model_config_components(model_name: str):
-    """Dynamically create configuration components based on the selected model."""
-    if model_name.startswith(("gpt-", "o1-", "o3-")):
-        return get_openai_config_components(model_name)
-    elif model_name.startswith("gemini-"):
-        return get_google_config_components()
-    elif model_name.startswith("deepseek-"):
-        return get_deepseek_config_components()
-    else:  # Ollama models
-        return get_ollama_config_components()
+def change_llm_dropdown_1(provider):
+    logger.debug(f"Changing LLM 1 provider to {provider}")
+    return gr.Dropdown(choices=provider_map[provider], label="LLM 1")
+
+
+def change_llm_dropdown_2(provider):
+    logger.debug(f"Changing LLM 2 provider to {provider}")
+    return gr.Dropdown(choices=provider_map[provider], label="LLM 2")
+
+
+def generate_response_1(message, history):
+    return generate_response(llm_1, message, history)
+
+
+def generate_response_2(message, history):
+    return generate_response(llm_2, message, history)
 
 
 with gr.Blocks() as demo:
-    gr.Markdown("# Chat Arena & Dataset Builder")
+    gr.Markdown("# Ymir")
     gr.Markdown(
-        "This app serves two purposes:\n\n"
-        "1. **RLHF Dataset Creation:** Compare two model outputs side by side and rate which one is better.\n\n"
-        "2. **Conversation Dataset Builder:** Build a multi-turn conversation (in OpenAI chat format) using a chosen model."
+        "**RLHF Dataset Creation:** Compare two model outputs side by side and rate which one is better."
     )
 
-    with gr.Tabs():
-        # ==============================
-        # Tab 1: RLHF Dataset Creation
-        # ==============================
-        with gr.TabItem("RLHF Dataset Creation"):
-            gr.Markdown("### Compare Model Responses and Rate")
-            with gr.Row():
-                system_input = gr.Textbox(
-                    label="System Prompt",
-                    placeholder="Enter system prompt here...",
-                    lines=4,
-                )
-                user_input = gr.Textbox(
-                    label="User Prompt",
-                    placeholder="Enter user prompt here...",
-                    lines=4,
-                )
-            with gr.Row():
-                llm1_dropdown = gr.Dropdown(
-                    choices=model_options, label="LLM 1", value="gpt-3.5-turbo"
-                )
-                llm2_dropdown = gr.Dropdown(
-                    choices=model_options, label="LLM 2", value="claude"
-                )
-            with gr.Row():
-                llm1_config_box = gr.Box(visible=True)
-                llm2_config_box = gr.Box(visible=True)
-            get_response_btn = gr.Button("Get Responses")
-            with gr.Row():
-                response1_output = gr.Textbox(label="LLM 1 Output", lines=10)
-                response2_output = gr.Textbox(label="LLM 2 Output", lines=10)
+    with gr.Row():
+        chatbot_1 = gr.Chatbot(
+            history_1, type="messages", min_height=800, label="LLM 1"
+        )
+        chatbot_2 = gr.Chatbot(
+            history_2, type="messages", min_height=800, label="LLM 2"
+        )
 
-            # Update configurations when models are selected
-            def update_config_box(model_name, box_number):
-                components = create_model_config_components(model_name)
-                if box_number == 1:
-                    return {llm1_config_box: gr.Group(list(components.values()))}
-                else:
-                    return {llm2_config_box: gr.Group(list(components.values()))}
+    input_box = gr.Textbox(placeholder="Enter your message here", label="Input")
 
-            llm1_dropdown.change(
-                fn=lambda m: update_config_box(m, 1),
-                inputs=[llm1_dropdown],
-                outputs=[llm1_config_box],
-            )
+    with gr.Sidebar(width=500):
+        gr.Markdown("## Settings")
+        with gr.Row():
+            with gr.Column():
+                with gr.Row():
+                    llm_provider_1 = gr.Dropdown(
+                        choices=provider_map.keys(),
+                        value="OpenAI",
+                        label="LLM 1 Provider",
+                    )
+                    llm_dropdown_1 = gr.Dropdown(
+                        choices=OPENAI_CHAT_MODELS, label="LLM 1"
+                    )
 
-            llm2_dropdown.change(
-                fn=lambda m: update_config_box(m, 2),
-                inputs=[llm2_dropdown],
-                outputs=[llm2_config_box],
-            )
+                @gr.render(inputs=llm_dropdown_1)
+                def update_llm_1(model_name):
+                    global llm_1, llm_config_1
+                    llm_1 = get_llm(model_name)
+                    llm_config_1 = {}
+                    llm_config_map_1 = get_supported_configurations(model_name)
+                    for k, v in llm_config_map_1.items():
+                        v.change(
+                            fn=lambda x: llm_config_1.update({k: x}),
+                            inputs=[v],
+                            outputs=[],
+                        )
 
-            # Updated to use rlhf_builder directly
-            get_response_btn.click(
-                fn=rlhf_builder.chat_arena,
-                inputs=[
-                    system_input,
-                    user_input,
-                    llm1_dropdown,
-                    llm2_dropdown,
-                    llm1_config_box,
-                    llm2_config_box,
-                ],
-                outputs=[response1_output, response2_output],
-            )
+            with gr.Column():
+                with gr.Row():
+                    llm_provider_2 = gr.Dropdown(
+                        choices=provider_map.keys(),
+                        value="DeepSeek",
+                        label="LLM 2 Provider",
+                    )
+                    llm_dropdown_2 = gr.Dropdown(
+                        choices=DEEPSEEK_CHAT_MODELS, label="LLM 2"
+                    )
 
-            gr.Markdown("### Rate and Save This Comparison")
-            rating_radio = gr.Radio(
-                choices=["LLM 1", "LLM 2", "Tie"],
-                label="Preferred Response",
-                value="LLM 1",
-            )
-            notes_input = gr.Textbox(
-                label="Optional Notes", placeholder="Enter any comments...", lines=2
-            )
-            save_entry_btn = gr.Button("Save RLHF Entry")
-            save_status = gr.Textbox(label="Status", interactive=False)
+                @gr.render(inputs=llm_dropdown_2)
+                def update_llm_2(model_name):
+                    global llm_2, llm_config_2
+                    llm_2 = get_llm(model_name)
+                    llm_config_2 = {}
+                    llm_config_map_2 = get_supported_configurations(model_name)
+                    for k, v in llm_config_map_2.items():
+                        v.change(
+                            fn=lambda x: llm_config_2.update({k: x}),
+                            inputs=[v],
+                            outputs=[],
+                        )
 
-            save_entry_btn.click(
-                fn=rlhf_builder.save_rlhf_entry,
-                inputs=[
-                    system_input,
-                    user_input,
-                    llm1_dropdown,
-                    llm2_dropdown,
-                    response1_output,
-                    response2_output,
-                    rating_radio,
-                    notes_input,
-                ],
-                outputs=save_status,
-            )
+    chat_interface_1 = gr.ChatInterface(
+        fn=generate_response_1, chatbot=chatbot_1, textbox=input_box, type="messages"
+    )
+    chat_interface_2 = gr.ChatInterface(
+        fn=generate_response_2, chatbot=chatbot_2, textbox=input_box, type="messages"
+    )
 
-            download_rlhf_btn = gr.Button("Download RLHF Dataset")
-            filename_input = gr.Textbox(
-                label="Filename",
-                placeholder="Enter filename (e.g. rlhf_dataset.json)",
-                value="rlhf_dataset.json",
-            )
-            download_file = gr.File(label="RLHF Dataset File")
-            download_rlhf_btn.click(
-                fn=rlhf_builder.download_rlhf_dataset,
-                inputs=[filename_input],
-                outputs=download_file,
-            )
-
-        # ======================================
-        # Tab 2: Conversation Dataset Creation
-        # ======================================
-        with gr.TabItem("Conversation Dataset Creation"):
-            gr.Markdown("### Build a Conversation")
-            system_conv = gr.Textbox(
-                label="System Prompt",
-                placeholder="Enter a system prompt (optional)...",
-                lines=2,
-            )
-            start_conv_btn = gr.Button("Start Conversation")
-            conv_display = gr.Textbox(
-                label="Conversation Log", lines=10, interactive=False
-            )
-            # Use a State component to hold the conversation (a list of messages).
-            conv_state = gr.State([])
-            conv_model_dropdown = gr.Dropdown(
-                choices=model_options, label="Conversation Model", value="gpt-4o-mini"
-            )
-
-            with gr.Row():
-                user_conv_input = gr.Textbox(
-                    label="Your Message", placeholder="Enter your message...", lines=2
-                )
-                send_conv_btn = gr.Button("Send")
-
-            with gr.Row():
-                clear_conv_btn = gr.Button("Clear Conversation")
-                download_conv_btn = gr.Button("Download Conversation")
-                conv_download_file = gr.File(label="Conversation Dataset File")
-
-            # Initialize conversation state with the system prompt.
-            def start_conversation(system_prompt):
-                conv, disp = initialize_conversation(system_prompt)
-                return conv, disp
-
-            start_conv_btn.click(
-                fn=start_conversation,
-                inputs=system_conv,
-                outputs=[conv_state, conv_display],
-            )
-
-            # Append a new turn: add user message and generate assistant response.
-            send_conv_btn.click(
-                fn=conversation_send,
-                inputs=[conv_state, user_conv_input, conv_model_dropdown],
-                outputs=[conv_state, conv_display],
-            )
-
-            clear_conv_btn.click(
-                fn=lambda: ([], ""), inputs=None, outputs=[conv_state, conv_display]
-            )
-
-            download_conv_btn.click(
-                fn=download_conversation, inputs=conv_state, outputs=conv_download_file
-            )
+    llm_provider_1.change(
+        fn=change_llm_dropdown_1,
+        inputs=[llm_provider_1],
+        outputs=[llm_dropdown_1],
+    )
+    llm_provider_2.change(
+        fn=change_llm_dropdown_2,
+        inputs=[llm_provider_2],
+        outputs=[llm_dropdown_2],
+    )
 
 demo.launch()

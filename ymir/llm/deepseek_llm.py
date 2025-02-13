@@ -1,14 +1,16 @@
-from typing import Literal, Dict
+from typing import Dict, Optional
 from langchain_deepseek import ChatDeepSeek
 import gradio as gr
 
-DEEPSEEK_CHAT_MODELS = Literal[
+DEEPSEEK_CHAT_MODELS = [
     "deepseek-chat",
     "deepseek-reasoner",
 ]
 
 
-def get_deepseek_config_components() -> Dict[str, gr.Component]:
+def get_deepseek_config_components(
+    model_name: Optional[str] = None,
+) -> Dict[str, gr.Component]:
     """Returns Gradio components for DeepSeek model configuration."""
     return {
         "temperature": gr.Slider(
@@ -23,9 +25,7 @@ def get_deepseek_config_components() -> Dict[str, gr.Component]:
     }
 
 
-def get_deepseek_llm(
-    model_name: DEEPSEEK_CHAT_MODELS, config: Dict = None
-) -> ChatDeepSeek:
+def get_deepseek_llm(model_name: str, config: Dict = None) -> ChatDeepSeek:
     if config is None:
         config = {}
     return ChatDeepSeek(model=model_name, **config)

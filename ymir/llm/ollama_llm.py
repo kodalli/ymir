@@ -16,13 +16,13 @@ except Exception as e:
     pass
 
 
-def get_ollama_config_components() -> Dict[str, gr.Component]:
+def get_ollama_config_components(model_name: str) -> Dict[str, gr.Component]:
     """Returns Gradio components for Ollama model configuration."""
     return {
         "temperature": gr.Slider(
             minimum=0.0, maximum=2.0, value=0.7, step=0.1, label="Temperature"
         ),
-        "num_ctx": gr.Slider(
+        "context_length": gr.Slider(
             minimum=512, maximum=16384, value=2048, step=512, label="Context Length"
         ),
         "num_predict": gr.Slider(

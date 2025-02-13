@@ -1,15 +1,17 @@
-from typing import Literal, Dict
+from typing import Dict, Optional
 from langchain_google_genai import ChatGoogleGenerativeAI
 import gradio as gr
 
-GOOGLE_CHAT_MODELS = Literal[
+GOOGLE_CHAT_MODELS = [
     "gemini-2.0-pro-exp-02-05",
     "gemini-2.0-flash-thinking-exp-01-21",
     "gemini-2.0-flash-exp",
 ]
 
 
-def get_google_config_components() -> Dict[str, gr.Component]:
+def get_google_config_components(
+    model_name: Optional[str] = None,
+) -> Dict[str, gr.Component]:
     """Returns Gradio components for Google model configuration."""
     return {
         "temperature": gr.Slider(
@@ -22,9 +24,7 @@ def get_google_config_components() -> Dict[str, gr.Component]:
     }
 
 
-def get_google_llm(
-    model_name: GOOGLE_CHAT_MODELS, config: Dict = None
-) -> ChatGoogleGenerativeAI:
+def get_google_llm(model_name: str, config: Dict = None) -> ChatGoogleGenerativeAI:
     if config is None:
         config = {}
     return ChatGoogleGenerativeAI(model=model_name, **config)

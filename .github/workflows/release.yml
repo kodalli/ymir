@@ -42,7 +42,7 @@ jobs:
           REPOSITORY_NAME: ${{ github.repository }}
         run: |
           # Get the latest tag and ensure it's used as the base version
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0-alpha.0")
+          LATEST_TAG=$(git tag --sort=-v:refname | head -n 1 || echo "v0.1.0-alpha.0")
           echo "Latest tag found: $LATEST_TAG"
 
           # Configure git for semantic-release

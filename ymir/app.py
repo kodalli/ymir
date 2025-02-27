@@ -1,19 +1,64 @@
-from typing import List
-import gradio as gr
+from typing import Optional
+import uvicorn
+from fastapi import FastAPI, Request, Form, HTTPException
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+import re
+from loguru import logger
+
 from ymir.llm import (
     get_llm,
     get_supported_configurations,
-    OLLAMA_CHAT_MODELS,
     OPENAI_CHAT_MODELS,
-    GOOGLE_CHAT_MODELS,
     DEEPSEEK_CHAT_MODELS,
 )
 from ymir.rlhf import RLHFDatasetBuilder
-from langchain_core.messages import convert_to_openai_messages
-from loguru import logger
-import re
 
+# Initialize global variables
+app = FastAPI(title="Ymir AI Dataset Tools")
 rlhf_builder = RLHFDatasetBuilder()
+templates = Jinja2Templates(directory="ymir/templates")
+
+# Initialize an empty triplet dataset (this would be replaced by a proper database in production)
+triplet_dataset = []
+
+# Create static files directory for CSS and JS
+try:
+    app.mount("/static", StaticFiles(directory="ymir/static"), name="static")
+except RuntimeError:
+    # This happens when reloading the app (files already mounted)
+    pass
+
+# Configuration variables - the current provider and model for each LLM slot
+llm_config = {
+    "llm_1": {"provider": "OpenAI", "model": OPENAI_CHAT_MODELS[0]},
+    "llm_2": {"provider": "DeepSeek", "model": DEEPSEEK_CHAT_MODELS[0]},
+}
+
+# Chat history
+chat_history = {
+    "llm_1": [],
+    "llm_2": [],
+}
+
+
+def get_supported_providers():
+    providers = []
+    configurations = get_supported_configurations()
+    for provider_info in configurations:
+        providers.append(provider_info["provider"])
+    return providers
+
+
+def get_provider_models(provider):
+    """Get all models for a given provider."""
+    configurations = get_supported_configurations()
+    for provider_info in configurations:
+        if provider_info["provider"] == provider:
+            return provider_info["models"]
+    return []
 
 
 def to_langchain_messages(message, history):
@@ -25,241 +70,416 @@ def to_langchain_messages(message, history):
 
 
 def convert_reasoning_to_markdown(message):
-    match = re.search(r"<think>.*?</think>", message, flags=re.DOTALL)
+    match = re.search(r"<think>(.*?)</think>", message, re.DOTALL)
     if match:
-        think_content = match.group(0).strip()
-        think_md = "```think\n" + think_content + "\n```\n"
-        message = re.sub(r"<think>.*?</think>", think_md, message, flags=re.DOTALL)
+        think_content = match.group(1).strip()
+        message = message.replace(
+            f"<think>{think_content}</think>", f"```think\n{think_content}\n```"
+        )
     return message
 
 
 def convert_markdown_to_reasoning(message):
-    pattern = re.compile(r"```think\s*(<think>.*?</think>)\s*```", re.DOTALL)
-    return pattern.sub(r"\1", message)
+    return message
 
 
 def generate_response(llm, message, history):
-    langchain_messages = to_langchain_messages(message, history)
-    response = llm.invoke(langchain_messages)
-    openai_message = convert_to_openai_messages(response)
-    final_message = convert_reasoning_to_markdown(openai_message["content"])
-    return final_message
+    llm_client = get_llm(llm["provider"], llm["model"])
+    return llm_client.invoke(message, history)
 
 
-history_1 = [
-    gr.ChatMessage(role="assistant", content="How can I help you?"),
-    gr.ChatMessage(role="user", content="What is the capital of France?"),
-    gr.ChatMessage(role="assistant", content="The capital of France is Paris."),
-]
-
-history_2 = [
-    gr.ChatMessage(role="assistant", content="How can I help you?"),
-    gr.ChatMessage(role="user", content="What is the capital of France?"),
-    gr.ChatMessage(role="assistant", content="The capital of France is Paris."),
-]
-
-provider_map = {
-    "Ollama": OLLAMA_CHAT_MODELS,
-    "OpenAI": OPENAI_CHAT_MODELS,
-    "Google": GOOGLE_CHAT_MODELS,
-    "DeepSeek": DEEPSEEK_CHAT_MODELS,
-}
+class Message(BaseModel):
+    role: str
+    content: str
 
 
-def change_llm_dropdown_1(provider):
-    logger.debug(f"Changing LLM 1 provider to {provider}")
-    return gr.Dropdown(choices=provider_map[provider], label="LLM 1")
+class ChatRequest(BaseModel):
+    message: str
+    llm_key: str  # "llm_1" or "llm_2"
 
 
-def change_llm_dropdown_2(provider):
-    logger.debug(f"Changing LLM 2 provider to {provider}")
-    return gr.Dropdown(choices=provider_map[provider], label="LLM 2")
+class LLMConfig(BaseModel):
+    provider: str
+    model: str
 
 
-def generate_response_1(message, history):
-    return generate_response(llm_1, message, history)
+class RatingRequest(BaseModel):
+    chosen: str  # "llm_1" or "llm_2"
+    notes: Optional[str] = ""
 
 
-def generate_response_2(message, history):
-    return generate_response(llm_2, message, history)
+class TripletRequest(BaseModel):
+    query: str
+    positive: str
+    negative: str
 
 
-with gr.Blocks() as demo:
-    gr.Markdown("# Ymir")
-    gr.Markdown(
-        "**RLHF Dataset Creation:** Compare two model outputs side by side and rate which one is better."
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "providers": get_supported_providers(),
+            "models": {
+                "llm_1": get_provider_models(llm_config["llm_1"]["provider"]),
+                "llm_2": get_provider_models(llm_config["llm_2"]["provider"]),
+            },
+            "chat_history_1": chat_history["llm_1"],
+            "chat_history_2": chat_history["llm_2"],
+        },
     )
 
-    with gr.Row():
-        chatbot_1 = gr.Chatbot(
-            history_1, type="messages", min_height=800, label="LLM 1"
+
+@app.get("/rlhf", response_class=HTMLResponse)
+async def rlhf_page(request: Request):
+    """Render the RLHF tool page (default content of index.html)"""
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "providers": get_supported_providers(),
+            "models": {
+                "llm_1": get_provider_models(llm_config["llm_1"]["provider"]),
+                "llm_2": get_provider_models(llm_config["llm_2"]["provider"]),
+            },
+            "chat_history_1": chat_history["llm_1"],
+            "chat_history_2": chat_history["llm_2"],
+        },
+    )
+
+
+@app.get("/triplet", response_class=HTMLResponse)
+async def triplet_page(request: Request):
+    """Render the Triplet Generation tool page"""
+    return templates.TemplateResponse(
+        "triplet.html",
+        {
+            "request": request,
+            "providers": get_supported_providers(),
+        },
+    )
+
+
+@app.get("/datasets", response_class=HTMLResponse)
+async def datasets_page(request: Request):
+    """Render the Datasets Management page"""
+    return templates.TemplateResponse(
+        "datasets.html",
+        {
+            "request": request,
+        },
+    )
+
+
+@app.post("/update_provider")
+async def update_provider(llm_key: str = Form(...), provider: str = Form(...)):
+    """Update the provider for an LLM slot and return available models."""
+    llm_config[llm_key]["provider"] = provider
+    models = get_provider_models(provider)
+    llm_config[llm_key]["model"] = models[0] if models else ""
+    return {"models": models}
+
+
+@app.post("/update_model")
+async def update_model(llm_key: str = Form(...), model: str = Form(...)):
+    """Update the model for an LLM slot."""
+    provider = llm_config[llm_key]["provider"]
+    models = get_provider_models(provider)
+    if model in models:
+        llm_config[llm_key]["model"] = model
+        return {"status": "success"}
+    else:
+        return {
+            "status": "error",
+            "message": f"Model {model} not available for provider {provider}",
+        }
+
+
+@app.post("/chat")
+async def chat(request: ChatRequest):
+    """Generate a response from an LLM."""
+    logger.info(f"Chat request received: {request}")
+    if request.llm_key not in llm_config:
+        raise HTTPException(
+            status_code=400, detail=f"Invalid LLM key: {request.llm_key}"
         )
-        chatbot_2 = gr.Chatbot(
-            history_2, type="messages", min_height=800, label="LLM 2"
+
+    # Add the user message to the chat history
+    chat_history[request.llm_key].append({"role": "user", "content": request.message})
+
+    # Generate a response
+    messages = to_langchain_messages(
+        request.message, chat_history[request.llm_key][:-1]
+    )
+    llm = llm_config[request.llm_key]
+    response = generate_response(llm, request.message, messages)
+    response_content = convert_reasoning_to_markdown(response)
+
+    # Add the assistant response to the chat history
+    chat_history[request.llm_key].append(
+        {"role": "assistant", "content": response_content}
+    )
+
+    # Return the updated chat history for this LLM
+    return templates.TemplateResponse(
+        "rlhf_chat.html",
+        {
+            "chat_history": chat_history[request.llm_key],
+        },
+    )
+
+
+@app.post("/rate")
+async def rate(rating: RatingRequest):
+    # Similar to the submit_rating function in the original app
+    # Save the rating to the RLHF dataset
+    if not chat_history["llm_1"] or not chat_history["llm_2"]:
+        return {
+            "status": "error",
+            "message": "Both LLMs must have chat history before rating",
+        }
+
+    # Get the most recent query (should be the same for both)
+    latest_user_message_index_1 = max(
+        [i for i, msg in enumerate(chat_history["llm_1"]) if msg["role"] == "user"]
+        or [-1]
+    )
+    latest_user_message_index_2 = max(
+        [i for i, msg in enumerate(chat_history["llm_2"]) if msg["role"] == "user"]
+        or [-1]
+    )
+
+    if latest_user_message_index_1 == -1 or latest_user_message_index_2 == -1:
+        return {"status": "error", "message": "No user messages found in chat history"}
+
+    query = chat_history["llm_1"][latest_user_message_index_1]["content"]
+    query2 = chat_history["llm_2"][latest_user_message_index_2]["content"]
+
+    if query != query2:
+        logger.warning(f"Queries don't match: {query} vs {query2}")
+
+    # Get the responses to the most recent query
+    response1_index = latest_user_message_index_1 + 1
+    response2_index = latest_user_message_index_2 + 1
+
+    if response1_index >= len(chat_history["llm_1"]) or response2_index >= len(
+        chat_history["llm_2"]
+    ):
+        return {"status": "error", "message": "Missing response from one or both LLMs"}
+
+    response1 = chat_history["llm_1"][response1_index]["content"]
+    response2 = chat_history["llm_2"][response2_index]["content"]
+
+    # Convert markdown reasoning back to the original format if needed
+    response1 = convert_markdown_to_reasoning(response1)
+    response2 = convert_markdown_to_reasoning(response2)
+
+    chosen_index = 0 if rating.chosen == "llm_1" else 1
+    rejected_index = 1 if rating.chosen == "llm_1" else 0
+
+    rlhf_builder.add_sample(
+        prompt=query,
+        chosen=response1 if chosen_index == 0 else response2,
+        rejected=response2 if rejected_index == 0 else response1,
+        chosen_model=f"{llm_config['llm_1']['provider']}/{llm_config['llm_1']['model']}"
+        if chosen_index == 0
+        else f"{llm_config['llm_2']['provider']}/{llm_config['llm_2']['model']}",
+        rejected_model=f"{llm_config['llm_2']['provider']}/{llm_config['llm_2']['model']}"
+        if rejected_index == 0
+        else f"{llm_config['llm_1']['provider']}/{llm_config['llm_1']['model']}",
+        notes=rating.notes,
+    )
+
+    # Clear the chat history after saving the rating
+    chat_history["llm_1"] = []
+    chat_history["llm_2"] = []
+
+    return {"status": "success", "message": "Rating saved successfully"}
+
+
+@app.get("/rlhf_data")
+async def get_rlhf_data(request: Request, format: str = "table", query: str = ""):
+    # Get RLHF dataset samples
+    data = rlhf_builder.get_samples()
+
+    # Filter if there's a search query
+    if query:
+        filtered_data = []
+        for sample in data:
+            if (
+                query.lower() in sample.prompt.lower()
+                or query.lower() in sample.chosen.lower()
+                or query.lower() in sample.rejected.lower()
+                or query.lower() in (sample.notes or "").lower()
+            ):
+                filtered_data.append(sample)
+        data = filtered_data
+
+    # Format the data for display
+    formatted_data = []
+    for sample in data:
+        formatted_data.append(
+            {
+                "user_prompt": sample.prompt,
+                "llm1": sample.chosen_model,
+                "llm2": sample.rejected_model,
+                "response1": sample.chosen,
+                "response2": sample.rejected,
+                "rating": "LLM1 better than LLM2",
+                "notes": sample.notes,
+            }
         )
 
-    input_box = gr.Textbox(placeholder="Enter your message here", label="Input")
+    # Return as JSON if requested
+    if format == "json":
+        return JSONResponse(content={"data": formatted_data})
 
-    with gr.Sidebar(width=500):
-        gr.Markdown("## Settings")
-        with gr.Row():
-            with gr.Column():
-                with gr.Row():
-                    llm_provider_1 = gr.Dropdown(
-                        choices=provider_map.keys(),
-                        value="OpenAI",
-                        label="LLM 1 Provider",
-                    )
-                    llm_dropdown_1 = gr.Dropdown(
-                        choices=OPENAI_CHAT_MODELS, label="LLM 1"
-                    )
-
-                @gr.render(inputs=llm_dropdown_1)
-                def update_llm_1(model_name):
-                    global llm_1, llm_config_1
-                    llm_1 = get_llm(model_name)
-                    llm_config_1 = {}
-                    llm_config_map_1 = get_supported_configurations(model_name)
-                    for k, v in llm_config_map_1.items():
-                        v.change(
-                            fn=lambda x: llm_config_1.update({k: x}),
-                            inputs=[v],
-                            outputs=[],
-                        )
-
-            with gr.Column():
-                with gr.Row():
-                    llm_provider_2 = gr.Dropdown(
-                        choices=provider_map.keys(),
-                        value="DeepSeek",
-                        label="LLM 2 Provider",
-                    )
-                    llm_dropdown_2 = gr.Dropdown(
-                        choices=DEEPSEEK_CHAT_MODELS, label="LLM 2"
-                    )
-
-                @gr.render(inputs=llm_dropdown_2)
-                def update_llm_2(model_name):
-                    global llm_2, llm_config_2
-                    llm_2 = get_llm(model_name)
-                    llm_config_2 = {}
-                    llm_config_map_2 = get_supported_configurations(model_name)
-                    for k, v in llm_config_map_2.items():
-                        v.change(
-                            fn=lambda x: llm_config_2.update({k: x}),
-                            inputs=[v],
-                            outputs=[],
-                        )
-
-    chat_interface_1 = gr.ChatInterface(
-        fn=generate_response_1, chatbot=chatbot_1, textbox=input_box, type="messages"
-    )
-    chat_interface_2 = gr.ChatInterface(
-        fn=generate_response_2, chatbot=chatbot_2, textbox=input_box, type="messages"
+    # Otherwise return as HTML table
+    return templates.TemplateResponse(
+        "rlhf_table.html",
+        {
+            "request": request,
+            "data": formatted_data,
+        },
     )
 
-    llm_provider_1.change(
-        fn=change_llm_dropdown_1,
-        inputs=[llm_provider_1],
-        outputs=[llm_dropdown_1],
-    )
-    llm_provider_2.change(
-        fn=change_llm_dropdown_2,
-        inputs=[llm_provider_2],
-        outputs=[llm_dropdown_2],
-    )
 
-    def submit_rating(chosen, notes, hist1, hist2):
-        if len(hist1) >= 2 and len(hist2) >= 2:
-            user_prompt = hist1[-2]["content"] if hist1[-2]["role"] == "user" else ""
-            response1 = hist1[-1]["content"]
-            response2 = hist2[-1]["content"]
-        else:
-            user_prompt = ""
-            response1 = ""
-            response2 = ""
+@app.post("/download_rlhf")
+async def download_rlhf():
+    try:
+        filepath = rlhf_builder.save_dataset_jsonl()
+        return {
+            "status": "success",
+            "message": f"Dataset saved to {filepath}",
+            "file": filepath,
+        }
+    except Exception as e:
+        logger.error(f"Error saving dataset: {e}")
+        return {"status": "error", "message": f"Error saving dataset: {str(e)}"}
 
-        conversation = [
-            {"role": "user", "content": user_prompt},
-            {"role": "assistant", "content": response1},
-            {"role": "assistant", "content": response2},
-        ]
 
-        llm1_name = llm_dropdown_1.value
-        llm2_name = llm_dropdown_2.value
+@app.post("/generate_queries")
+async def generate_queries(
+    domain: str = Form("general"),
+    count: int = Form(10),
+    custom_domain: str = Form(None),
+):
+    """Generate queries for triplet dataset"""
+    # This would be implemented to use an LLM to generate diverse queries
+    # For now, return some sample queries
+    sample_queries = [
+        "What are the main features of Python 3.10?",
+        "How do I deploy a FastAPI application to production?",
+        "Explain the difference between supervised and unsupervised learning",
+        "What are the best practices for REST API design?",
+        "How does BERT handle natural language processing tasks?",
+    ]
 
-        result = rlhf_builder.save_rlhf_entry(
-            system_prompt="",
-            user_prompt=user_prompt,
-            llm1_name=llm1_name,
-            llm2_name=llm2_name,
-            response1=response1,
-            response2=response2,
-            rating=chosen,
-            notes=notes,
-            conversation=conversation,
-        )
-        return result
+    # Limit to the requested count
+    return {"queries": sample_queries[:count]}
 
-    with gr.Row():
-        rate_llm1 = gr.Button("Choose LLM 1")
-        rate_llm2 = gr.Button("Choose LLM 2")
 
-    with gr.Row():
-        rating_notes = gr.Textbox(
-            label="Rating Notes", placeholder="Optional notes on your rating"
-        )
-        rating_result = gr.Textbox(label="Rating Result", interactive=False)
+@app.post("/generate_responses")
+async def generate_responses(
+    query: str = Form(...), provider: str = Form(...), model: str = Form(...)
+):
+    """Generate positive and negative responses for a query"""
+    # This would use the selected LLM to generate responses
+    # For now, return sample responses
+    return {
+        "positive": "Here's a detailed explanation of the main features in Python 3.10: Structural pattern matching (match/case statements), better error messages with precise line indicators, parenthesized context managers, and typing improvements like Union operator using the pipe symbol (|). These features make Python code more readable and maintainable.",
+        "negative": "Python 3.10 has some new stuff. You can look it up online.",
+    }
 
-    rate_llm1.click(
-        lambda notes, hist1, hist2: submit_rating("LLM1", notes, hist1, hist2),
-        inputs=[rating_notes, chatbot_1, chatbot_2],
-        outputs=rating_result,
-    )
 
-    rate_llm2.click(
-        lambda notes, hist1, hist2: submit_rating("LLM2", notes, hist1, hist2),
-        inputs=[rating_notes, chatbot_1, chatbot_2],
-        outputs=rating_result,
+@app.post("/add_manual_triplet")
+async def add_manual_triplet(triplet: TripletRequest):
+    """Add a manually created triplet to the dataset"""
+    # Add the triplet to our in-memory storage
+    triplet_dataset.append(
+        {
+            "id": len(triplet_dataset) + 1,
+            "query": triplet.query,
+            "positive": triplet.positive,
+            "negative": triplet.negative,
+            "created_at": "2023-06-01T12:00:00Z",  # This would be the current timestamp in production
+        }
     )
 
-    # New helper function to format RLHF entries as a table (list of lists)
-    def get_rlhf_table_data() -> List[List[str]]:
-        samples = []
-        for entry in rlhf_builder.rlhf_data:
-            samples.append(
-                [
-                    entry.get("system_prompt", ""),
-                    entry.get("user_prompt", ""),
-                    entry.get("llm1", ""),
-                    entry.get("llm2", ""),
-                    convert_markdown_to_reasoning(entry.get("response1", "")),
-                    convert_markdown_to_reasoning(entry.get("response2", "")),
-                    entry.get("rating", ""),
-                    entry.get("notes", ""),
-                ]
-            )
-        return samples
+    return {
+        "status": "success",
+        "message": "Triplet added successfully",
+        "count": len(triplet_dataset),
+    }
 
-    # Add an Accordion for the RLHF dataset view using Gradio's Dataframe component.
-    with gr.Accordion("RLHF Dataset", open=False):
-        headers = [
-            "System Prompt",
-            "User Prompt",
-            "LLM1",
-            "LLM2",
-            "Response1",
-            "Response2",
-            "Rating",
-            "Notes",
-        ]
-        rlhf_dataset_display = gr.Dataframe(
-            label="RLHF Dataset",
-            value=get_rlhf_table_data(),
-            headers=headers,
-            datatype=["str"] * len(headers),
-        )
-        refresh_dataset = gr.Button("Refresh RLHF Dataset")
-        refresh_dataset.click(fn=get_rlhf_table_data, outputs=rlhf_dataset_display)
 
-    demo.launch()
+@app.get("/view_triplets")
+async def view_triplets(request: Request, format: str = "table", query: str = ""):
+    """Get the triplet dataset"""
+    # Filter the dataset if there's a search query
+    data = triplet_dataset
+    if query:
+        filtered_data = []
+        for triplet in data:
+            if (
+                query.lower() in triplet["query"].lower()
+                or query.lower() in triplet["positive"].lower()
+                or query.lower() in triplet["negative"].lower()
+            ):
+                filtered_data.append(triplet)
+        data = filtered_data
+
+    # Return as JSON if requested
+    if format == "json":
+        return JSONResponse(content={"data": data})
+
+    # Otherwise return as HTML table
+    return templates.TemplateResponse(
+        "triplet_table.html",
+        {
+            "request": request,
+            "data": data,
+        },
+    )
+
+
+@app.post("/download_triplets")
+async def download_triplets():
+    """Download the triplet dataset"""
+    # In a real app, this would save to disk or provide a download link
+    count = len(triplet_dataset)
+    if count == 0:
+        return {"status": "error", "message": "No triplets to download"}
+
+    return {
+        "status": "success",
+        "message": f"Dataset with {count} triplets would be downloaded",
+        "count": count,
+    }
+
+
+@app.get("/dataset_counts")
+async def dataset_counts():
+    """Get the number of samples in each dataset"""
+    return {"rlhf": len(rlhf_builder.get_samples()), "triplet": len(triplet_dataset)}
+
+
+@app.post("/import_dataset")
+async def import_dataset():
+    """Import a dataset from a file"""
+    # This would parse and import the uploaded file
+    return {
+        "status": "success",
+        "message": "Dataset import functionality will be implemented soon",
+    }
+
+
+@app.on_event("startup")
+async def startup_event():
+    rlhf_builder.load_dataset_jsonl()
+    logger.info("Ymir RLHF application started")
+
+
+if __name__ == "__main__":
+    uvicorn.run("ymir.app:app", host="0.0.0.0", port=8008, reload=True)

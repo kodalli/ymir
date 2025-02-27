@@ -20,73 +20,64 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
 
-      - name: Install Poetry
+      - name: Install uv
         run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          # Add Poetry's bin directory to PATH
-          echo "${HOME}/.local/bin" >> $GITHUB_PATH
+          curl -sSf https://astral.sh/uv/install.sh | bash
+          echo "${HOME}/.uv/bin" >> $GITHUB_PATH
 
       - name: Install dependencies
-        run: poetry install
+        run: |
+          uv pip install python-semantic-release>=9.19.1,<10
 
-      - name: Run semantic-release in pre-release (alpha) mode
+      - name: Configure git
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+
+      - name: Run semantic-release
         id: semantic_release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPOSITORY_NAME: ${{ github.repository }}
         run: |
           # Fetch all tags to ensure we have the complete history
           git fetch --tags
 
-          # Get the latest tag and ensure it's used as the base version
-          LATEST_TAG=$(git tag --sort=-v:refname | head -n 1 || echo "v0.1.0-alpha.0")
-          echo "Latest tag found: $LATEST_TAG"
+          # Run semantic release to determine new version
+          semantic-release version --prerelease --prerelease-token alpha
 
-          # Configure git for semantic-release
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
+          # Capture the new version from pyproject.toml
+          NEW_VERSION=$(grep -Po '(?<=version = ")[^"]*' pyproject.toml)
+          echo "New version from pyproject.toml: $NEW_VERSION"
 
-          # Remove the v prefix for semantic-release
-          LATEST_VERSION=${LATEST_TAG#v}
+          # Add v prefix for GitHub release
+          echo "new_version=v${NEW_VERSION}" >> $GITHUB_OUTPUT
 
-          # Run semantic release and capture its output
-          VERSION_OUTPUT=$(SEMANTIC_RELEASE_LAST_VERSION=$LATEST_VERSION poetry run semantic-release version --prerelease --prerelease-token alpha)
-          echo "Version command output: $VERSION_OUTPUT"
-
-          if [[ $VERSION_OUTPUT =~ "The next version is: "([0-9]+\.[0-9]+\.[0-9]+[-a-z0-9.]*) ]]; then
-            NEW_VERSION="${BASH_REMATCH[1]}"
-            echo "Detected new version: $NEW_VERSION"
-            if [ "$NEW_VERSION" != "$LATEST_VERSION" ]; then
-              echo "new_version=v${NEW_VERSION}" >> $GITHUB_OUTPUT
-              # Now publish with the same version awareness
-              SEMANTIC_RELEASE_LAST_VERSION=$LATEST_VERSION poetry run semantic-release publish --prerelease --prerelease-token alpha
-            else
-              echo "Version $NEW_VERSION already exists"
-              exit 0
-            fi
-          else
-            echo "No new version detected in output"
-            exit 0
-          fi
+          # Publish the release
+          semantic-release publish --prerelease --prerelease-token alpha
 
       - name: Generate release notes
         id: release_notes
         if: steps.semantic_release.outputs.new_version != ''
         run: |
-          # Determine the previous tag (if it exists)
-          PREV_TAG=$(git describe --tags --abbrev=0 $(git rev-list --tags --skip=1 --max-count=1) 2>/dev/null || echo "")
+          # Get the previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
           if [ -z "$PREV_TAG" ]; then
               echo "No previous tag found. Generating release notes from the beginning."
               NOTES=$(git log --pretty=format:"- %s")
           else
+              echo "Generating release notes from $PREV_TAG to current commit."
               NOTES=$(git log "$PREV_TAG"..HEAD --pretty=format:"- %s")
           fi
+
           # Properly escape the notes for GitHub Actions
           NOTES="${NOTES//'%'/'%25'}"
           NOTES="${NOTES//$'\n'/'%0A'}"

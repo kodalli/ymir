@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Main entrypoint for Ymir RLHF Dataset Builder
+Main entrypoint for Ymir Dataset Builder
 """
 
 import argparse
@@ -20,7 +20,7 @@ def setup_directories():
 def main():
     """Main entry point for the application"""
     parser = argparse.ArgumentParser(
-        description="Ymir RLHF Dataset Builder - FastAPI Backend"
+        description="Ymir Dataset Builder - FastAPI Backend"
     )
     parser.add_argument(
         "--host", type=str, default="0.0.0.0", help="Host to run the server on"
@@ -35,9 +35,9 @@ def main():
     setup_directories()
 
     # Start FastAPI server
-    logger.info(f"Starting Ymir RLHF Dataset Builder on http://{args.host}:{args.port}")
+    logger.info(f"Starting Ymir Dataset Builder on http://{args.host}:{args.port}")
     uvicorn.run(
-        "ymir.fastapi_app:app",
+        "ymir.app:app",
         host=args.host,
         port=args.port,
         reload=args.reload,

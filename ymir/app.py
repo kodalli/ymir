@@ -178,7 +178,13 @@ async def update_provider(llm_key: str = Form(...), provider: str = Form(...)):
     llm_config[llm_key]["provider"] = provider
     models = get_provider_models(provider)
     llm_config[llm_key]["model"] = models[0] if models else ""
-    return {"models": models}
+
+    # Return HTML options for the model dropdown
+    options_html = ""
+    for model in models:
+        options_html += f'<option value="{model}">{model}</option>'
+
+    return HTMLResponse(content=options_html)
 
 
 @app.post("/update_model")

@@ -247,6 +247,53 @@ function attachEventListeners() {
         }
     });
 
+    // Handle provider changes and model selection
+    htmx.on('body', 'htmx:afterSwap', function (evt) {
+        // When provider is changed and model select is updated
+        if (evt.detail.target.id === 'llm1-model-select' || evt.detail.target.id === 'llm2-model-select') {
+            const select = evt.detail.target;
+
+            // If there are options, select the first one by default
+            if (select.options && select.options.length > 0) {
+                // Trigger the model update
+                const llmKey = select.id === 'llm1-model-select' ? 'llm_1' : 'llm_2';
+                const selectedModel = select.options[0].value;
+
+                // Show toast to indicate models were loaded
+                showToast(`Models loaded for ${llmKey}`, 'success', 2000);
+
+                // Make the POST request to update the model on the server
+                fetch('/update_model', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `llm_key=${llmKey}&model=${selectedModel}`
+                });
+            } else {
+                // If no options were found, show an error
+                showToast('No models found for the selected provider', 'error');
+            }
+        }
+    });
+
+    // Handle model selection change
+    document.addEventListener('change', function (evt) {
+        if (evt.target.id === 'llm1-model-select' || evt.target.id === 'llm2-model-select') {
+            const llmKey = evt.target.id === 'llm1-model-select' ? 'llm_1' : 'llm_2';
+            const selectedModel = evt.target.value;
+
+            // Make the POST request to update the model on the server
+            fetch('/update_model', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `llm_key=${llmKey}&model=${selectedModel}`
+            });
+        }
+    });
+
     // Handle successful rating
     htmx.on('#rating-result', 'htmx:afterSettle', function (evt) {
         if (evt.detail.requestConfig.url === '/rate' && evt.detail.successful) {

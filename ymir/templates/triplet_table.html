@@ -1,0 +1,85 @@
+<table class="min-w-full divide-y divide-gray-200">
+    <thead>
+        <tr>
+            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID
+            </th>
+            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Query
+            </th>
+            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Positive Response</th>
+            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Negative Response</th>
+            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions</th>
+        </tr>
+    </thead>
+    <tbody class="bg-white divide-y divide-gray-200">
+        {% if data %}
+        {% for entry in data %}
+        <tr>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ entry.id }}</td>
+            <td class="px-6 py-4">
+                <div class="response-content">
+                    {% if entry.query|length > 150 %}
+                    <div class="truncated">{{ entry.query[:150] }}...</div>
+                    <div class="full-text hidden">{{ entry.query }}</div>
+                    <button class="text-blue-600 text-sm mt-2 toggle-text"
+                        _="on click toggle .hidden on the previous <div/> toggle .hidden on the previous <div/> previous <div/>
+                                         then if its innerText is 'Show more' set its innerText to 'Show less' else set its innerText to 'Show more'">
+                        Show more
+                    </button>
+                    {% else %}
+                    {{ entry.query }}
+                    {% endif %}
+                </div>
+            </td>
+            <td class="px-6 py-4">
+                <div class="response-content">
+                    {% if entry.positive|length > 150 %}
+                    <div class="truncated">{{ entry.positive[:150] }}...</div>
+                    <div class="full-text hidden">{{ entry.positive }}</div>
+                    <button class="text-blue-600 text-sm mt-2 toggle-text"
+                        _="on click toggle .hidden on the previous <div/> toggle .hidden on the previous <div/> previous <div/>
+                                         then if its innerText is 'Show more' set its innerText to 'Show less' else set its innerText to 'Show more'">
+                        Show more
+                    </button>
+                    {% else %}
+                    {{ entry.positive }}
+                    {% endif %}
+                </div>
+            </td>
+            <td class="px-6 py-4">
+                <div class="response-content">
+                    {% if entry.negative|length > 150 %}
+                    <div class="truncated">{{ entry.negative[:150] }}...</div>
+                    <div class="full-text hidden">{{ entry.negative }}</div>
+                    <button class="text-blue-600 text-sm mt-2 toggle-text"
+                        _="on click toggle .hidden on the previous <div/> toggle .hidden on the previous <div/> previous <div/>
+                                         then if its innerText is 'Show more' set its innerText to 'Show less' else set its innerText to 'Show more'">
+                        Show more
+                    </button>
+                    {% else %}
+                    {{ entry.negative }}
+                    {% endif %}
+                </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <button class="text-red-600 hover:text-red-900 mr-2" hx-delete="/delete_triplet/{{ entry.id }}"
+                    hx-confirm="Are you sure you want to delete this triplet?" hx-target="#triplet-dataset"
+                    hx-swap="innerHTML">
+                    Delete
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr class="text-gray-400 italic">
+            <td class="px-6 py-4 whitespace-nowrap text-sm">-</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm">No triplets found</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm">-</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm">-</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm">-</td>
+        </tr>
+        {% endif %}
+    </tbody>
+</table>

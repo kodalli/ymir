@@ -1,0 +1,56 @@
+<table class="rlhf-table">
+    <thead>
+        <tr>
+            <th>User Prompt</th>
+            <th>LLM1</th>
+            <th>LLM2</th>
+            <th>Response1</th>
+            <th>Response2</th>
+            <th>Rating</th>
+            <th>Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in data %}
+        <tr>
+            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+                {{ entry.user_prompt }}
+            </td>
+            <td>{{ entry.llm1 }}</td>
+            <td>{{ entry.llm2 }}</td>
+            <td>
+                <div class="response-content">
+                    {% if entry.response1|length > 150 %}
+                    <div class="truncated">{{ entry.response1[:150] }}...</div>
+                    <div class="full-text hidden">{{ entry.response1 }}</div>
+                    <button class="text-blue-600 text-sm mt-2 toggle-text"
+                        _="on click toggle .hidden on the previous <div/> toggle .hidden on the previous <div/> previous <div/>
+                                     then if its innerText is 'Show more' set its innerText to 'Show less' else set its innerText to 'Show more'">
+                        Show more
+                    </button>
+                    {% else %}
+                    {{ entry.response1 }}
+                    {% endif %}
+                </div>
+            </td>
+            <td>
+                <div class="response-content">
+                    {% if entry.response2|length > 150 %}
+                    <div class="truncated">{{ entry.response2[:150] }}...</div>
+                    <div class="full-text hidden">{{ entry.response2 }}</div>
+                    <button class="text-blue-600 text-sm mt-2 toggle-text"
+                        _="on click toggle .hidden on the previous <div/> toggle .hidden on the previous <div/> previous <div/>
+                                     then if its innerText is 'Show more' set its innerText to 'Show less' else set its innerText to 'Show more'">
+                        Show more
+                    </button>
+                    {% else %}
+                    {{ entry.response2 }}
+                    {% endif %}
+                </div>
+            </td>
+            <td>{{ entry.rating }}</td>
+            <td>{{ entry.notes or '-' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

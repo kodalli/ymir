@@ -1,0 +1,20 @@
+{% for message in chat_history %}
+<div class="chat-message {% if message.role == 'user' %}user-message{% else %}assistant-message{% endif %}">
+    {% if message.role == 'assistant' %}
+    {% set content = message.content %}
+    {% if "```think" in content %}
+    {% set parts = content.split("```think") %}
+    {{ parts[0] | safe }}
+    {% for part in parts[1:] %}
+    {% set think_parts = part.split("```") %}
+    <div class="thinking-block">{{ think_parts[0] | safe }}</div>
+    {{ think_parts[1] | safe if think_parts|length > 1 else "" }}
+    {% endfor %}
+    {% else %}
+    {{ content | safe }}
+    {% endif %}
+    {% else %}
+    {{ message.content }}
+    {% endif %}
+</div>
+{% endfor %}

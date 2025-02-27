@@ -1,6 +1,5 @@
 from typing import Dict, Optional
 from langchain_deepseek import ChatDeepSeek
-import gradio as gr
 
 DEEPSEEK_CHAT_MODELS = [
     "deepseek-chat",
@@ -10,18 +9,33 @@ DEEPSEEK_CHAT_MODELS = [
 
 def get_deepseek_config_components(
     model_name: Optional[str] = None,
-) -> Dict[str, gr.Component]:
-    """Returns Gradio components for DeepSeek model configuration."""
+) -> Dict[str, Dict]:
+    """Returns configuration options for DeepSeek model configuration."""
     return {
-        "temperature": gr.Slider(
-            minimum=0.0, maximum=2.0, value=0.7, step=0.1, label="Temperature"
-        ),
-        "max_tokens": gr.Slider(
-            minimum=50, maximum=4000, value=1000, step=50, label="Max Tokens"
-        ),
-        "top_p": gr.Slider(
-            minimum=0.0, maximum=1.0, value=0.9, step=0.05, label="Top P"
-        ),
+        "temperature": {
+            "type": "slider",
+            "min": 0.0,
+            "max": 2.0,
+            "default": 0.7,
+            "step": 0.1,
+            "label": "Temperature",
+        },
+        "max_tokens": {
+            "type": "slider",
+            "min": 50,
+            "max": 4000,
+            "default": 1000,
+            "step": 50,
+            "label": "Max Tokens",
+        },
+        "top_p": {
+            "type": "slider",
+            "min": 0.0,
+            "max": 1.0,
+            "default": 0.9,
+            "step": 0.05,
+            "label": "Top P",
+        },
     }
 
 

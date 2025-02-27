@@ -1,0 +1,274 @@
+<!-- Triplet Generation Tool Template -->
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-center mb-4">Triplet Generation</h1>
+    <p class="text-center mb-8 text-gray-700">Generate triplets for model optimization and evaluation.</p>
+
+    <!-- Tool Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- Query Generation Card -->
+        <div class="bg-white rounded-lg shadow-md p-5 border border-gray-100 tool-card">
+            <h2 class="text-xl font-semibold mb-4 flex items-center text-indigo-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+                        clip-rule="evenodd" />
+                </svg>
+                Query Generation
+            </h2>
+            <p class="text-gray-600 mb-4">Generate diverse and meaningful queries for your triplet dataset.</p>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Domain</label>
+                <select
+                    class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    name="domain">
+                    <option value="general">General Knowledge</option>
+                    <option value="programming">Programming</option>
+                    <option value="science">Science</option>
+                    <option value="math">Mathematics</option>
+                    <option value="custom">Custom Domain</option>
+                </select>
+            </div>
+
+            <div class="mb-4 hidden" id="custom-domain-input">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Custom Domain Description</label>
+                <textarea
+                    class="w-full h-20 border border-gray-300 rounded-md shadow-sm p-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Describe your custom domain..."></textarea>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Number of Queries</label>
+                <input type="number" min="1" max="100" value="10"
+                    class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+
+            <button
+                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center"
+                hx-post="/generate_queries" hx-target="#generated-queries" hx-swap="innerHTML"
+                hx-indicator="#query-spinner">
+                <span id="query-spinner" class="htmx-indicator mr-2">
+                    <div class="spinner"></div>
+                </span>
+                Generate Queries
+            </button>
+
+            <div id="generated-queries"
+                class="mt-4 p-2 bg-gray-50 rounded-lg border border-gray-200 max-h-60 overflow-y-auto hidden">
+                <!-- Generated queries will appear here -->
+            </div>
+        </div>
+
+        <!-- Response Generation Card -->
+        <div class="bg-white rounded-lg shadow-md p-5 border border-gray-100 tool-card">
+            <h2 class="text-xl font-semibold mb-4 flex items-center text-indigo-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
+                    <path
+                        d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
+                </svg>
+                Response Generation
+            </h2>
+            <p class="text-gray-600 mb-4">Generate positive and negative responses for your queries.</p>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">LLM Provider</label>
+                <select
+                    class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    name="provider">
+                    {% for provider in providers %}
+                    <option value="{{ provider }}">{{ provider }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                <select
+                    class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    name="model">
+                    <!-- Models will be loaded dynamically based on provider -->
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Query</label>
+                <textarea
+                    class="w-full h-20 border border-gray-300 rounded-md shadow-sm p-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Enter your query here or select from generated queries..."></textarea>
+            </div>
+
+            <button
+                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center mb-4"
+                hx-post="/generate_responses" hx-target="#generated-responses" hx-swap="innerHTML"
+                hx-indicator="#response-spinner">
+                <span id="response-spinner" class="htmx-indicator mr-2">
+                    <div class="spinner"></div>
+                </span>
+                Generate Responses
+            </button>
+
+            <div id="generated-responses"
+                class="bg-gray-50 rounded-lg border border-gray-200 max-h-60 overflow-y-auto hidden">
+                <!-- Generated responses will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Triplet Dataset -->
+    <div class="bg-white rounded-lg shadow-md p-5 border border-gray-100 mb-8">
+        <h2 class="text-2xl font-semibold mb-4 flex items-center text-indigo-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                    d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM14 11a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1v-1a1 1 0 011-1z" />
+            </svg>
+            Triplet Dataset
+        </h2>
+        <p class="text-gray-600 mb-4">Your generated triplets will appear here. Each triplet consists of a query, a
+            positive response, and a negative response.</p>
+
+        <div id="triplet-dataset" class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr>
+                        <th
+                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            ID</th>
+                        <th
+                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Query</th>
+                        <th
+                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Positive Response</th>
+                        <th
+                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Negative Response</th>
+                        <th
+                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <!-- Sample placeholder row -->
+                    <tr class="text-gray-400 italic">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">-</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">No triplets generated yet</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">-</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">-</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">-</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-6 flex justify-end space-x-4">
+            <button
+                class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center"
+                hx-get="/view_triplets" hx-target="#triplet-dataset" hx-swap="innerHTML">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                    <path fill-rule="evenodd"
+                        d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                        clip-rule="evenodd" />
+                </svg>
+                View All Triplets
+            </button>
+
+            <button
+                class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center"
+                hx-post="/download_triplets" hx-target="#download-triplet-result">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 00-1.414-1.414L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                        clip-rule="evenodd" />
+                </svg>
+                Download Dataset
+            </button>
+        </div>
+
+        <div id="download-triplet-result" class="mt-4 p-2 bg-gray-100 rounded text-center"></div>
+    </div>
+
+    <!-- Manual Triplet Creation -->
+    <div class="bg-white rounded-lg shadow-md p-5 border border-gray-100">
+        <h2 class="text-2xl font-semibold mb-4 flex items-center text-indigo-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
+                    clip-rule="evenodd" />
+            </svg>
+            Create Triplet Manually
+        </h2>
+        <p class="text-gray-600 mb-4">Add triplets to your dataset manually with custom queries and responses.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Query</label>
+                <textarea id="manual-query"
+                    class="w-full h-32 border border-gray-300 rounded-md shadow-sm p-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Enter your query..."></textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Positive Response</label>
+                <textarea id="manual-positive"
+                    class="w-full h-32 border border-gray-300 rounded-md shadow-sm p-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Enter a high-quality response..."></textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Negative Response</label>
+                <textarea id="manual-negative"
+                    class="w-full h-32 border border-gray-300 rounded-md shadow-sm p-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Enter a low-quality response..."></textarea>
+            </div>
+        </div>
+
+        <button
+            class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center"
+            hx-post="/add_manual_triplet" hx-vals='js:{
+                "query": document.getElementById("manual-query").value,
+                "positive": document.getElementById("manual-positive").value,
+                "negative": document.getElementById("manual-negative").value
+            }' hx-target="#manual-result"
+            _="on htmx:afterOnLoad set #manual-query.value to '' set #manual-positive.value to '' set #manual-negative.value to ''">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clip-rule="evenodd" />
+            </svg>
+            Add Triplet
+        </button>
+
+        <div id="manual-result" class="mt-4 p-2 bg-gray-100 rounded text-center"></div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Show/hide custom domain input
+        const domainSelect = document.querySelector('select[name="domain"]');
+        const customDomainInput = document.getElementById('custom-domain-input');
+
+        if (domainSelect && customDomainInput) {
+            domainSelect.addEventListener('change', function () {
+                if (this.value === 'custom') {
+                    customDomainInput.classList.remove('hidden');
+                } else {
+                    customDomainInput.classList.add('hidden');
+                }
+            });
+        }
+
+        // When queries are generated, show the container
+        document.body.addEventListener('htmx:afterSwap', function (evt) {
+            if (evt.target.id === 'generated-queries' && evt.target.innerHTML.trim() !== '') {
+                evt.target.classList.remove('hidden');
+            }
+
+            if (evt.target.id === 'generated-responses' && evt.target.innerHTML.trim() !== '') {
+                evt.target.classList.remove('hidden');
+            }
+        });
+    });
+</script>

@@ -19,30 +19,34 @@
             <td>{{ entry.llm1 }}</td>
             <td>{{ entry.llm2 }}</td>
             <td>
-                <div class="response-content">
+                <div class="response-content" id="resp1-{{ loop.index }}">
                     {% if entry.response1|length > 150 %}
-                    <div class="truncated">{{ entry.response1[:150] }}...</div>
-                    <div class="full-text hidden">{{ entry.response1 }}</div>
-                    <button class="text-blue-600 text-sm mt-2 toggle-text"
-                        _="on click toggle .hidden on the previous <div/> toggle .hidden on the previous <div/> previous <div/>
-                                     then if its innerText is 'Show more' set its innerText to 'Show less' else set its innerText to 'Show more'">
+                    <div>{{ entry.response1[:150] }}...</div>
+                    <button class="text-blue-600 text-sm mt-2" hx-get="/expand_text?id={{ entry.id }}&field=response1"
+                        hx-target="#resp1-{{ loop.index }}" hx-swap="innerHTML"
+                        hx-indicator="#indicator-{{ loop.index }}">
                         Show more
                     </button>
+                    <div id="indicator-{{ loop.index }}" class="htmx-indicator">
+                        <div class="spinner"></div>
+                    </div>
                     {% else %}
                     {{ entry.response1 }}
                     {% endif %}
                 </div>
             </td>
             <td>
-                <div class="response-content">
+                <div class="response-content" id="resp2-{{ loop.index }}">
                     {% if entry.response2|length > 150 %}
-                    <div class="truncated">{{ entry.response2[:150] }}...</div>
-                    <div class="full-text hidden">{{ entry.response2 }}</div>
-                    <button class="text-blue-600 text-sm mt-2 toggle-text"
-                        _="on click toggle .hidden on the previous <div/> toggle .hidden on the previous <div/> previous <div/>
-                                     then if its innerText is 'Show more' set its innerText to 'Show less' else set its innerText to 'Show more'">
+                    <div>{{ entry.response2[:150] }}...</div>
+                    <button class="text-blue-600 text-sm mt-2" hx-get="/expand_text?id={{ entry.id }}&field=response2"
+                        hx-target="#resp2-{{ loop.index }}" hx-swap="innerHTML"
+                        hx-indicator="#indicator2-{{ loop.index }}">
                         Show more
                     </button>
+                    <div id="indicator2-{{ loop.index }}" class="htmx-indicator">
+                        <div class="spinner"></div>
+                    </div>
                     {% else %}
                     {{ entry.response2 }}
                     {% endif %}
@@ -54,3 +58,8 @@
         {% endfor %}
     </tbody>
 </table>
+
+{% if not data or data|length == 0 %}
+<p class="text-center text-gray-500 my-8">No RLHF data available yet. Rate some responses to start building your
+    dataset.</p>
+{% endif %}

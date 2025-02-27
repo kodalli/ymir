@@ -1,0 +1,68 @@
+<!-- Triplet Extraction Results Template -->
+<div class="p-4">
+    <h3 class="text-lg font-semibold mb-3 text-indigo-700">
+        Extraction Results: {{ count }} triplets found
+    </h3>
+
+    {% if count > 0 %}
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 mb-4">
+            <thead>
+                <tr>
+                    <th
+                        class="px-4 py-2 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Subject</th>
+                    <th
+                        class="px-4 py-2 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Predicate</th>
+                    <th
+                        class="px-4 py-2 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Object</th>
+                    <th
+                        class="px-4 py-2 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Description</th>
+                    <th
+                        class="px-4 py-2 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Confidence</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for triplet in triplets %}
+                <tr>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{{ triplet.subject }}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ triplet.predicate }}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ triplet.object }}</td>
+                    <td class="px-4 py-2 text-sm text-gray-700">{{ triplet.description }}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
+                        <div class="flex items-center">
+                            <div class="w-24 bg-gray-200 rounded-full h-2.5">
+                                <div class="bg-blue-600 h-2.5 rounded-full"
+                                    style="width: {{ triplet.confidence * 100 }}%"></div>
+                            </div>
+                            <span class="ml-2">{{ "%.2f"|format(triplet.confidence) }}</span>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-4 flex justify-between">
+        <div class="text-sm text-gray-600">
+            <p>These triplets have been added to your dataset. You can view all triplets using the "View All Triplets"
+                button.</p>
+        </div>
+
+        <button
+            class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1 px-3 rounded-md transition-colors duration-200 text-sm"
+            hx-get="/view_triplets" hx-target="#triplet-dataset" hx-swap="innerHTML">
+            View Updated Dataset
+        </button>
+    </div>
+    {% else %}
+    <div class="p-4 bg-yellow-100 text-yellow-800 rounded-md">
+        <p>No triplets were extracted from the provided text. Try with a different text or different entity types.</p>
+    </div>
+    {% endif %}
+</div>

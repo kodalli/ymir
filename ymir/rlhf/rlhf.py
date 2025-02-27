@@ -56,3 +56,21 @@ class RLHFDatasetBuilder:
             for entry in self.rlhf_data:
                 f.write(json.dumps(entry) + "\n")
         return filename
+
+    def get_entry_by_id(self, entry_id: str):
+        """
+        Get an RLHF entry by its ID.
+        If no entry matches the ID, return None.
+        """
+        try:
+            # Convert string ID to integer index if needed
+            idx = int(entry_id)
+            if 0 <= idx < len(self.rlhf_data):
+                return self.rlhf_data[idx]
+        except ValueError:
+            # If entry_id is not a valid integer index, try matching by other fields
+            for entry in self.rlhf_data:
+                if str(entry.get("id", "")) == entry_id:
+                    return entry
+
+        return None

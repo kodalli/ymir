@@ -259,12 +259,16 @@
                         <select
                             class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
                             hx-post="/update_provider" hx-vals='{"llm_key": "llm_1"}' hx-target="#llm1-model-select"
-                            hx-trigger="change" hx-swap="innerHTML" name="provider">
+                            hx-trigger="change" hx-swap="innerHTML" hx-indicator="#provider-indicator-1"
+                            name="provider">
                             {% for provider in providers %}
                             <option value="{{ provider }}" {% if provider=="OpenAI" %}selected{% endif %}>{{ provider }}
                             </option>
                             {% endfor %}
                         </select>
+                        <div id="provider-indicator-1" class="htmx-indicator flex justify-center mt-2">
+                            <div class="spinner"></div>
+                        </div>
                     </div>
 
                     <div class="mb-4">
@@ -306,7 +310,7 @@
                         class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center"
                         hx-post="/chat"
                         hx-vals='{"llm_key": "llm_1", "message": document.getElementById("message-input").value}'
-                        hx-target="#llm1-chat" hx-swap="innerHTML" hx-indicator="#spinner-1"
+                        hx-target="#llm1-chat" hx-swap="innerHTML" hx-indicator="#spinner-1" hx-disabled-elt="this"
                         _="on click set #message-input.value to ''">
                         <span id="spinner-1" class="htmx-indicator mr-2">
                             <div class="spinner"></div>

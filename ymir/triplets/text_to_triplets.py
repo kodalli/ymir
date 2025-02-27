@@ -2,9 +2,17 @@ import asyncio
 import json
 import re
 import os
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from dataclasses import dataclass
 import tiktoken
+
+# Add LangChain imports
+from langchain.chains import LLMChain
+from langchain.prompts import PromptTemplate
+from langchain_openai import ChatOpenAI, OpenAI as OpenAILLM
+from langchain_anthropic import ChatAnthropic
+from langchain_community.llms import HuggingFaceEndpoint, LlamaCpp
+import logging
 
 # Constants for formatting
 TUPLE_DELIMITER = "<|>"
@@ -222,20 +230,115 @@ Output:
 """
 
 
+def get_langchain_model(
+    provider: str, model_name: str, api_key: Optional[str] = None
+) -> Any:
+    """
+    Initialize and return the appropriate LangChain LLM based on provider and model.
+
+    Args:
+        provider: The LLM provider name (e.g., "openai", "anthropic", "huggingface")
+        model_name: The specific model to use
+        api_key: API key for the provider (optional)
+
+    Returns:
+        A LangChain LLM instance
+    """
+    # Set API key if provided
+    if api_key:
+        if provider.lower() == "openai":
+            os.environ["OPENAI_API_KEY"] = api_key
+        elif provider.lower() == "anthropic":
+            os.environ["ANTHROPIC_API_KEY"] = api_key
+        elif provider.lower() == "huggingface":
+            os.environ["HUGGINGFACE_API_KEY"] = api_key
+
+    # Initialize the appropriate LLM based on provider
+    if provider.lower() == "openai":
+        if "gpt" in model_name.lower() and "chat" in model_name.lower():
+            return ChatOpenAI(model_name=model_name, temperature=0.2)
+        else:
+            return OpenAILLM(model=model_name, temperature=0.2)
+
+    elif provider.lower() == "anthropic":
+        return ChatAnthropic(model=model_name, temperature=0.2)
+
+    elif provider.lower() == "huggingface":
+        return HuggingFaceEndpoint(repo_id=model_name, temperature=0.2, max_length=2048)
+
+    elif provider.lower() == "local":
+        # For local models using llama.cpp
+        return LlamaCpp(
+            model_path=model_name, temperature=0.2, max_tokens=2048, n_ctx=4096
+        )
+
+    else:
+        raise ValueError(f"Unsupported provider: {provider}")
+
+
 async def extract_triplets_with_llm(
-    text: str, llm_function, entity_types: List[str] = DEFAULT_ENTITY_TYPES
+    text: str,
+    provider: str,
+    model_name: str,
+    api_key: Optional[str] = None,
+    entity_types: List[str] = DEFAULT_ENTITY_TYPES,
 ) -> Dict:
     """
-    Extract triplets from text using an LLM function.
+    Extract triplets from text using LangChain with the specified provider and model.
 
     Args:
         text: The input text to extract triplets from
-        llm_function: An async function that takes a prompt and returns a response
+        provider: The LLM provider to use
+        model_name: The specific model to use
+        api_key: API key for the provider (optional)
         entity_types: List of entity types to extract
 
     Returns:
         A dictionary containing entities, relationships, and triplets
     """
+    # Get the LangChain model
+    llm = get_langchain_model(provider, model_name, api_key)
+
+    # Initialize prompt template
+    prompt_template = PromptTemplate(
+        input_variables=["text", "entity_types", "language"],
+        template="""
+-Goal-
+Given a text document that is potentially relevant to this activity and a list of entity types, identify all entities of those types from the text and all relationships among the identified entities.
+Use {language} as output language.
+
+-Steps-
+1. Identify all entities. For each identified entity, extract the following information:
+- entity_name: Name of the entity, use same language as input text. If English, capitalized the name.
+- entity_type: One of the following types: [{entity_types}]
+- entity_description: Comprehensive description of the entity's attributes and activities
+Format each entity as ("entity"<|><entity_name><|><entity_type><|><entity_description>)
+
+2. From the entities identified in step 1, identify all pairs of (source_entity, target_entity) that are *clearly related* to each other.
+For each pair of related entities, extract the following information:
+- source_entity: name of the source entity, as identified in step 1
+- target_entity: name of the target entity, as identified in step 1
+- relationship_description: explanation as to why you think the source entity and the target entity are related to each other
+- relationship_strength: a numeric score indicating strength of the relationship between the source entity and target entity
+- relationship_keywords: one or more high-level key words that summarize the overarching nature of the relationship, focusing on concepts or themes rather than specific details
+Format each relationship as ("relationship"<|><source_entity><|><target_entity><|><relationship_description><|><relationship_keywords><|><relationship_strength>)
+
+3. Identify high-level key words that summarize the main concepts, themes, or topics of the entire text. These should capture the overarching ideas present in the document.
+Format the content-level key words as ("content_keywords"<|><high_level_keywords>)
+
+4. Return output in {language} as a single list of all the entities and relationships identified in steps 1 and 2. Use **##** as the list delimiter.
+
+5. When finished, output <|COMPLETE|>
+
+Entity_types: {entity_types}
+Text: {text}
+Output:
+""",
+    )
+
+    # Create the LLM chain
+    chain = LLMChain(llm=llm, prompt=prompt_template)
+
     # Generate chunks to handle long texts
     chunks = chunking_by_token_size(text, overlap_token_size=100, max_token_size=1200)
 
@@ -245,10 +348,17 @@ async def extract_triplets_with_llm(
 
     for chunk in chunks:
         chunk_key = compute_mdhash_id(chunk["content"], prefix="chunk-")
-        prompt = get_entity_extraction_prompt(chunk["content"], entity_types)
 
-        # Call the LLM function
-        response = await llm_function(prompt)
+        # Call the LLM chain with the current chunk
+        try:
+            response = await chain.arun(
+                text=chunk["content"],
+                entity_types=", ".join(entity_types),
+                language=DEFAULT_LANGUAGE,
+            )
+        except Exception as e:
+            logging.error(f"Error calling LLM: {e}")
+            continue
 
         # Process the response
         records = split_string_by_multi_markers(
@@ -322,63 +432,32 @@ def triplets_to_csv(triplets: List[Triplet], output_file: str = "triplets.csv") 
     return output_file
 
 
-# Example of how to use with OpenAI
-async def example_with_openai(text: str) -> Dict:
-    """Example of how to use the triplet extraction with OpenAI."""
-    import openai
-
-    # Set your API key
-    openai.api_key = os.environ.get("OPENAI_API_KEY")
-
-    async def openai_llm(prompt: str) -> str:
-        """Call OpenAI API to get a response."""
-        from openai import AsyncOpenAI
-
-        client = AsyncOpenAI(api_key=openai.api_key)
-        response = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2,
-        )
-        return response.choices[0].message.content
-
-    return await extract_triplets_with_llm(text, openai_llm)
-
-
-# Example of how to use with local LLM
-async def example_with_local_llm(text: str) -> Dict:
-    """Example of how to use the triplet extraction with a local LLM."""
-    from llama_cpp import Llama
-
-    # Load the model
-    model_path = "path/to/your/model.gguf"
-    llm = Llama(model_path=model_path, n_ctx=4096)
-
-    async def local_llm(prompt: str) -> str:
-        """Call local LLM to get a response."""
-        response = llm(prompt, max_tokens=2048, temperature=0.2)
-        return response["choices"][0]["text"]
-
-    return await extract_triplets_with_llm(text, local_llm)
-
-
 # Simple synchronous wrapper for easier use
-def extract_triplets(text: str, api_key: str = None) -> Dict:
+def extract_triplets(
+    text: str,
+    provider: str = "openai",
+    model_name: str = "gpt-4o-mini",
+    api_key: str = None,
+) -> Dict:
     """
     Synchronous wrapper to extract triplets from text.
 
     Args:
         text: The input text to extract triplets from
-        api_key: OpenAI API key (optional, will use environment variable if not provided)
+        provider: The LLM provider to use (e.g., "openai", "anthropic", "huggingface")
+        model_name: The specific model to use
+        api_key: API key for the provider (optional, will use environment variable if not provided)
 
     Returns:
         A dictionary containing entities, relationships, and triplets
     """
-    if api_key:
+    if api_key and provider.lower() == "openai":
         os.environ["OPENAI_API_KEY"] = api_key
 
     async def run():
-        return await example_with_openai(text)
+        return await extract_triplets_with_llm(
+            text=text, provider=provider, model_name=model_name, api_key=api_key
+        )
 
     loop = asyncio.get_event_loop()
     try:
@@ -399,15 +478,10 @@ if __name__ == "__main__":
     The company's hardware products include the iPhone, the Mac computer, the iPad, the Apple Watch, and Apple TV.
     """
 
-    # Check if API key is set
-    if not os.environ.get("OPENAI_API_KEY"):
-        print(
-            "Please set your OPENAI_API_KEY environment variable or provide it as an argument."
-        )
-        exit(1)
-
-    # Extract triplets
-    result = extract_triplets(sample_text)
+    # Extract triplets using OpenAI by default
+    result = extract_triplets(
+        text=sample_text, provider="openai", model_name="gpt-4o-mini"
+    )
 
     # Print results
     print(triplets_to_json(result))

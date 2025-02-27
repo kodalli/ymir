@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import re
 from loguru import logger
+import json
 
 from ymir.llm import (
     get_llm,
@@ -15,6 +16,7 @@ from ymir.llm import (
     DEEPSEEK_CHAT_MODELS,
 )
 from ymir.rlhf import RLHFDatasetBuilder
+from ymir.triplets.text_to_triplets import extract_triplets
 
 # Initialize global variables
 app = FastAPI(title="Ymir AI Dataset Tools")
@@ -192,14 +194,42 @@ async def update_model(llm_key: str = Form(...), model: str = Form(...)):
     """Update the model for an LLM slot."""
     provider = llm_config[llm_key]["provider"]
     models = get_provider_models(provider)
+
+    response = None
     if model in models:
         llm_config[llm_key]["model"] = model
-        return {"status": "success"}
+        response = JSONResponse(content={"status": "success"})
+
+        # Add toast notification header
+        response.headers["HX-Trigger-After-Swap"] = json.dumps(
+            {
+                "showToast": {
+                    "message": f"Model updated to {model} for {llm_key}",
+                    "type": "success",
+                    "duration": 2000,
+                }
+            }
+        )
     else:
-        return {
-            "status": "error",
-            "message": f"Model {model} not available for provider {provider}",
-        }
+        response = JSONResponse(
+            content={
+                "status": "error",
+                "message": f"Model {model} not available for provider {provider}",
+            }
+        )
+
+        # Add error toast notification header
+        response.headers["HX-Trigger-After-Swap"] = json.dumps(
+            {
+                "showToast": {
+                    "message": f"Error: Model {model} not available for provider {provider}",
+                    "type": "error",
+                    "duration": 3000,
+                }
+            }
+        )
+
+    return response
 
 
 @app.post("/chat")
@@ -241,67 +271,157 @@ async def rate(rating: RatingRequest):
     # Similar to the submit_rating function in the original app
     # Save the rating to the RLHF dataset
     if not chat_history["llm_1"] or not chat_history["llm_2"]:
-        return {
-            "status": "error",
-            "message": "Both LLMs must have chat history before rating",
-        }
+        response = JSONResponse(
+            content={
+                "status": "error",
+                "message": "Both LLMs must have chat history before rating",
+            }
+        )
+
+        # Add error toast notification
+        response.headers["HX-Trigger-After-Swap"] = json.dumps(
+            {
+                "showToast": {
+                    "message": "Error: Both LLMs must have chat history before rating",
+                    "type": "error",
+                    "duration": 3000,
+                }
+            }
+        )
+        return response
 
     # Get the most recent query (should be the same for both)
     latest_user_message_index_1 = max(
-        [i for i, msg in enumerate(chat_history["llm_1"]) if msg["role"] == "user"]
-        or [-1]
+        [i for i, m in enumerate(chat_history["llm_1"]) if m["role"] == "user"],
+        default=-1,
     )
     latest_user_message_index_2 = max(
-        [i for i, msg in enumerate(chat_history["llm_2"]) if msg["role"] == "user"]
-        or [-1]
+        [i for i, m in enumerate(chat_history["llm_2"]) if m["role"] == "user"],
+        default=-1,
     )
 
     if latest_user_message_index_1 == -1 or latest_user_message_index_2 == -1:
-        return {"status": "error", "message": "No user messages found in chat history"}
+        response = JSONResponse(
+            content={
+                "status": "error",
+                "message": "Both LLMs must have at least one user message before rating",
+            }
+        )
 
-    query = chat_history["llm_1"][latest_user_message_index_1]["content"]
-    query2 = chat_history["llm_2"][latest_user_message_index_2]["content"]
+        # Add error toast notification
+        response.headers["HX-Trigger-After-Swap"] = json.dumps(
+            {
+                "showToast": {
+                    "message": "Error: Both LLMs must have at least one user message before rating",
+                    "type": "error",
+                    "duration": 3000,
+                }
+            }
+        )
+        return response
 
-    if query != query2:
-        logger.warning(f"Queries don't match: {query} vs {query2}")
+    # Save the rating
+    user_prompt_1 = chat_history["llm_1"][latest_user_message_index_1]["content"]
+    user_prompt_2 = chat_history["llm_2"][latest_user_message_index_2]["content"]
 
-    # Get the responses to the most recent query
-    response1_index = latest_user_message_index_1 + 1
-    response2_index = latest_user_message_index_2 + 1
+    if user_prompt_1 != user_prompt_2:
+        response = JSONResponse(
+            content={
+                "status": "error",
+                "message": "The most recent user messages for both LLMs must match",
+            }
+        )
 
-    if response1_index >= len(chat_history["llm_1"]) or response2_index >= len(
-        chat_history["llm_2"]
-    ):
-        return {"status": "error", "message": "Missing response from one or both LLMs"}
+        # Add error toast notification
+        response.headers["HX-Trigger-After-Swap"] = json.dumps(
+            {
+                "showToast": {
+                    "message": "Error: The most recent user messages for both LLMs must match",
+                    "type": "error",
+                    "duration": 3000,
+                }
+            }
+        )
+        return response
 
-    response1 = chat_history["llm_1"][response1_index]["content"]
-    response2 = chat_history["llm_2"][response2_index]["content"]
-
-    # Convert markdown reasoning back to the original format if needed
-    response1 = convert_markdown_to_reasoning(response1)
-    response2 = convert_markdown_to_reasoning(response2)
-
-    chosen_index = 0 if rating.chosen == "llm_1" else 1
-    rejected_index = 1 if rating.chosen == "llm_1" else 0
-
-    rlhf_builder.add_sample(
-        prompt=query,
-        chosen=response1 if chosen_index == 0 else response2,
-        rejected=response2 if rejected_index == 0 else response1,
-        chosen_model=f"{llm_config['llm_1']['provider']}/{llm_config['llm_1']['model']}"
-        if chosen_index == 0
-        else f"{llm_config['llm_2']['provider']}/{llm_config['llm_2']['model']}",
-        rejected_model=f"{llm_config['llm_2']['provider']}/{llm_config['llm_2']['model']}"
-        if rejected_index == 0
-        else f"{llm_config['llm_1']['provider']}/{llm_config['llm_1']['model']}",
-        notes=rating.notes,
+    # Get the most recent assistant response
+    latest_assistant_message_index_1 = max(
+        [
+            i
+            for i, m in enumerate(chat_history["llm_1"])
+            if m["role"] == "assistant" and i > latest_user_message_index_1
+        ],
+        default=-1,
+    )
+    latest_assistant_message_index_2 = max(
+        [
+            i
+            for i, m in enumerate(chat_history["llm_2"])
+            if m["role"] == "assistant" and i > latest_user_message_index_2
+        ],
+        default=-1,
     )
 
-    # Clear the chat history after saving the rating
+    if latest_assistant_message_index_1 == -1 or latest_assistant_message_index_2 == -1:
+        response = JSONResponse(
+            content={
+                "status": "error",
+                "message": "Both LLMs must have responded to the latest user message before rating",
+            }
+        )
+
+        # Add error toast notification
+        response.headers["HX-Trigger-After-Swap"] = json.dumps(
+            {
+                "showToast": {
+                    "message": "Error: Both LLMs must have responded to the latest user message before rating",
+                    "type": "error",
+                    "duration": 3000,
+                }
+            }
+        )
+        return response
+
+    # Now save the RLHF data
+    system_prompt = ""  # Default empty system prompt
+    user_prompt = user_prompt_1  # Verified to be the same as user_prompt_2
+    llm1_name = llm_config["llm_1"]["provider"] + " " + llm_config["llm_1"]["model"]
+    llm2_name = llm_config["llm_2"]["provider"] + " " + llm_config["llm_2"]["model"]
+    response1 = chat_history["llm_1"][latest_assistant_message_index_1]["content"]
+    response2 = chat_history["llm_2"][latest_assistant_message_index_2]["content"]
+    chosen_rating = rating.chosen  # "llm_1" or "llm_2"
+    notes = rating.notes
+
+    # Save the entry
+    rlhf_builder.save_rlhf_entry(
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        llm1_name=llm1_name,
+        llm2_name=llm2_name,
+        response1=response1,
+        response2=response2,
+        rating=chosen_rating.upper(),  # Convert to uppercase
+        notes=notes,
+    )
+
+    # Clear the chat history for both LLMs
     chat_history["llm_1"] = []
     chat_history["llm_2"] = []
 
-    return {"status": "success", "message": "Rating saved successfully"}
+    response = JSONResponse(content={"status": "success", "message": "Rating saved"})
+
+    # Add success toast notification
+    response.headers["HX-Trigger-After-Swap"] = json.dumps(
+        {
+            "showToast": {
+                "message": f"Rating saved: {chosen_rating.upper()} preferred",
+                "type": "success",
+                "duration": 2000,
+            }
+        }
+    )
+
+    return response
 
 
 @app.get("/rlhf_data")
@@ -324,9 +444,10 @@ async def get_rlhf_data(request: Request, format: str = "table", query: str = ""
 
     # Format the data for display
     formatted_data = []
-    for sample in data:
+    for i, sample in enumerate(data):
         formatted_data.append(
             {
+                "id": str(i),  # Add ID for each entry
                 "user_prompt": sample.prompt,
                 "llm1": sample.chosen_model,
                 "llm2": sample.rejected_model,
@@ -390,13 +511,95 @@ async def generate_queries(
 async def generate_responses(
     query: str = Form(...), provider: str = Form(...), model: str = Form(...)
 ):
-    """Generate positive and negative responses for a query"""
-    # This would use the selected LLM to generate responses
-    # For now, return sample responses
-    return {
-        "positive": "Here's a detailed explanation of the main features in Python 3.10: Structural pattern matching (match/case statements), better error messages with precise line indicators, parenthesized context managers, and typing improvements like Union operator using the pipe symbol (|). These features make Python code more readable and maintainable.",
-        "negative": "Python 3.10 has some new stuff. You can look it up online.",
-    }
+    """Generate positive and negative responses for a query using the selected LLM"""
+    try:
+        # Use the LLM to generate responses
+        llm_client = get_llm(provider, model)
+
+        # Generate a positive response
+        positive_prompt = f"Please provide a high-quality, detailed, and informative response to this query: {query}"
+        positive_response = llm_client.invoke(positive_prompt, [])
+
+        # Generate a negative response
+        negative_prompt = f"Please provide a brief, low-quality, uninformative response to this query: {query}"
+        negative_response = llm_client.invoke(negative_prompt, [])
+
+        return {
+            "positive": positive_response,
+            "negative": negative_response,
+        }
+    except Exception as e:
+        logger.error(f"Error generating responses: {e}")
+        return {
+            "error": f"Failed to generate responses: {str(e)}",
+            "positive": "",
+            "negative": "",
+        }
+
+
+@app.post("/extract_triplets")
+async def process_triplets(
+    text: str = Form(...),
+    provider: str = Form(...),
+    model: str = Form(...),
+    entity_types: str = Form("organization,person,geo,event,category"),
+):
+    """Extract knowledge graph triplets from text using the selected LLM"""
+    try:
+        # Split entity types string into a list
+        entity_types_list = [t.strip() for t in entity_types.split(",")]
+
+        # Use our extract_triplets function with the specified provider and model
+        result = extract_triplets(
+            text=text,
+            provider=provider,
+            model_name=model,
+            entity_types=entity_types_list,
+        )
+
+        # Add the extracted triplets to our dataset
+        for triplet in result["triplets"]:
+            triplet_dataset.append(
+                {
+                    "id": len(triplet_dataset) + 1,
+                    "query": f"What is the relationship between {triplet.subject} and {triplet.object}?",
+                    "positive": f"{triplet.subject} {triplet.predicate} {triplet.object}. {triplet.description}",
+                    "negative": f"{triplet.subject} and {triplet.object} may be related.",
+                    "created_at": "2023-06-01T12:00:00Z",  # This would be the current timestamp in production
+                    "confidence": triplet.confidence,
+                }
+            )
+
+        # Format the triplets for display
+        formatted_triplets = []
+        for t in result["triplets"]:
+            formatted_triplets.append(
+                {
+                    "subject": t.subject,
+                    "predicate": t.predicate,
+                    "object": t.object,
+                    "description": t.description,
+                    "confidence": t.confidence,
+                }
+            )
+
+        # Return HTML for displaying the results
+        return templates.TemplateResponse(
+            "triplet_extraction_results.html",
+            {
+                "triplets": formatted_triplets,
+                "count": len(formatted_triplets),
+                "entities": len(result["entities"]),
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error extracting triplets: {e}")
+        return f"""
+        <div class="p-4 bg-red-100 text-red-700 rounded-md">
+            <h3 class="font-bold">Error</h3>
+            <p>{str(e)}</p>
+        </div>
+        """
 
 
 @app.post("/add_manual_triplet")
@@ -479,6 +682,70 @@ async def import_dataset():
         "status": "success",
         "message": "Dataset import functionality will be implemented soon",
     }
+
+
+@app.get("/expand_text")
+async def expand_text(request: Request, id: str, field: str):
+    """Return the full text of a field in an RLHF dataset entry."""
+    entry = rlhf_builder.get_entry_by_id(id)
+    if not entry:
+        return HTMLResponse(f"Entry with ID {id} not found.")
+
+    if field not in entry:
+        return HTMLResponse(f"Field {field} not found in entry.")
+
+    full_text = entry[field]
+
+    # Return both the expanded text and a button to collapse it
+    return HTMLResponse(f"""
+        <div>{full_text}</div>
+        <button class="text-blue-600 text-sm mt-2"
+                hx-get="/collapse_text?id={id}&field={field}"
+                hx-target="#{field}-{id}"
+                hx-swap="innerHTML">
+            Show less
+        </button>
+    """)
+
+
+@app.get("/collapse_text")
+async def collapse_text(request: Request, id: str, field: str):
+    """Return the truncated text of a field in an RLHF dataset entry."""
+    entry = rlhf_builder.get_entry_by_id(id)
+    if not entry:
+        return HTMLResponse(f"Entry with ID {id} not found.")
+
+    if field not in entry:
+        return HTMLResponse(f"Field {field} not found in entry.")
+
+    full_text = entry[field]
+    truncated = full_text[:150] + "..." if len(full_text) > 150 else full_text
+
+    # Return both the truncated text and a button to expand it
+    return HTMLResponse(f"""
+        <div>{truncated}</div>
+        <button class="text-blue-600 text-sm mt-2"
+                hx-get="/expand_text?id={id}&field={field}"
+                hx-target="#{field}-{id}"
+                hx-swap="innerHTML"
+                hx-indicator="#indicator-{id}">
+            Show more
+        </button>
+        <div id="indicator-{id}" class="htmx-indicator">
+            <div class="spinner"></div>
+        </div>
+    """)
+
+
+@app.get("/provider_models")
+async def provider_models(provider: str):
+    """Get the list of models available for a specific provider"""
+    try:
+        models = get_provider_models(provider)
+        return {"models": models}
+    except Exception as e:
+        logger.error(f"Error getting models for provider {provider}: {e}")
+        return {"error": str(e), "models": []}
 
 
 @app.on_event("startup")

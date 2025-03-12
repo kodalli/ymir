@@ -118,26 +118,20 @@ class TripletRequest(BaseModel):
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
+    """Render the main layout template only (content will be loaded via HTMX)"""
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
-            "providers": get_supported_providers(),
-            "models": {
-                "llm_1": get_provider_models(llm_config["llm_1"]["provider"]),
-                "llm_2": get_provider_models(llm_config["llm_2"]["provider"]),
-            },
-            "chat_history_1": chat_history["llm_1"],
-            "chat_history_2": chat_history["llm_2"],
         },
     )
 
 
 @app.get("/rlhf", response_class=HTMLResponse)
 async def rlhf_page(request: Request):
-    """Render the RLHF tool page (default content of index.html)"""
+    """Render the RLHF tool page content only (not the entire index.html)"""
     return templates.TemplateResponse(
-        "index.html",
+        "rlhf_content.html",
         {
             "request": request,
             "providers": get_supported_providers(),

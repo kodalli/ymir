@@ -47,7 +47,7 @@ jobs:
           git fetch --tags
 
           # Run semantic release to determine new version
-          semantic-release version --prerelease --prerelease-token alpha --no-changelog
+          semantic-release version --prerelease --prerelease-token alpha
 
           # Capture the new version from pyproject.toml
           NEW_VERSION=$(grep -Po '(?<=version = ")[^"]*' pyproject.toml)
@@ -65,11 +65,29 @@ jobs:
               echo "# Release v${NEW_VERSION}" > RELEASE_NOTES.md
               echo "Changes since ${PREV_TAG}:" >> RELEASE_NOTES.md
               echo "" >> RELEASE_NOTES.md
-              git log --pretty=format:"* %s" ${PREV_TAG}..HEAD >> RELEASE_NOTES.md
+
+              # Features
+              echo "## Features" >> RELEASE_NOTES.md
+              git log ${PREV_TAG}..HEAD --grep="^feat" --pretty=format:"* %s" >> RELEASE_NOTES.md
+              echo "" >> RELEASE_NOTES.md
+
+              # Bug Fixes
+              echo "## Bug Fixes" >> RELEASE_NOTES.md
+              git log ${PREV_TAG}..HEAD --grep="^fix" --pretty=format:"* %s" >> RELEASE_NOTES.md
+              echo "" >> RELEASE_NOTES.md
+
+              # Refactoring
+              echo "## Refactoring" >> RELEASE_NOTES.md
+              git log ${PREV_TAG}..HEAD --grep="^refactor" --pretty=format:"* %s" >> RELEASE_NOTES.md
+              echo "" >> RELEASE_NOTES.md
+
+              # Other Changes
+              echo "## Other Changes" >> RELEASE_NOTES.md
+              git log ${PREV_TAG}..HEAD --grep="^feat\\|^fix\\|^refactor" --invert-grep --pretty=format:"* %s" >> RELEASE_NOTES.md
           fi
 
           # Publish the release
-          semantic-release publish --no-changelog
+          semantic-release publish
 
       - name: Create GitHub Release
         if: steps.semantic_release.outputs.new_version != ''

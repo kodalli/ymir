@@ -56,8 +56,8 @@ jobs:
           # Add v prefix for GitHub release
           echo "new_version=v${NEW_VERSION}" >> $GITHUB_OUTPUT
 
-          # Generate release notes using semantic-release (store them in a file)
-          semantic-release changelog
+          # Generate separate release notes file for GitHub Release
+          semantic-release changelog --unreleased-only > RELEASE_NOTES.md
 
           # Publish the release
           semantic-release publish
@@ -68,5 +68,5 @@ jobs:
         with:
           tag: ${{ steps.semantic_release.outputs.new_version }}
           name: "Release ${{ steps.semantic_release.outputs.new_version }}"
-          bodyFile: "CHANGELOG.md"
+          bodyFile: "RELEASE_NOTES.md"
           token: ${{ secrets.GITHUB_TOKEN }}

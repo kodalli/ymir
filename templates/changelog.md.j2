@@ -1,7 +1,8 @@
 # Changelog
 
-{% for version, release in releases.items() %}
-## {{ version }} ({{ release.tagged_date.strftime('%Y-%m-%d') }})
+{% if context.history %}
+{% for version, release in context.history.items() %}
+## {{ version }} {% if release.tagged_date %}({{ release.tagged_date.strftime('%Y-%m-%d') }}){% endif %}
 
 {% for type, commits in release.elements_by_type.items() %}
 ### {{ type }}
@@ -11,3 +12,16 @@
 {% endfor %}
 {% endfor %}
 {% endfor %}
+{% endif %}
+
+{% if context.unreleased %}
+## Unreleased
+
+{% for type, commits in context.unreleased.items() %}
+### {{ type }}
+
+{% for commit in commits %}
+* {{ commit.message.rstrip() }} ([{{ commit.short_hash }}]({{ commit.hexsha | commit_hash_url }}))
+{% endfor %}
+{% endfor %}
+{% endif %}

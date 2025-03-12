@@ -5,7 +5,7 @@ Usage:
 
     button_text - The text to display on the button (default: "Button")
     button_type - The button type: submit or button (default: "button")
-    button_color - The button color: red, blue, green, or gray (default: "red")
+    button_color - The button color: ymir, blue, green, or gray (default: "ymir")
     button_icon - Whether to show an icon: true or false
     button_icon_position - Icon position: left or right (default: "left")
     button_loading_indicator - Whether to show a loading spinner: true or false
@@ -19,7 +19,8 @@ Usage:
 -->
 
 {% set button_colors = {
-'red': 'bg-red-600 hover:bg-red-700',
+'ymir': 'bg-ymir-500 hover:bg-ymir-600',
+'red': 'bg-ymir-500 hover:bg-ymir-600',
 'blue': 'bg-blue-600 hover:bg-blue-700',
 'green': 'bg-green-600 hover:bg-green-700',
 'gray': 'bg-gray-600 hover:bg-gray-700'
@@ -35,7 +36,7 @@ button_icon and button_icon_position|default('left') == "left") %}
 {% set has_right_icon = button_icon is defined and button_icon and button_icon_position|default('left') == "right" %}
 
 <button type="{{ button_type|default('button') }}" {% if button_id is defined %}id="{{ button_id }}" {% endif %}
-    class="{{ button_colors[button_color|default('red')] }} text-white font-medium {{ padding }} rounded-md transition-colors duration-200 flex items-center shadow-sm {{ button_additional_classes|default('') }}"
+    class="{{ button_colors[button_color|default('ymir')] }} text-white font-medium {{ padding }} rounded-md transition-colors duration-200 flex items-center shadow-sm {{ button_additional_classes|default('') }}"
     {{ button_htmx_attrs|default('') }}>
 
     <!-- Left icon container with fixed width -->

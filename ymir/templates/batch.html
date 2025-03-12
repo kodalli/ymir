@@ -9,7 +9,7 @@
             hx-indicator="#submit-indicator">
             <!-- CSV Upload Section -->
             <div class="mb-6">
-                <h2 class="text-xl font-semibold mb-4 flex items-center text-red-700">
+                <h2 class="text-xl font-semibold mb-4 flex items-center text-ymir-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
                         fill="currentColor">
                         <path fill-rule="evenodd"
@@ -31,7 +31,7 @@
                             </svg>
                             <div class="flex justify-center text-sm text-gray-600">
                                 <label for="csv-file"
-                                    class="relative cursor-pointer bg-white rounded-md font-medium text-red-600 hover:text-red-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-red-500">
+                                    class="relative cursor-pointer bg-white rounded-md font-medium text-ymir-600 hover:text-ymir-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-ymir-500">
                                     <span>Upload a CSV file</span>
                                     <input id="csv-file" name="csv_file" type="file" class="sr-only" accept=".csv"
                                         onchange="parseCSV()" required>
@@ -62,7 +62,7 @@
 
             <!-- Prompt Configuration -->
             <div class="mb-6">
-                <h2 class="text-xl font-semibold mb-4 flex items-center text-red-700">
+                <h2 class="text-xl font-semibold mb-4 flex items-center text-ymir-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
                         fill="currentColor">
                         <path fill-rule="evenodd"
@@ -75,7 +75,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1" id="system-prompt-label">System
                         Prompt</label>
                     <textarea id="system-prompt" name="system_prompt" rows="4"
-                        class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
+                        class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ymir-500 focus:border-ymir-500"
                         placeholder="Enter system prompt with format placeholders like {column_name}"
                         hx-on:input="generatePreview()" required></textarea>
                     <p class="text-sm text-gray-500 mt-1">Use {column_name} to reference CSV columns (e.g., {question})
@@ -93,7 +93,7 @@
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1">User Prompt</label>
                     <textarea id="user-prompt" name="user_prompt" rows="4"
-                        class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
+                        class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ymir-500 focus:border-ymir-500"
                         placeholder="Enter user prompt with format placeholders like {column_name}" required
                         hx-on:input="generatePreview()"></textarea>
                     <p class="text-sm text-gray-500 mt-1">Use {column_name} to reference CSV columns (e.g., {question})
@@ -103,7 +103,7 @@
 
             <!-- Model Configuration -->
             <div class="mb-6">
-                <h2 class="text-xl font-semibold mb-4 flex items-center text-red-700">
+                <h2 class="text-xl font-semibold mb-4 flex items-center text-ymir-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
                         fill="currentColor">
                         <path fill-rule="evenodd"
@@ -116,7 +116,7 @@
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Model</label>
                         <select id="model" name="model"
-                            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500">
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ymir-500 focus:border-ymir-500">
                             {% for model in openai_models %}
                             <option value="{{ model }}">{{ model }}</option>
                             {% endfor %}
@@ -126,12 +126,12 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Max Tokens</label>
                         <input type="number" id="max-tokens" name="max_tokens" value="1000" min="50" max="64000"
                             step="50"
-                            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500">
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ymir-500 focus:border-ymir-500">
                     </div>
                     <div class="mb-4" id="reasoning-effort-container">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Reasoning Effort</label>
                         <select id="reasoning-effort" name="reasoning_effort"
-                            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500">
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ymir-500 focus:border-ymir-500">
                             <option value="low">Low</option>
                             <option value="medium" selected>Medium</option>
                             <option value="high">High</option>
@@ -149,7 +149,7 @@
 
             <!-- Prompt Preview -->
             <div class="mb-6">
-                <h2 class="text-xl font-semibold mb-4 flex items-center text-red-700">
+                <h2 class="text-xl font-semibold mb-4 flex items-center text-ymir-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
                         fill="currentColor">
                         <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
@@ -397,11 +397,11 @@
         });
 
         function highlight() {
-            dropArea.classList.add('border-red-300', 'bg-red-50');
+            dropArea.classList.add('border-ymir-300', 'bg-ymir-50');
         }
 
         function unhighlight() {
-            dropArea.classList.remove('border-red-300', 'bg-red-50');
+            dropArea.classList.remove('border-ymir-300', 'bg-ymir-50');
         }
 
         // Handle dropped files

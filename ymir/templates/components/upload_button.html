@@ -5,7 +5,7 @@ Usage:
 
     button_text - The text to display on the button (default: "Upload File")
     button_indicator_id - ID for the loading indicator
-    button_color - The button color: red, blue, green, or gray (default: "red")
+    button_color - The button color: ymir, blue, green, or gray (default: "ymir")
     button_additional_classes - Additional CSS classes
     button_id - ID for the button element
 
@@ -14,14 +14,15 @@ Usage:
 -->
 
 {% set button_colors = {
-'red': 'bg-red-600 hover:bg-red-700',
+'ymir': 'bg-ymir-500 hover:bg-ymir-600',
+'red': 'bg-ymir-500 hover:bg-ymir-600',
 'blue': 'bg-blue-600 hover:bg-blue-700',
 'green': 'bg-green-600 hover:bg-green-700',
 'gray': 'bg-gray-600 hover:bg-gray-700'
 } %}
 
 <button type="submit" {% if button_id is defined %}id="{{ button_id }}" {% endif %}
-    class="{{ button_colors[button_color|default('red')] }} text-white font-medium py-2 px-5 rounded-md transition-colors duration-200 flex items-center shadow-sm {{ button_additional_classes|default('') }}">
+    class="{{ button_colors[button_color|default('ymir')] }} text-white font-medium py-2 px-5 rounded-md transition-colors duration-200 flex items-center shadow-sm {{ button_additional_classes|default('') }}">
 
     <!-- Left icon containers with fixed width -->
     <div class="w-12 flex-shrink-0 flex items-center">

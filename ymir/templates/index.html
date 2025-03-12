@@ -12,6 +12,8 @@
     <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
     <!-- TailwindCSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind config with custom ymir color palette -->
+    <script src="/static/js/tailwind-config.js"></script>
     <!-- Heroicons -->
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
@@ -104,8 +106,8 @@
 
         /* Active nav item styling */
         .nav-item.active {
-            border-bottom: 2px solid #dc2626;
-            color: #dc2626;
+            border-bottom: 2px solid #e93b52;
+            color: #e93b52;
         }
 
         /* Custom scrollbar */
@@ -144,7 +146,7 @@
         .hover-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border-color: rgba(79, 70, 229, 0.3);
+            border-color: rgba(233, 59, 82, 0.3);
             background-color: rgba(249, 250, 251, 0.8);
         }
 
@@ -155,7 +157,7 @@
             top: 0;
             width: 4px;
             height: 100%;
-            background-color: #dc2626;
+            background-color: #e93b52;
             transform: translateX(-100%);
             transition: transform 0.3s ease;
         }
@@ -173,36 +175,36 @@
             <div class="flex justify-between h-16">
                 <div class="flex">
                     <div class="flex-shrink-0 flex items-center">
-                        <span class="text-red-600 font-bold text-xl">YMIR</span>
+                        <span class="text-ymir-500 font-bold text-xl">YMIR</span>
                     </div>
                     <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
                         <!-- Current: "border-indigo-500 text-gray-900", Default: "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700" -->
                         <a href="#"
-                            class="nav-item active border-transparent text-gray-900 hover:text-gray-700 inline-flex items-center px-1 pt-1 text-sm font-medium"
+                            class="nav-item active border-transparent text-gray-900 hover:text-ymir-500 inline-flex items-center px-1 pt-1 text-sm font-medium"
                             hx-get="/rlhf" hx-target="#main-content" hx-swap="innerHTML"
                             _="on click remove .active from .nav-item then add .active to me">
                             RLHF Dataset Builder
                         </a>
                         <a href="#"
-                            class="nav-item border-transparent text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 text-sm font-medium"
+                            class="nav-item border-transparent text-gray-500 hover:text-ymir-500 inline-flex items-center px-1 pt-1 text-sm font-medium"
                             hx-get="/triplet" hx-target="#main-content" hx-swap="innerHTML"
                             _="on click remove .active from .nav-item then add .active to me">
                             Triplet Generation
                         </a>
                         <a href="#"
-                            class="nav-item border-transparent text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 text-sm font-medium"
+                            class="nav-item border-transparent text-gray-500 hover:text-ymir-500 inline-flex items-center px-1 pt-1 text-sm font-medium"
                             hx-get="/batch" hx-target="#main-content" hx-swap="innerHTML"
                             _="on click remove .active from .nav-item then add .active to me">
                             Batch Dataset Builder
                         </a>
                         <a href="#"
-                            class="nav-item border-transparent text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 text-sm font-medium"
+                            class="nav-item border-transparent text-gray-500 hover:text-ymir-500 inline-flex items-center px-1 pt-1 text-sm font-medium"
                             hx-get="/document" hx-target="#main-content" hx-swap="innerHTML"
                             _="on click remove .active from .nav-item then add .active to me">
                             Document Processor
                         </a>
                         <a href="#"
-                            class="nav-item border-transparent text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 text-sm font-medium"
+                            class="nav-item border-transparent text-gray-500 hover:text-ymir-500 inline-flex items-center px-1 pt-1 text-sm font-medium"
                             hx-get="/datasets" hx-target="#main-content" hx-swap="innerHTML"
                             _="on click remove .active from .nav-item then add .active to me">
                             Datasets
@@ -212,7 +214,7 @@
                 <div class="hidden sm:ml-6 sm:flex sm:items-center">
                     <!-- Theme Toggle Button -->
                     <button type="button" onclick="toggleTheme()"
-                        class="theme-toggle bg-white p-1 mr-2 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        class="theme-toggle bg-white p-1 mr-2 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ymir-500">
                         <span class="sr-only">Toggle theme</span>
                         <span id="theme-icon">
                             <!-- Icon will be set by JS -->
@@ -220,7 +222,7 @@
                     </button>
 
                     <button type="button"
-                        class="bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        class="bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ymir-500">
                         <span class="sr-only">View settings</span>
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
@@ -235,7 +237,7 @@
                 <!-- Mobile menu button -->
                 <div class="-mr-2 flex items-center sm:hidden">
                     <button type="button"
-                        class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-red-500"
+                        class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-ymir-500"
                         aria-expanded="false" x-data="{ open: false }" @click="open = !open">
                         <span class="sr-only">Open main menu</span>
                         <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
@@ -257,31 +259,31 @@
         <div class="sm:hidden" x-data="{ open: false }" x-show="open" style="display: none;">
             <div class="pt-2 pb-3 space-y-1">
                 <a href="#"
-                    class="bg-red-50 border-red-500 text-red-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
+                    class="bg-ymir-50 border-ymir-500 text-ymir-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
                     hx-get="/rlhf" hx-target="#main-content" hx-swap="innerHTML"
                     _="on click remove .active from .nav-item then add .active to me">
                     RLHF Dataset Builder
                 </a>
                 <a href="#"
-                    class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
+                    class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-ymir-500 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
                     hx-get="/triplet" hx-target="#main-content" hx-swap="innerHTML"
                     _="on click remove .active from .nav-item then add .active to me">
                     Triplet Generation
                 </a>
                 <a href="#"
-                    class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
+                    class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-ymir-500 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
                     hx-get="/batch" hx-target="#main-content" hx-swap="innerHTML"
                     _="on click remove .active from .nav-item then add .active to me">
                     Batch Dataset Builder
                 </a>
                 <a href="#"
-                    class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
+                    class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-ymir-500 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
                     hx-get="/document" hx-target="#main-content" hx-swap="innerHTML"
                     _="on click remove .active from .nav-item then add .active to me">
                     Document Processor
                 </a>
                 <a href="#"
-                    class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
+                    class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-ymir-500 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
                     hx-get="/datasets" hx-target="#main-content" hx-swap="innerHTML"
                     _="on click remove .active from .nav-item then add .active to me">
                     Datasets
@@ -303,7 +305,7 @@
                     <p class="text-gray-600 text-sm">© 2025 Ymir - AI Dataset Tools</p>
                 </div>
                 <div class="flex space-x-4">
-                    <a href="#" class="text-gray-500 hover:text-red-600">
+                    <a href="#" class="text-gray-500 hover:text-ymir-500">
                         <span class="sr-only">GitHub</span>
                         <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
                             <path fill-rule="evenodd"
@@ -311,7 +313,7 @@
                                 clip-rule="evenodd" />
                         </svg>
                     </a>
-                    <a href="#" class="text-gray-500 hover:text-red-600">
+                    <a href="#" class="text-gray-500 hover:text-ymir-500">
                         <span class="sr-only">Documentation</span>
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">

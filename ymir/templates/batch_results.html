@@ -42,7 +42,7 @@
         <div class="mb-6">
             <h3 class="text-md font-semibold mb-3 text-gray-700">Progress</h3>
             <div class="bg-gray-200 rounded-full h-4 mb-2 overflow-hidden">
-                <div id="progress-bar" class="bg-red-600 h-4 rounded-full" style="width: 0%"></div>
+                <div id="progress-bar" class="bg-ymir-600 h-4 rounded-full" style="width: 0%"></div>
             </div>
             <p class="text-sm text-gray-600 text-right" id="progress-text">0%</p>
         </div>
@@ -62,7 +62,7 @@
 
     <div class="flex flex-col sm:flex-row justify-between space-y-2 sm:space-y-0 sm:space-x-2">
         <button
-            class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-md transition-colors duration-200 shadow-md"
+            class="bg-ymir-600 hover:bg-ymir-700 text-white font-bold py-3 px-6 rounded-md transition-colors duration-200 shadow-md"
             hx-get="/batch" hx-target="#main-content" hx-swap="innerHTML">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd"
@@ -183,7 +183,7 @@
                 return "bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium";
             case "failed":
             case "expired":
-                return "bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium";
+                return "bg-ymir-100 text-ymir-800 px-3 py-1 rounded-full text-sm font-medium";
             case "cancelling":
             case "cancelled":
                 return "bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium";

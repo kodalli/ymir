@@ -8,7 +8,7 @@
         class="bg-white rounded-lg shadow-md p-6 border border-gray-100 tool-card hover-card transition duration-300 ease-in-out">
         <!-- PDF Upload Section -->
         <div class="mb-6">
-            <h2 class="text-xl font-semibold mb-4 flex items-center text-red-700">
+            <h2 class="text-xl font-semibold mb-4 flex items-center text-ymir-700">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd"
                         d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
@@ -30,7 +30,7 @@
                             </svg>
                             <div class="flex justify-center text-sm text-gray-600">
                                 <label for="pdf-file"
-                                    class="relative cursor-pointer bg-white rounded-md font-medium text-red-600 hover:text-red-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-red-500">
+                                    class="relative cursor-pointer bg-white rounded-md font-medium text-ymir-600 hover:text-ymir-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-ymir-500">
                                     <span>Upload a PDF file</span>
                                     <input id="pdf-file" name="pdf_file" type="file" class="sr-only" accept=".pdf"
                                         required>
@@ -60,7 +60,7 @@
 
         <!-- TOC Detection Section (shown after PDF upload) -->
         <div id="toc-detection" class="hidden mb-6">
-            <h2 class="text-xl font-semibold mb-4 flex items-center text-red-700">
+            <h2 class="text-xl font-semibold mb-4 flex items-center text-ymir-700">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
                     <path fill-rule="evenodd"
@@ -87,13 +87,13 @@
                         <label for="toc-start-page" class="block text-sm font-medium text-gray-700 mb-1">Start
                             Page</label>
                         <input type="number" id="toc-start-page" name="toc_start_page" min="1"
-                            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ymir-500 focus:border-ymir-500"
                             placeholder="1">
                     </div>
                     <div class="w-1/4">
                         <label for="toc-end-page" class="block text-sm font-medium text-gray-700 mb-1">End Page</label>
                         <input type="number" id="toc-end-page" name="toc_end_page" min="1"
-                            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ymir-500 focus:border-ymir-500"
                             placeholder="3">
                     </div>
                 </div>
@@ -106,7 +106,7 @@
 
         <!-- PDF Processing Section (shown after TOC detection) -->
         <div id="pdf-processing" class="hidden mb-6">
-            <h2 class="text-xl font-semibold mb-4 flex items-center text-red-700">
+            <h2 class="text-xl font-semibold mb-4 flex items-center text-ymir-700">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd"
                         d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15 13.586V12a1 1 0 011-1z"
@@ -118,21 +118,21 @@
                 <div class="flex flex-col space-y-4">
                     <div class="flex items-center">
                         <input type="checkbox" id="split-chapters" name="split_chapters"
-                            class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                            class="h-4 w-4 text-ymir-600 focus:ring-ymir-500 border-gray-300 rounded">
                         <label for="split-chapters" class="ml-2 block text-sm text-gray-700">Split PDF into individual
                             chapter files</label>
                     </div>
 
                     <div class="flex items-center">
                         <input type="checkbox" id="extract-text" name="extract_text"
-                            class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded" checked>
+                            class="h-4 w-4 text-ymir-600 focus:ring-ymir-500 border-gray-300 rounded" checked>
                         <label for="extract-text" class="ml-2 block text-sm text-gray-700">Extract text content from
                             chapters</label>
                     </div>
 
                     <div class="flex items-center">
                         <input type="checkbox" id="create-csv" name="create_csv"
-                            class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded" checked>
+                            class="h-4 w-4 text-ymir-600 focus:ring-ymir-500 border-gray-300 rounded" checked>
                         <label for="create-csv" class="ml-2 block text-sm text-gray-700">Generate CSV dataset for Batch
                             Processing</label>
                     </div>
@@ -208,11 +208,11 @@
             });
 
             function highlight() {
-                dropArea.classList.add('border-red-300', 'bg-red-50');
+                dropArea.classList.add('border-ymir-300', 'bg-ymir-50');
             }
 
             function unhighlight() {
-                dropArea.classList.remove('border-red-300', 'bg-red-50');
+                dropArea.classList.remove('border-ymir-300', 'bg-ymir-50');
             }
 
             // Handle dropped files

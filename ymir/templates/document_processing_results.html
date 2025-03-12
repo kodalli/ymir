@@ -1,0 +1,92 @@
+<div class="bg-green-50 border-l-4 border-green-500 p-4 mb-6">
+    <div class="flex">
+        <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                fill="currentColor">
+                <path fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clip-rule="evenodd" />
+            </svg>
+        </div>
+        <div class="ml-3">
+            <h3 class="text-sm font-medium text-green-800">PDF Processing Complete</h3>
+            <div class="mt-2 text-sm text-green-700">
+                <p>Successfully processed the document.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-lg shadow-md p-6 border border-gray-100 mb-6">
+    <h3 class="text-lg font-semibold mb-4">Processing Results</h3>
+
+    {% if results.chapters_processed > 0 %}
+    <div class="mb-4">
+        <p class="text-gray-700"><strong>Chapters Processed:</strong> {{ results.chapters_processed }}</p>
+    </div>
+    {% endif %}
+
+    {% if results.csv_path %}
+    <div class="mb-4">
+        <p class="text-gray-700"><strong>CSV Dataset:</strong> <span class="text-sm text-gray-500">{{ results.csv_path
+                }}</span></p>
+        <div class="mt-2">
+            <a href="/download?file={{ results.csv_path }}"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                        clip-rule="evenodd" />
+                </svg>
+                Download CSV
+            </a>
+            <a href="/batch" hx-get="/batch" hx-target="#main-content" hx-swap="innerHTML"
+                class="ml-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z"
+                        clip-rule="evenodd" />
+                </svg>
+                Use in Batch Builder
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if results.chapter_pdfs %}
+    <div class="mt-6">
+        <h4 class="text-md font-medium mb-2">Individual Chapter PDFs:</h4>
+        <div class="bg-gray-50 p-4 rounded-md max-h-60 overflow-y-auto">
+            <ul class="space-y-2">
+                {% for pdf_path in results.chapter_pdfs %}
+                <li class="text-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-700">{{ pdf_path.split('/')[-1] }}</span>
+                        <a href="/download?file={{ pdf_path }}" class="text-blue-600 hover:text-blue-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="flex space-x-4">
+    <a href="/document" hx-get="/document" hx-target="#main-content" hx-swap="innerHTML"
+        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+                d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+                clip-rule="evenodd" />
+        </svg>
+        Process Another Document
+    </a>
+</div>

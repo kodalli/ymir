@@ -171,6 +171,12 @@
                         </a>
                         <a href="#"
                             class="nav-item border-transparent text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 text-sm font-medium"
+                            hx-get="/document" hx-target="#main-content" hx-swap="innerHTML"
+                            _="on click remove .active from .nav-item then add .active to me">
+                            Document Processor
+                        </a>
+                        <a href="#"
+                            class="nav-item border-transparent text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 text-sm font-medium"
                             hx-get="/datasets" hx-target="#main-content" hx-swap="innerHTML"
                             _="on click remove .active from .nav-item then add .active to me">
                             Datasets
@@ -241,6 +247,12 @@
                     hx-get="/batch" hx-target="#main-content" hx-swap="innerHTML"
                     _="on click remove .active from .nav-item then add .active to me">
                     Batch Dataset Builder
+                </a>
+                <a href="#"
+                    class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
+                    hx-get="/document" hx-target="#main-content" hx-swap="innerHTML"
+                    _="on click remove .active from .nav-item then add .active to me">
+                    Document Processor
                 </a>
                 <a href="#"
                     class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"

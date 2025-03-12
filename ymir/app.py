@@ -12,6 +12,8 @@ import os
 import tempfile
 import time
 from openai import OpenAI
+import csv
+from pathlib import Path
 
 from ymir.llm import (
     get_llm,
@@ -22,6 +24,7 @@ from ymir.llm import (
 from ymir.llm.openai_llm import OpenAIBatchProcessor
 from ymir.rlhf import RLHFDatasetBuilder
 from ymir.triplets.text_to_triplets import extract_triplets
+from ymir.prompt.pdf import extract_chapter_starts, split_pdf_by_chapters
 import pandas as pd
 
 # Initialize global variables
@@ -905,6 +908,243 @@ async def download_file(request: Request, file: str):
     except Exception as e:
         logger.error(f"Error downloading file: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/document", response_class=HTMLResponse)
+async def document_page(request: Request):
+    """Render the Document Processor page"""
+    return templates.TemplateResponse(
+        "document_processor.html",
+        {
+            "request": request,
+        },
+    )
+
+
+@app.post("/upload_pdf")
+async def upload_pdf(request: Request, pdf_file: UploadFile = File(...)):
+    """Upload a PDF file and return basic information about it"""
+    try:
+        # Create data directory if it doesn't exist
+        data_dir = Path("ymir/data/documents")
+        data_dir.mkdir(parents=True, exist_ok=True)
+
+        # Save the uploaded file
+        timestamp = int(time.time())
+        filename = f"{timestamp}_{pdf_file.filename}"
+        file_path = data_dir / filename
+
+        with open(file_path, "wb") as f:
+            content = await pdf_file.read()
+            f.write(content)
+
+        # Get basic PDF info
+        from pypdf import PdfReader
+
+        reader = PdfReader(file_path)
+        num_pages = len(reader.pages)
+
+        # Return PDF info
+        return templates.TemplateResponse(
+            "document_pdf_info.html",
+            {
+                "request": request,
+                "filename": pdf_file.filename,
+                "file_path": str(file_path),
+                "num_pages": num_pages,
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error uploading PDF: {e}")
+        return templates.TemplateResponse(
+            "document_error.html",
+            {
+                "request": request,
+                "error_message": f"Error uploading PDF: {str(e)}",
+            },
+        )
+
+
+@app.post("/detect_toc")
+async def detect_toc(
+    request: Request,
+    pdf_path: str = Form(...),
+    toc_start_page: Optional[int] = Form(None),
+    toc_end_page: Optional[int] = Form(None),
+):
+    """Detect table of contents in a PDF file"""
+    try:
+        # Check if manual TOC range was provided
+        toc_page_range = None
+        if toc_start_page is not None and toc_end_page is not None:
+            toc_page_range = (toc_start_page, toc_end_page)
+
+        # Extract chapter starts
+        chapter_starts = extract_chapter_starts(pdf_path, toc_page_range)
+
+        # Convert to 1-indexed for display
+        chapter_pages = [page + 1 for page in chapter_starts]
+
+        # Create chapter info
+        chapters = []
+        for i, page in enumerate(chapter_pages):
+            next_page = (
+                chapter_pages[i + 1] - 1 if i < len(chapter_pages) - 1 else "end"
+            )
+            chapters.append(
+                {
+                    "number": i + 1,
+                    "start_page": page,
+                    "end_page": next_page,
+                }
+            )
+
+        # Return chapter info
+        return templates.TemplateResponse(
+            "document_toc_results.html",
+            {
+                "request": request,
+                "chapters": chapters,
+                "chapter_starts": ",".join(map(str, chapter_starts)),
+                "pdf_path": pdf_path,
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error detecting TOC: {e}")
+        return templates.TemplateResponse(
+            "document_error.html",
+            {
+                "request": request,
+                "error_message": f"Error detecting table of contents: {str(e)}",
+            },
+        )
+
+
+@app.post("/process_pdf")
+async def process_pdf(
+    request: Request,
+    pdf_path: str = Form(...),
+    chapter_starts: str = Form(...),
+    split_chapters: bool = Form(False),
+    extract_text: bool = Form(True),
+    create_csv: bool = Form(True),
+    toc_start_page: Optional[int] = Form(None),
+    toc_end_page: Optional[int] = Form(None),
+):
+    """Process a PDF file based on detected chapters"""
+    try:
+        # Parse chapter starts
+        chapter_starts_list = [int(page) for page in chapter_starts.split(",")]
+
+        # Create output directory
+        timestamp = int(time.time())
+        output_dir = Path("ymir/data/documents") / f"output_{timestamp}"
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Base filename for outputs
+        pdf_filename = os.path.basename(pdf_path)
+        base_name = os.path.splitext(pdf_filename)[0]
+        output_prefix = str(output_dir / base_name)
+
+        results = {
+            "chapters_processed": 0,
+            "csv_path": None,
+            "chapter_pdfs": [],
+        }
+
+        # Split PDF if requested
+        if split_chapters:
+            chapter_contents = split_pdf_by_chapters(
+                pdf_path, output_prefix, chapter_starts_list
+            )
+            results["chapters_processed"] = len(chapter_contents)
+            results["chapter_pdfs"] = list(chapter_contents.keys())
+
+        # Create CSV if requested
+        if create_csv:
+            csv_path = f"{output_prefix}_chapters.csv"
+
+            # If we already have chapter contents from splitting
+            if split_chapters and extract_text:
+                with open(csv_path, "w", newline="") as csvfile:
+                    writer = csv.writer(csvfile)
+                    writer.writerow(["chapter", "pages", "content"])
+
+                    for i, (pdf_path, content) in enumerate(chapter_contents.items()):
+                        chapter_num = i + 1
+                        start_page = chapter_starts_list[i] + 1  # Convert to 1-indexed
+                        end_page = (
+                            chapter_starts_list[i + 1]
+                            if i + 1 < len(chapter_starts_list)
+                            else "end"
+                        )
+                        pages = f"{start_page}-{end_page}"
+
+                        # Join all page content
+                        full_content = "\n\n".join(content)
+
+                        writer.writerow([chapter_num, pages, full_content])
+
+            # If we need to extract text without splitting
+            elif extract_text:
+                from pypdf import PdfReader
+
+                reader = PdfReader(pdf_path)
+
+                with open(csv_path, "w", newline="") as csvfile:
+                    writer = csv.writer(csvfile)
+                    writer.writerow(["chapter", "pages", "content"])
+
+                    for i in range(len(chapter_starts_list) - 1):
+                        chapter_num = i + 1
+                        start_page = chapter_starts_list[i]
+                        end_page = chapter_starts_list[i + 1]
+                        pages = f"{start_page + 1}-{end_page}"
+
+                        # Extract text from all pages in this chapter
+                        chapter_content = []
+                        for page_num in range(start_page, end_page):
+                            if page_num < len(reader.pages):
+                                page_text = reader.pages[page_num].extract_text()
+                                chapter_content.append(page_text)
+
+                        full_content = "\n\n".join(chapter_content)
+                        writer.writerow([chapter_num, pages, full_content])
+
+            # Just create a CSV with chapter info but no content
+            else:
+                with open(csv_path, "w", newline="") as csvfile:
+                    writer = csv.writer(csvfile)
+                    writer.writerow(["chapter", "pages", "content"])
+
+                    for i in range(len(chapter_starts_list) - 1):
+                        chapter_num = i + 1
+                        start_page = chapter_starts_list[i] + 1  # Convert to 1-indexed
+                        end_page = chapter_starts_list[i + 1]
+                        pages = f"{start_page}-{end_page}"
+
+                        writer.writerow([chapter_num, pages, ""])
+
+            results["csv_path"] = csv_path
+
+        # Return processing results
+        return templates.TemplateResponse(
+            "document_processing_results.html",
+            {
+                "request": request,
+                "results": results,
+                "pdf_path": pdf_path,
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error processing PDF: {e}")
+        return templates.TemplateResponse(
+            "document_error.html",
+            {
+                "request": request,
+                "error_message": f"Error processing PDF: {str(e)}",
+            },
+        )
 
 
 if __name__ == "__main__":

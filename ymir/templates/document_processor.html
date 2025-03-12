@@ -1,0 +1,276 @@
+<!-- Document Processor Content -->
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-center mb-4">Document Processor</h1>
+    <p class="text-center mb-8 text-gray-700">Process PDF documents to create structured datasets for batch processing
+    </p>
+
+    <div class="bg-white rounded-lg shadow-md p-6 border border-gray-100">
+        <!-- PDF Upload Section -->
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold mb-4 flex items-center text-red-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                        clip-rule="evenodd" />
+                </svg>
+                PDF Document Upload
+            </h2>
+            <div class="mb-4">
+                <form id="pdf-upload-form" hx-encoding="multipart/form-data" hx-post="/upload_pdf" hx-target="#pdf-info"
+                    hx-indicator="#pdf-upload-indicator">
+                    <div
+                        class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                        <div class="space-y-1 text-center">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none"
+                                viewBox="0 0 48 48" aria-hidden="true">
+                                <path
+                                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <div class="flex justify-center text-sm text-gray-600">
+                                <label for="pdf-file"
+                                    class="relative cursor-pointer bg-white rounded-md font-medium text-red-600 hover:text-red-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-red-500">
+                                    <span>Upload a PDF file</span>
+                                    <input id="pdf-file" name="pdf_file" type="file" class="sr-only" accept=".pdf"
+                                        required>
+                                </label>
+                                <p class="pl-1">or drag and drop</p>
+                            </div>
+                            <p class="text-xs text-gray-500">
+                                PDF files only, up to 50MB
+                            </p>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex justify-center">
+                        {% set button_text = "Upload PDF" %}
+                        {% set button_indicator_id = "pdf-upload-indicator" %}
+                        {% set button_color = "red" %}
+                        {% set button_additional_classes = "py-2.5" %}
+                        {% include "components/upload_button.html" %}
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- PDF Information Section -->
+        <div id="pdf-info" class="hidden">
+            <!-- This will be populated by the server after PDF upload -->
+        </div>
+
+        <!-- TOC Detection Section (shown after PDF upload) -->
+        <div id="toc-detection" class="hidden mb-6">
+            <h2 class="text-xl font-semibold mb-4 flex items-center text-red-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                    <path fill-rule="evenodd"
+                        d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
+                        clip-rule="evenodd" />
+                </svg>
+                Table of Contents Detection
+            </h2>
+            <div class="mb-4">
+                <div class="flex items-center mb-4">
+                    {% set button_text = "Auto-Detect Table of Contents" %}
+                    {% set button_color = "blue" %}
+                    {% set button_id = "detect-toc-btn" %}
+                    {% set button_loading_indicator = true %}
+                    {% set button_indicator_id = "toc-indicator" %}
+                    {% set button_htmx_attrs = 'hx-post="/detect_toc" hx-target="#toc-results"
+                    hx-indicator="#toc-indicator" hx-include="[name=\'pdf_path\']"' %}
+                    {% include "components/button.html" %}
+                    <span class="text-sm text-gray-600 ml-4">or manually specify the page range:</span>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <div class="w-1/4">
+                        <label for="toc-start-page" class="block text-sm font-medium text-gray-700 mb-1">Start
+                            Page</label>
+                        <input type="number" id="toc-start-page" name="toc_start_page" min="1"
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
+                            placeholder="1">
+                    </div>
+                    <div class="w-1/4">
+                        <label for="toc-end-page" class="block text-sm font-medium text-gray-700 mb-1">End Page</label>
+                        <input type="number" id="toc-end-page" name="toc_end_page" min="1"
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
+                            placeholder="3">
+                    </div>
+                </div>
+            </div>
+
+            <div id="toc-results" class="mb-4">
+                <!-- This will be populated with TOC detection results -->
+            </div>
+        </div>
+
+        <!-- PDF Processing Section (shown after TOC detection) -->
+        <div id="pdf-processing" class="hidden mb-6">
+            <h2 class="text-xl font-semibold mb-4 flex items-center text-red-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15 13.586V12a1 1 0 011-1z"
+                        clip-rule="evenodd" />
+                </svg>
+                PDF Processing Options
+            </h2>
+            <div class="mb-4">
+                <div class="flex flex-col space-y-4">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="split-chapters" name="split_chapters"
+                            class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                        <label for="split-chapters" class="ml-2 block text-sm text-gray-700">Split PDF into individual
+                            chapter files</label>
+                    </div>
+
+                    <div class="flex items-center">
+                        <input type="checkbox" id="extract-text" name="extract_text"
+                            class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded" checked>
+                        <label for="extract-text" class="ml-2 block text-sm text-gray-700">Extract text content from
+                            chapters</label>
+                    </div>
+
+                    <div class="flex items-center">
+                        <input type="checkbox" id="create-csv" name="create_csv"
+                            class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded" checked>
+                        <label for="create-csv" class="ml-2 block text-sm text-gray-700">Generate CSV dataset for Batch
+                            Processing</label>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    {% set button_text = "Process Document" %}
+                    {% set button_type = "button" %}
+                    {% set button_color = "green" %}
+                    {% set button_id = "process-pdf-btn" %}
+                    {% set button_loading_indicator = true %}
+                    {% set button_indicator_id = "processing-indicator" %}
+                    {% set button_htmx_attrs = 'hx-post="/process_pdf" hx-target="#processing-results"
+                    hx-indicator="#processing-indicator" hx-include="[name=\'pdf_path\'], [name=\'toc_start_page\'],
+                    [name=\'toc_end_page\'], [name=\'split_chapters\'], [name=\'extract_text\'], [name=\'create_csv\'],
+                    [name=\'chapter_starts\']"' %}
+                    {% include "components/button.html" %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Processing Results Section -->
+        <div id="processing-results" class="hidden">
+            <!-- This will be populated with processing results -->
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Document Processor -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Add CSS for HTMX indicators
+        const style = document.createElement('style');
+        style.textContent = `
+            .htmx-indicator {
+                display: none;
+            }
+            .htmx-request .htmx-indicator {
+                display: inline-block;
+            }
+            .htmx-request.htmx-indicator {
+                display: inline-block;
+            }
+            button:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Set up drag and drop for PDF upload
+        const dropArea = document.querySelector('.border-dashed');
+        const fileInput = document.getElementById('pdf-file');
+
+        if (dropArea && fileInput) {
+            // Prevent default behavior for these events
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            // Add visual indicators when dragging
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight() {
+                dropArea.classList.add('border-red-300', 'bg-red-50');
+            }
+
+            function unhighlight() {
+                dropArea.classList.remove('border-red-300', 'bg-red-50');
+            }
+
+            // Handle dropped files
+            dropArea.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+
+                if (files.length > 0 && files[0].name.toLowerCase().endsWith('.pdf')) {
+                    fileInput.files = files;
+                    updateFileInfo(files[0]);
+                } else {
+                    alert('Please upload a PDF file');
+                }
+            }
+
+            // Handle file selection
+            fileInput.addEventListener('change', function (e) {
+                if (e.target.files.length > 0) {
+                    updateFileInfo(e.target.files[0]);
+                }
+            });
+
+            function updateFileInfo(file) {
+                const fileName = file.name;
+                const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                const uploadArea = document.querySelector('.space-y-1.text-center');
+
+                // Remove any existing file info element
+                const existingInfo = uploadArea.querySelector('.file-info');
+                if (existingInfo) {
+                    existingInfo.remove();
+                }
+
+                // Create and append file info element
+                const fileInfo = document.createElement('p');
+                fileInfo.classList.add('text-xs', 'text-gray-700', 'mt-2', 'file-info');
+                fileInfo.innerHTML = `<strong>Selected:</strong> ${fileName} <span class="text-gray-500">(${fileSize} MB)</span>`;
+                uploadArea.appendChild(fileInfo);
+            }
+        }
+
+        // Listen for events to show/hide sections
+        document.body.addEventListener('htmx:afterSwap', function (evt) {
+            // If PDF info was loaded, show TOC detection section
+            if (evt.target.id === 'pdf-info' && evt.target.innerHTML.trim() !== '') {
+                document.getElementById('toc-detection').classList.remove('hidden');
+            }
+
+            // If TOC results were loaded, show PDF processing section
+            if (evt.target.id === 'toc-results' && evt.target.innerHTML.trim() !== '') {
+                document.getElementById('pdf-processing').classList.remove('hidden');
+            }
+
+            // If processing results were loaded, scroll to them
+            if (evt.target.id === 'processing-results' && evt.target.innerHTML.trim() !== '') {
+                evt.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+</script>

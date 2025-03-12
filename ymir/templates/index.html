@@ -130,12 +130,38 @@
 
         /* Card hover effect */
         .tool-card {
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s ease;
+            border-radius: 0.5rem;
         }
 
-        .tool-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        /* Hover card component with animated red border */
+        .hover-card {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hover-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: rgba(79, 70, 229, 0.3);
+            background-color: rgba(249, 250, 251, 0.8);
+        }
+
+        .hover-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background-color: #dc2626;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .hover-card:hover::before {
+            transform: translateX(0);
         }
     </style>
 </head>

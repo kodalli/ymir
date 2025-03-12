@@ -6,7 +6,8 @@
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Left Model (LLM 1) -->
-        <div class="bg-white rounded-lg shadow-md p-5 border border-gray-100">
+        <div
+            class="bg-white rounded-lg shadow-md p-5 border border-gray-100 tool-card hover-card transition duration-300 ease-in-out">
             <h2 class="text-xl font-semibold mb-4 flex items-center text-red-700">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path
@@ -62,7 +63,8 @@
         </div>
 
         <!-- Message Input (Middle) -->
-        <div class="bg-white rounded-lg shadow-md p-5 border border-gray-100">
+        <div
+            class="bg-white rounded-lg shadow-md p-5 border border-gray-100 tool-card hover-card transition duration-300 ease-in-out">
             <h2 class="text-xl font-semibold mb-4 flex items-center text-red-700">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd"
@@ -98,7 +100,8 @@
                     </button>
                 </div>
 
-                <div id="rating-result" class="mt-4 p-2 bg-gray-100 rounded text-center"></div>
+                <div id="rating-result" class="mt-4 p-2 bg-gray-100 rounded text-center">
+                </div>
             </div>
 
             <div class="mt-8 space-y-4">
@@ -127,12 +130,14 @@
                     Download RLHF Dataset
                 </button>
 
-                <div id="download-result" class="mt-4 p-2 bg-gray-100 rounded text-center"></div>
+                <div id="download-result" class="mt-4 p-2 bg-gray-100 rounded text-center">
+                </div>
             </div>
         </div>
 
         <!-- Right Model (LLM 2) -->
-        <div class="bg-white rounded-lg shadow-md p-5 border border-gray-100">
+        <div
+            class="bg-white rounded-lg shadow-md p-5 border border-gray-100 tool-card hover-card transition duration-300 ease-in-out">
             <h2 class="text-xl font-semibold mb-4 flex items-center text-red-700">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path
@@ -146,13 +151,16 @@
                 <select
                     class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
                     hx-post="/update_provider" hx-vals='{"llm_key": "llm_2"}' hx-target="#llm2-model-select"
-                    hx-trigger="change" hx-swap="innerHTML" name="provider">
+                    hx-trigger="change" hx-swap="innerHTML" hx-indicator="#provider-indicator-2" name="provider">
                     {% for provider in providers %}
                     <option value="{{ provider }}" {% if provider=="DeepSeek" %}selected{% endif %}>{{ provider
                         }}
                     </option>
                     {% endfor %}
                 </select>
+                <div id="provider-indicator-2" class="htmx-indicator flex justify-center mt-2">
+                    <div class="spinner"></div>
+                </div>
             </div>
 
             <div class="mb-4">
@@ -187,7 +195,8 @@
     </div>
 
     <!-- RLHF Dataset -->
-    <div class="mt-12 bg-white rounded-lg shadow-md p-5 border border-gray-100">
+    <div
+        class="mt-12 bg-white rounded-lg shadow-md p-5 border border-gray-100 tool-card hover-card transition duration-300 ease-in-out">
         <h2 class="text-2xl font-semibold mb-4 flex items-center text-red-700">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z" />

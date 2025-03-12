@@ -3,12 +3,17 @@
         <tr>
             <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID
             </th>
-            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Query
+            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Subject
             </th>
             <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Positive Response</th>
+                Predicate</th>
             <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Negative Response</th>
+                Object</th>
+            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Description</th>
+            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Confidence</th>
             <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions</th>
         </tr>
@@ -20,47 +25,72 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ entry.id }}</td>
             <td class="px-6 py-4">
                 <div class="response-content">
-                    {% if entry.query|length > 150 %}
-                    <div class="truncated">{{ entry.query[:150] }}...</div>
-                    <div class="full-text hidden">{{ entry.query }}</div>
+                    {% if entry.subject|length > 150 %}
+                    <div class="truncated">{{ entry.subject[:150] }}...</div>
+                    <div class="full-text hidden">{{ entry.subject }}</div>
                     <button class="text-blue-600 text-sm mt-2 toggle-text"
                         _="on click toggle .hidden on the previous <div/> toggle .hidden on the previous <div/> previous <div/>
                                          then if its innerText is 'Show more' set its innerText to 'Show less' else set its innerText to 'Show more'">
                         Show more
                     </button>
                     {% else %}
-                    {{ entry.query }}
+                    {{ entry.subject }}
                     {% endif %}
                 </div>
             </td>
             <td class="px-6 py-4">
                 <div class="response-content">
-                    {% if entry.positive|length > 150 %}
-                    <div class="truncated">{{ entry.positive[:150] }}...</div>
-                    <div class="full-text hidden">{{ entry.positive }}</div>
+                    {% if entry.predicate|length > 150 %}
+                    <div class="truncated">{{ entry.predicate[:150] }}...</div>
+                    <div class="full-text hidden">{{ entry.predicate }}</div>
                     <button class="text-blue-600 text-sm mt-2 toggle-text"
                         _="on click toggle .hidden on the previous <div/> toggle .hidden on the previous <div/> previous <div/>
                                          then if its innerText is 'Show more' set its innerText to 'Show less' else set its innerText to 'Show more'">
                         Show more
                     </button>
                     {% else %}
-                    {{ entry.positive }}
+                    {{ entry.predicate }}
                     {% endif %}
                 </div>
             </td>
             <td class="px-6 py-4">
                 <div class="response-content">
-                    {% if entry.negative|length > 150 %}
-                    <div class="truncated">{{ entry.negative[:150] }}...</div>
-                    <div class="full-text hidden">{{ entry.negative }}</div>
+                    {% if entry.object|length > 150 %}
+                    <div class="truncated">{{ entry.object[:150] }}...</div>
+                    <div class="full-text hidden">{{ entry.object }}</div>
                     <button class="text-blue-600 text-sm mt-2 toggle-text"
                         _="on click toggle .hidden on the previous <div/> toggle .hidden on the previous <div/> previous <div/>
                                          then if its innerText is 'Show more' set its innerText to 'Show less' else set its innerText to 'Show more'">
                         Show more
                     </button>
                     {% else %}
-                    {{ entry.negative }}
+                    {{ entry.object }}
                     {% endif %}
+                </div>
+            </td>
+            <td class="px-6 py-4">
+                <div class="response-content">
+                    {% if entry.description|length > 150 %}
+                    <div class="truncated">{{ entry.description[:150] }}...</div>
+                    <div class="full-text hidden">{{ entry.description }}</div>
+                    <button class="text-blue-600 text-sm mt-2 toggle-text"
+                        _="on click toggle .hidden on the previous <div/> toggle .hidden on the previous <div/> previous <div/>
+                                         then if its innerText is 'Show more' set its innerText to 'Show less' else set its innerText to 'Show more'">
+                        Show more
+                    </button>
+                    {% else %}
+                    {{ entry.description }}
+                    {% endif %}
+                </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                <div class="flex items-center">
+                    {% set confidence_pct = (entry.confidence * 100)|round|int %}
+                    <div class="w-16 bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-blue-600 h-2.5 rounded-full confidence-bar" data-width="{{ confidence_pct }}">
+                        </div>
+                    </div>
+                    <span class="ml-2">{{ "%.2f"|format(entry.confidence) }}</span>
                 </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -79,7 +109,24 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm">-</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm">-</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm">-</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm">-</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm">-</td>
         </tr>
         {% endif %}
     </tbody>
 </table>
+
+<style>
+    .confidence-bar {
+        width: 0;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.confidence-bar').forEach(function (bar) {
+            const width = bar.getAttribute('data-width');
+            bar.style.width = width + '%';
+        });
+    });
+</script>

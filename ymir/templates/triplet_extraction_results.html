@@ -1,11 +1,11 @@
 <!-- Triplet Extraction Results Template -->
-<div class="p-4">
+<div class="p-4 hover-card transition duration-300 ease-in-out">
     <h3 class="text-lg font-semibold mb-3 text-indigo-700">
         Extraction Results: {{ count }} triplets found
     </h3>
 
     {% if count > 0 %}
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto hover-card transition duration-300 ease-in-out">
         <table class="min-w-full divide-y divide-gray-200 mb-4">
             <thead>
                 <tr>
@@ -35,9 +35,10 @@
                     <td class="px-4 py-2 text-sm text-gray-700">{{ triplet.description }}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
                         <div class="flex items-center">
+                            {% set confidence_pct = (triplet.confidence * 100)|round|int %}
                             <div class="w-24 bg-gray-200 rounded-full h-2.5">
-                                <div class="bg-blue-600 h-2.5 rounded-full"
-                                    style="width: {{ triplet.confidence * 100 }}%"></div>
+                                <div class="bg-blue-600 h-2.5 rounded-full confidence-bar"
+                                    data-width="{{ confidence_pct }}"></div>
                             </div>
                             <span class="ml-2">{{ "%.2f"|format(triplet.confidence) }}</span>
                         </div>
@@ -61,8 +62,23 @@
         </button>
     </div>
     {% else %}
-    <div class="p-4 bg-yellow-100 text-yellow-800 rounded-md">
+    <div class="p-4 bg-yellow-100 text-yellow-800 rounded-md hover-card transition duration-300 ease-in-out">
         <p>No triplets were extracted from the provided text. Try with a different text or different entity types.</p>
     </div>
     {% endif %}
 </div>
+
+<style>
+    .confidence-bar {
+        width: 0;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.confidence-bar').forEach(function (bar) {
+            const width = bar.getAttribute('data-width');
+            bar.style.width = width + '%';
+        });
+    });
+</script>

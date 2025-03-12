@@ -120,9 +120,10 @@ class RatingRequest(BaseModel):
 
 
 class TripletRequest(BaseModel):
-    query: str
-    positive: str
-    negative: str
+    subject: str
+    predicate: str
+    object: str
+    description: Optional[str] = ""
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -565,11 +566,12 @@ async def process_triplets(
             triplet_dataset.append(
                 {
                     "id": len(triplet_dataset) + 1,
-                    "query": f"What is the relationship between {triplet.subject} and {triplet.object}?",
-                    "positive": f"{triplet.subject} {triplet.predicate} {triplet.object}. {triplet.description}",
-                    "negative": f"{triplet.subject} and {triplet.object} may be related.",
-                    "created_at": "2023-06-01T12:00:00Z",  # This would be the current timestamp in production
+                    "subject": triplet.subject,
+                    "predicate": triplet.predicate,
+                    "object": triplet.object,
+                    "description": triplet.description,
                     "confidence": triplet.confidence,
+                    "created_at": "2023-06-01T12:00:00Z",  # This would be the current timestamp in production
                 }
             )
 
@@ -607,21 +609,23 @@ async def process_triplets(
 
 @app.post("/add_manual_triplet")
 async def add_manual_triplet(triplet: TripletRequest):
-    """Add a manually created triplet to the dataset"""
+    """Add a manually created SPO triplet to the dataset"""
     # Add the triplet to our in-memory storage
     triplet_dataset.append(
         {
             "id": len(triplet_dataset) + 1,
-            "query": triplet.query,
-            "positive": triplet.positive,
-            "negative": triplet.negative,
+            "subject": triplet.subject,
+            "predicate": triplet.predicate,
+            "object": triplet.object,
+            "description": triplet.description,
+            "confidence": 1.0,  # Manual triplets have full confidence
             "created_at": "2023-06-01T12:00:00Z",  # This would be the current timestamp in production
         }
     )
 
     return {
         "status": "success",
-        "message": "Triplet added successfully",
+        "message": "SPO triplet added successfully",
         "count": len(triplet_dataset),
     }
 
@@ -635,9 +639,10 @@ async def view_triplets(request: Request, format: str = "table", query: str = ""
         filtered_data = []
         for triplet in data:
             if (
-                query.lower() in triplet["query"].lower()
-                or query.lower() in triplet["positive"].lower()
-                or query.lower() in triplet["negative"].lower()
+                query.lower() in triplet.get("subject", "").lower()
+                or query.lower() in triplet.get("predicate", "").lower()
+                or query.lower() in triplet.get("object", "").lower()
+                or query.lower() in triplet.get("description", "").lower()
             ):
                 filtered_data.append(triplet)
         data = filtered_data
@@ -1145,6 +1150,29 @@ async def process_pdf(
                 "error_message": f"Error processing PDF: {str(e)}",
             },
         )
+
+
+@app.delete("/delete_triplet/{triplet_id}")
+async def delete_triplet(request: Request, triplet_id: int):
+    """Delete a triplet from the dataset"""
+    global triplet_dataset
+
+    # Find the triplet by ID
+    for i, triplet in enumerate(triplet_dataset):
+        if triplet["id"] == triplet_id:
+            # Remove the triplet
+            del triplet_dataset[i]
+
+            # Return the updated table
+            return await view_triplets(request)
+
+    # If triplet not found, return an error
+    return JSONResponse(
+        content={
+            "status": "error",
+            "message": f"Triplet with ID {triplet_id} not found",
+        }
+    )
 
 
 if __name__ == "__main__":

@@ -1,7 +1,8 @@
 # Changelog
 
 {% if context.history %}
-{% for version, release in context.history.items() %}
+{% for version in context.history.versions() %}
+{% set release = context.history.get(version) %}
 ## {{ version }} {% if release.tagged_date %}({{ release.tagged_date.strftime('%Y-%m-%d') }}){% endif %}
 
 {% for type, commits in release.elements_by_type.items() %}

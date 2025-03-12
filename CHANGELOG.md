@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.0.0-alpha.6 (2025-03-12)
+
+### Refactoring
+
+- Updated styling of several templates to have hover effect, and fixed some styling issues.
+  ([`f57770c`](https://github.com/kodalli/ymir/commit/f57770c73538288fd0aab211efad8f486288f701))
+
+
 ## v0.0.0-alpha.5 (2025-03-12)
 
 

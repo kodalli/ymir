@@ -47,7 +47,7 @@ jobs:
           git fetch --tags
 
           # Run semantic release to determine new version
-          semantic-release version --prerelease --prerelease-token alpha
+          semantic-release version --prerelease --prerelease-token alpha --no-changelog
 
           # Capture the new version from pyproject.toml
           NEW_VERSION=$(grep -Po '(?<=version = ")[^"]*' pyproject.toml)
@@ -56,7 +56,7 @@ jobs:
           # Add v prefix for GitHub release
           echo "new_version=v${NEW_VERSION}" >> $GITHUB_OUTPUT
 
-          # Get the commits since the last tag to generate release notes
+          # Generate simple release notes without using templates
           PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           if [ -z "$PREV_TAG" ]; then
               echo "# Release v${NEW_VERSION}" > RELEASE_NOTES.md
@@ -69,7 +69,7 @@ jobs:
           fi
 
           # Publish the release
-          semantic-release publish
+          semantic-release publish --no-changelog
 
       - name: Create GitHub Release
         if: steps.semantic_release.outputs.new_version != ''

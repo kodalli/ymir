@@ -31,7 +31,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install python-semantic-release>=9.19.1,<10
+          uv pip install "python-semantic-release>=9.19.1,<10"
 
       - name: Configure git
         run: |

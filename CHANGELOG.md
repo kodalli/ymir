@@ -1,6 +1,9 @@
 # CHANGELOG
 
 
+## v0.0.0-alpha.5 (2025-03-12)
+
+
 ## v0.0.0-alpha.4 (2025-03-12)
 
 ### Chores
@@ -107,11 +110,6 @@
 
 ## v0.0.0-alpha.2 (2025-02-13)
 
-### Bug Fixes
-
-- Change to pep621
-  ([`5ae988a`](https://github.com/kodalli/ymir/commit/5ae988a13572a36d4031cc2b1614b58a75f5fad1))
-
 ### Features
 
 - Add batch processing, prompt creation, and RLHF dataset utilities
@@ -124,6 +122,11 @@
 
 
 ## v0.0.0-alpha.1 (2025-02-13)
+
+### Bug Fixes
+
+- Change to pep621
+  ([`5ae988a`](https://github.com/kodalli/ymir/commit/5ae988a13572a36d4031cc2b1614b58a75f5fad1))
 
 ### Continuous Integration
 

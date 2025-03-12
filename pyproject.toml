@@ -47,3 +47,5 @@ build_command = "pip install build && python -m build"
 dist_path = "dist/"
 major_on_zero = false
 tag_format = "v{version}"
+prerelease = true
+prerelease_token = "alpha"

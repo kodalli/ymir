@@ -1,0 +1,352 @@
+<!-- Batch Dataset Builder Content -->
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-center mb-4">Batch Dataset Builder</h1>
+    <p class="text-center mb-8 text-gray-700">Create datasets in bulk using OpenAI's batch processing API</p>
+
+    <div class="bg-white rounded-lg shadow-md p-6 border border-gray-100">
+        <form id="batch-form" hx-post="/process_batch" hx-encoding="multipart/form-data"
+            hx-indicator="#submit-indicator">
+            <!-- CSV Upload Section -->
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-4 flex items-center text-red-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    CSV Upload
+                </h2>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Upload CSV File</label>
+                    <div
+                        class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                        <div class="space-y-1 text-center">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none"
+                                viewBox="0 0 48 48" aria-hidden="true">
+                                <path
+                                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <div class="flex justify-center text-sm text-gray-600">
+                                <label for="csv-file"
+                                    class="relative cursor-pointer bg-white rounded-md font-medium text-red-600 hover:text-red-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-red-500">
+                                    <span>Upload a CSV file</span>
+                                    <input id="csv-file" name="csv_file" type="file" class="sr-only" accept=".csv"
+                                        onchange="parseCSV()" required>
+                                </label>
+                                <p class="pl-1">or drag and drop</p>
+                            </div>
+                            <p class="text-xs text-gray-500">
+                                CSV files only, up to 10MB
+                            </p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-2">First row should contain column headers that can be referenced
+                        in your prompts.</p>
+                </div>
+                <div id="csv-preview" class="hidden mb-4 overflow-x-auto">
+                    <h3 class="text-md font-medium mb-2">CSV Preview:</h3>
+                    <div class="csv-table-container max-h-60 overflow-y-auto">
+                        <table class="min-w-full divide-y divide-gray-200 border">
+                            <thead class="bg-gray-50">
+                                <tr id="csv-header-row"></tr>
+                            </thead>
+                            <tbody id="csv-body" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prompt Configuration -->
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-4 flex items-center text-red-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    Prompt Configuration
+                </h2>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">System Prompt</label>
+                    <textarea id="system-prompt" name="system_prompt" rows="4"
+                        class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
+                        placeholder="Enter system prompt with format placeholders like {column_name}" required
+                        hx-on:input="generatePreview()"></textarea>
+                    <p class="text-sm text-gray-500 mt-1">Use {column_name} to reference CSV columns (e.g., {question})
+                    </p>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">User Prompt</label>
+                    <textarea id="user-prompt" name="user_prompt" rows="4"
+                        class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
+                        placeholder="Enter user prompt with format placeholders like {column_name}" required
+                        hx-on:input="generatePreview()"></textarea>
+                    <p class="text-sm text-gray-500 mt-1">Use {column_name} to reference CSV columns (e.g., {question})
+                    </p>
+                </div>
+            </div>
+
+            <!-- Model Configuration -->
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-4 flex items-center text-red-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    Model Configuration
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                        <select id="model" name="model"
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500">
+                            {% for model in openai_models %}
+                            <option value="{{ model }}">{{ model }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Max Tokens</label>
+                        <input type="number" id="max-tokens" name="max_tokens" value="1000" min="50" max="64000"
+                            step="50"
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Temperature</label>
+                        <input type="range" id="temperature-range" name="temperature" value="0.7" min="0" max="2"
+                            step="0.1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                            oninput="document.getElementById('temperature-value').innerText = this.value">
+                        <span id="temperature-value" class="text-sm text-gray-600">0.7</span>
+                    </div>
+                    <div class="mb-4" id="reasoning-effort-container">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Reasoning Effort</label>
+                        <select id="reasoning-effort" name="reasoning_effort"
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prompt Preview -->
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-4 flex items-center text-red-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                        <path fill-rule="evenodd"
+                            d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    Prompt Preview
+                </h2>
+                <div id="preview-container" class="hidden mb-4">
+                    <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h3 class="text-md font-medium mb-2">Example Formatted Prompts:</h3>
+                        <div class="mb-3">
+                            <div class="text-sm font-medium text-gray-700">System Prompt:</div>
+                            <pre id="preview-system"
+                                class="mt-1 p-2 bg-gray-100 rounded text-sm overflow-x-auto whitespace-pre-wrap"></pre>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-gray-700">User Prompt:</div>
+                            <pre id="preview-user"
+                                class="mt-1 p-2 bg-gray-100 rounded text-sm overflow-x-auto whitespace-pre-wrap"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex justify-center">
+                <button type="submit"
+                    class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-md transition-colors duration-200 flex items-center">
+                    <span id="submit-indicator" class="htmx-indicator mr-2">
+                        <div class="spinner"></div>
+                    </span>
+                    Start Batch Processing
+                </button>
+            </div>
+        </form>
+
+        <!-- Results Area -->
+        <div id="batch-results" class="mt-8"></div>
+    </div>
+</div>
+
+<!-- JavaScript for CSV and Prompt Preview -->
+<script>
+    let csvData = [];
+    let csvHeaders = [];
+
+    // Show/hide reasoning effort option based on model selection
+    document.getElementById('model').addEventListener('change', function () {
+        const modelName = this.value;
+        const reasoningContainer = document.getElementById('reasoning-effort-container');
+
+        if (modelName.startsWith('o')) {
+            reasoningContainer.classList.remove('hidden');
+        } else {
+            reasoningContainer.classList.add('hidden');
+        }
+    });
+
+    function parseCSV() {
+        const fileInput = document.getElementById('csv-file');
+        const file = fileInput.files[0];
+
+        if (!file) return;
+
+        // Update the file information display
+        updateFileInfo(file);
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const content = e.target.result;
+            const lines = content.split('\n');
+            csvHeaders = lines[0].split(',').map(header => header.trim());
+
+            csvData = [];
+            for (let i = 1; i < Math.min(lines.length, 6); i++) { // Show up to 5 data rows
+                if (lines[i].trim() === '') continue;
+                const row = lines[i].split(',').map(cell => cell.trim());
+                csvData.push(row);
+            }
+
+            displayCSVPreview();
+            generatePreview();
+        };
+        reader.readAsText(file);
+    }
+
+    function updateFileInfo(file) {
+        const fileName = file.name;
+        const fileSize = (file.size / 1024 / 1024).toFixed(2);
+        const uploadArea = document.querySelector('.space-y-1.text-center');
+
+        // Remove any existing file info element
+        const existingInfo = uploadArea.querySelector('.file-info');
+        if (existingInfo) {
+            existingInfo.remove();
+        }
+
+        // Create and append file info element
+        const fileInfo = document.createElement('p');
+        fileInfo.classList.add('text-xs', 'text-gray-700', 'mt-2', 'file-info');
+        fileInfo.innerHTML = `<strong>Selected:</strong> ${fileName} <span class="text-gray-500">(${fileSize} MB)</span>`;
+        uploadArea.appendChild(fileInfo);
+    }
+
+    function displayCSVPreview() {
+        const headerRow = document.getElementById('csv-header-row');
+        const csvBody = document.getElementById('csv-body');
+        const csvPreview = document.getElementById('csv-preview');
+
+        // Clear existing content
+        headerRow.innerHTML = '';
+        csvBody.innerHTML = '';
+
+        // Add headers
+        csvHeaders.forEach(header => {
+            const th = document.createElement('th');
+            th.className = 'px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider';
+            th.textContent = header;
+            headerRow.appendChild(th);
+        });
+
+        // Add data rows
+        csvData.forEach(row => {
+            const tr = document.createElement('tr');
+            row.forEach(cell => {
+                const td = document.createElement('td');
+                td.className = 'px-3 py-2 whitespace-nowrap text-sm text-gray-500';
+                td.textContent = cell;
+                tr.appendChild(td);
+            });
+            csvBody.appendChild(tr);
+        });
+
+        csvPreview.classList.remove('hidden');
+    }
+
+    function generatePreview() {
+        if (csvData.length === 0) return;
+
+        const systemPrompt = document.getElementById('system-prompt').value;
+        const userPrompt = document.getElementById('user-prompt').value;
+        const previewSystem = document.getElementById('preview-system');
+        const previewUser = document.getElementById('preview-user');
+        const previewContainer = document.getElementById('preview-container');
+
+        // Use the first row of data for preview
+        const dataRow = csvData[0];
+        let formattedSystemPrompt = systemPrompt;
+        let formattedUserPrompt = userPrompt;
+
+        // Replace placeholders in the prompts
+        csvHeaders.forEach((header, index) => {
+            const placeholder = new RegExp(`\\{${header}\\}`, 'g');
+            formattedSystemPrompt = formattedSystemPrompt.replace(placeholder, dataRow[index]);
+            formattedUserPrompt = formattedUserPrompt.replace(placeholder, dataRow[index]);
+        });
+
+        previewSystem.textContent = formattedSystemPrompt;
+        previewUser.textContent = formattedUserPrompt;
+        previewContainer.classList.remove('hidden');
+    }
+
+    // Set up drag and drop functionality
+    document.addEventListener('DOMContentLoaded', function () {
+        const dropArea = document.querySelector('.border-dashed');
+        const fileInput = document.getElementById('csv-file');
+
+        // Prevent default behavior for these events
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Add visual indicators when dragging
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            dropArea.classList.add('border-red-300', 'bg-red-50');
+        }
+
+        function unhighlight() {
+            dropArea.classList.remove('border-red-300', 'bg-red-50');
+        }
+
+        // Handle dropped files
+        dropArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            if (files.length > 0 && files[0].name.toLowerCase().endsWith('.csv')) {
+                fileInput.files = files;
+                parseCSV();
+            } else {
+                alert('Please upload a CSV file');
+            }
+        }
+    });
+</script>

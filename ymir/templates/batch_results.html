@@ -1,0 +1,204 @@
+<!-- Batch Processing Results -->
+<div class="bg-white rounded-lg shadow-md p-6 border border-gray-100">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-semibold text-gray-800">Batch Processing Status</h2>
+        <div class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+            <span id="batch-status">Submitted</span>
+        </div>
+    </div>
+
+    <div class="mb-6">
+        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+            <h3 class="text-md font-semibold mb-3 text-gray-700">Batch Summary</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Batch ID:</p>
+                    <p class="text-sm font-medium">{{ batch_id }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Model:</p>
+                    <p class="text-sm font-medium">{{ model }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Total Requests:</p>
+                    <p class="text-sm font-medium">{{ num_rows }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Completed:</p>
+                    <p class="text-sm font-medium" id="completed-count">0</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Timestamp:</p>
+                    <p class="text-sm font-medium">{{ timestamp }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Duration:</p>
+                    <p class="text-sm font-medium" id="duration">Calculating...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <h3 class="text-md font-semibold mb-3 text-gray-700">Progress</h3>
+            <div class="bg-gray-200 rounded-full h-4 mb-2 overflow-hidden">
+                <div id="progress-bar" class="bg-red-600 h-4 rounded-full" style="width: 0%"></div>
+            </div>
+            <p class="text-sm text-gray-600 text-right" id="progress-text">0%</p>
+        </div>
+
+        <div class="bg-gray-50 rounded-lg p-4">
+            <h3 class="text-md font-semibold mb-3 text-gray-700">File Information</h3>
+            <div class="mb-3">
+                <p class="text-sm text-gray-600 mb-1">Input File:</p>
+                <p class="text-sm font-medium break-all">{{ input_file }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600 mb-1">Output File:</p>
+                <p class="text-sm font-medium break-all">{{ output_file }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-col sm:flex-row justify-between space-y-2 sm:space-y-0 sm:space-x-2">
+        <button
+            class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+            hx-get="/batch" hx-target="#main-content" hx-swap="innerHTML">
+            Create New Batch
+        </button>
+        <div class="flex space-x-2">
+            <button
+                class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition-colors duration-200"
+                hx-get="/check_batch_status?batch_id={{ batch_id }}" hx-target="#batch-status-update" hx-trigger="click"
+                hx-swap="innerHTML">
+                Refresh Status
+            </button>
+            <button id="download-btn"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+                disabled>
+                Download Results
+            </button>
+        </div>
+    </div>
+
+    <div id="batch-status-update" class="hidden"></div>
+</div>
+
+<script>
+    // Variables to store batch information
+    const batchId = "{{ batch_id }}";
+    const totalRequests = {{ num_rows }};
+    const startTime = new Date();
+    let completedCount = 0;
+    let batchStatus = "validating";
+    let statusCheckInterval;
+
+    // Function to update the UI with batch status
+    function updateBatchStatus(status) {
+        // Update status label
+        const statusElement = document.getElementById("batch-status");
+        statusElement.textContent = status.status.charAt(0).toUpperCase() + status.status.slice(1);
+
+        // Set appropriate status color
+        statusElement.parentElement.className = getStatusColorClass(status.status);
+
+        // Update completed count
+        completedCount = status.completed_count || 0;
+        document.getElementById("completed-count").textContent = completedCount;
+
+        // Update progress bar
+        const progressPercent = totalRequests > 0 ? Math.round((completedCount / totalRequests) * 100) : 0;
+        document.getElementById("progress-bar").style.width = `${progressPercent}%`;
+        document.getElementById("progress-text").textContent = `${progressPercent}%`;
+
+        // Update duration
+        const currentTime = new Date();
+        const duration = Math.floor((currentTime - startTime) / 1000);
+        document.getElementById("duration").textContent = formatDuration(duration);
+
+        // Enable download button if completed
+        if (status.status === "completed") {
+            document.getElementById("download-btn").disabled = false;
+            clearInterval(statusCheckInterval);
+        }
+
+        batchStatus = status.status;
+    }
+
+    // Function to get color class based on status
+    function getStatusColorClass(status) {
+        switch (status) {
+            case "validating":
+            case "in_progress":
+                return "bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium";
+            case "completed":
+                return "bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium";
+            case "failed":
+            case "expired":
+                return "bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium";
+            case "cancelling":
+            case "cancelled":
+                return "bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium";
+            default:
+                return "bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium";
+        }
+    }
+
+    // Function to format duration
+    function formatDuration(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+
+        return [
+            hours > 0 ? `${hours}h` : "",
+            minutes > 0 ? `${minutes}m` : "",
+            `${secs}s`
+        ].filter(Boolean).join(" ");
+    }
+
+    // Set up automatic status checking
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initial status check
+        fetch(`/check_batch_status?batch_id=${batchId}`)
+            .then(response => response.json())
+            .then(data => {
+                updateBatchStatus(data);
+
+                // Set up interval for status checking (every 30 seconds)
+                if (data.status !== "completed" && data.status !== "failed" && data.status !== "cancelled") {
+                    statusCheckInterval = setInterval(() => {
+                        fetch(`/check_batch_status?batch_id=${batchId}`)
+                            .then(response => response.json())
+                            .then(updateBatchStatus)
+                            .catch(console.error);
+                    }, 30000); // Check every 30 seconds
+                }
+            })
+            .catch(console.error);
+
+        // Handle download button click
+        document.getElementById("download-btn").addEventListener("click", function () {
+            const outputFile = "{{ output_file }}";
+            // Create temporary link to trigger download
+            const a = document.createElement("a");
+            a.style.display = "none";
+            a.href = `/download?file=${encodeURIComponent(outputFile)}`;
+            a.download = outputFile.split("/").pop();
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+    });
+
+    // Handle htmx status updates from refresh button
+    document.body.addEventListener('htmx:afterSwap', function (event) {
+        if (event.target.id === "batch-status-update" && event.target.textContent) {
+            try {
+                const data = JSON.parse(event.target.textContent);
+                updateBatchStatus(data);
+            } catch (e) {
+                console.error("Error parsing status update:", e);
+            }
+        }
+    });
+</script>

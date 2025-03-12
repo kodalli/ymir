@@ -1,13 +1,17 @@
 from typing import Optional
 import uvicorn
-from fastapi import FastAPI, Request, Form, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import re
 from loguru import logger
 import json
+import os
+import tempfile
+import time
+from openai import OpenAI
 
 from ymir.llm import (
     get_llm,
@@ -15,8 +19,10 @@ from ymir.llm import (
     OPENAI_CHAT_MODELS,
     DEEPSEEK_CHAT_MODELS,
 )
+from ymir.llm.openai_llm import OpenAIBatchProcessor
 from ymir.rlhf import RLHFDatasetBuilder
 from ymir.triplets.text_to_triplets import extract_triplets
+import pandas as pd
 
 # Initialize global variables
 app = FastAPI(title="Ymir AI Dataset Tools")
@@ -746,6 +752,156 @@ async def provider_models(provider: str):
 async def startup_event():
     rlhf_builder.load_dataset_jsonl()
     logger.info("Ymir RLHF application started")
+
+
+@app.get("/batch", response_class=HTMLResponse)
+async def batch_page(request: Request):
+    """Render the Batch Dataset Builder page"""
+    return templates.TemplateResponse(
+        "batch.html",
+        {
+            "request": request,
+            "openai_models": OPENAI_CHAT_MODELS,
+        },
+    )
+
+
+@app.post("/process_batch")
+async def process_batch(
+    request: Request,
+    csv_file: UploadFile = File(...),
+    system_prompt: str = Form(...),
+    user_prompt: str = Form(...),
+    model: str = Form(...),
+    max_tokens: int = Form(1000),
+    temperature: float = Form(0.7),
+    reasoning_effort: Optional[str] = Form(None),
+):
+    """Process a batch of data using OpenAI Batch API"""
+    try:
+        # Create temp file to store uploaded CSV
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as temp_file:
+            temp_file_path = temp_file.name
+            content = await csv_file.read()
+            temp_file.write(content)
+
+        # Read the CSV file
+        df = pd.read_csv(temp_file_path)
+        os.unlink(temp_file_path)  # Clean up temp file
+
+        # Validate CSV content
+        if df.empty:
+            return templates.TemplateResponse(
+                "batch_error.html",
+                {
+                    "request": request,
+                    "error_message": "The CSV file is empty.",
+                },
+            )
+
+        # Create output file for batch results
+        timestamp = int(time.time())
+        output_path = f"ymir/data/batch_results_{timestamp}.jsonl"
+
+        # Initialize the batch processor
+        batch_processor = OpenAIBatchProcessor(
+            description=f"Batch processing with model {model}",
+            output_path=output_path,
+            model=model,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            reasoning_effort=reasoning_effort if reasoning_effort else None,
+        )
+
+        # Define the template function that formats prompts using CSV data
+        def format_prompts(row_dict):
+            formatted_system = system_prompt
+            formatted_user = user_prompt
+
+            # Replace placeholders with values from the row
+            for key, value in row_dict.items():
+                formatted_system = formatted_system.replace(f"{{{key}}}", str(value))
+                formatted_user = formatted_user.replace(f"{{{key}}}", str(value))
+
+            return formatted_system, formatted_user
+
+        # Prepare template arguments - convert DataFrame to list of dicts
+        template_args = df.to_dict(orient="records")
+
+        # Create a unique name for the input JSONL file
+        batch_input_file = f"ymir/data/batch_input_{timestamp}.jsonl"
+
+        # Create the batch
+        batch_processor.create_batch(
+            template_args=template_args,
+            template_func=format_prompts,
+            batch_jsonl_input_save_file=batch_input_file,
+        )
+
+        # Submit the batch
+        batch_processor.submit()
+
+        # Return the batch status and monitoring info
+        return templates.TemplateResponse(
+            "batch_results.html",
+            {
+                "request": request,
+                "batch_id": batch_processor.batch_id,
+                "input_file": batch_input_file,
+                "output_file": output_path,
+                "num_rows": len(df),
+                "model": model,
+                "timestamp": timestamp,
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error processing batch: {e}")
+        return templates.TemplateResponse(
+            "batch_error.html",
+            {
+                "request": request,
+                "error_message": f"Error processing batch: {str(e)}",
+            },
+        )
+
+
+@app.get("/check_batch_status")
+async def check_batch_status(request: Request, batch_id: str):
+    """Check the status of a batch job"""
+    try:
+        client = OpenAI()
+        status = client.batches.retrieve(batch_id)
+
+        return {
+            "status": status.status,
+            "created_at": status.created_at,
+            "completed_at": status.completed_at,
+            "error": status.error,
+            "total_requests": status.total_requests,
+            "completed_count": status.completed_count,
+        }
+    except Exception as e:
+        logger.error(f"Error checking batch status: {e}")
+        return {"error": str(e)}
+
+
+@app.get("/download")
+async def download_file(request: Request, file: str):
+    """Download a file from the server"""
+    try:
+        # Validate the file path (ensure it's in the data directory to prevent directory traversal attacks)
+        if not os.path.exists(file) or not file.startswith("ymir/data/"):
+            raise HTTPException(status_code=404, detail="File not found")
+
+        # Create a FileResponse to serve the file
+        return FileResponse(
+            path=file,
+            filename=os.path.basename(file),
+            media_type="application/octet-stream",
+        )
+    except Exception as e:
+        logger.error(f"Error downloading file: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":

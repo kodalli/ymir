@@ -69,13 +69,22 @@
                     </svg>
                     Prompt Configuration
                 </h2>
-                <div class="mb-4">
+                <div class="mb-4" id="system-prompt-container">
                     <label class="block text-sm font-medium text-gray-700 mb-1">System Prompt</label>
                     <textarea id="system-prompt" name="system_prompt" rows="4"
                         class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
-                        placeholder="Enter system prompt with format placeholders like {column_name}" required
+                        placeholder="Enter system prompt with format placeholders like {column_name}"
                         hx-on:input="generatePreview()"></textarea>
                     <p class="text-sm text-gray-500 mt-1">Use {column_name} to reference CSV columns (e.g., {question})
+                    </p>
+                    <p id="system-prompt-message" class="text-sm text-orange-600 mt-1 hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        System prompts are not supported for "o" models. This field will be ignored.
                     </p>
                 </div>
                 <div class="mb-4">
@@ -150,7 +159,7 @@
                 <div id="preview-container" class="hidden mb-4">
                     <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
                         <h3 class="text-md font-medium mb-2">Example Formatted Prompts:</h3>
-                        <div class="mb-3">
+                        <div class="mb-3" id="preview-system-container">
                             <div class="text-sm font-medium text-gray-700">System Prompt:</div>
                             <pre id="preview-system"
                                 class="mt-1 p-2 bg-gray-100 rounded text-sm overflow-x-auto whitespace-pre-wrap"></pre>
@@ -190,11 +199,32 @@
     document.getElementById('model').addEventListener('change', function () {
         const modelName = this.value;
         const reasoningContainer = document.getElementById('reasoning-effort-container');
+        const systemPromptContainer = document.getElementById('system-prompt-container');
+        const systemPromptInput = document.getElementById('system-prompt');
+        const systemPromptMessage = document.getElementById('system-prompt-message');
 
+        // Handle reasoning models (o models)
         if (modelName.startsWith('o')) {
+            // Show reasoning effort options
             reasoningContainer.classList.remove('hidden');
+
+            // Disable system prompt
+            systemPromptInput.disabled = true;
+            systemPromptInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+            systemPromptMessage.classList.remove('hidden');
         } else {
+            // Hide reasoning effort options
             reasoningContainer.classList.add('hidden');
+
+            // Enable system prompt
+            systemPromptInput.disabled = false;
+            systemPromptInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+            systemPromptMessage.classList.add('hidden');
+        }
+
+        // Update preview if data is available
+        if (csvData.length > 0) {
+            generatePreview();
         }
     });
 
@@ -284,6 +314,8 @@
         const previewSystem = document.getElementById('preview-system');
         const previewUser = document.getElementById('preview-user');
         const previewContainer = document.getElementById('preview-container');
+        const modelName = document.getElementById('model').value;
+        const systemPromptContainer = document.getElementById('preview-system-container');
 
         // Use the first row of data for preview
         const dataRow = csvData[0];
@@ -297,13 +329,32 @@
             formattedUserPrompt = formattedUserPrompt.replace(placeholder, dataRow[index]);
         });
 
-        previewSystem.textContent = formattedSystemPrompt;
+        // Handle system prompt preview for 'o' models
+        if (modelName.startsWith('o')) {
+            systemPromptContainer.classList.add('hidden');
+        } else {
+            systemPromptContainer.classList.remove('hidden');
+            previewSystem.textContent = formattedSystemPrompt;
+        }
+
         previewUser.textContent = formattedUserPrompt;
         previewContainer.classList.remove('hidden');
     }
 
     // Set up drag and drop functionality
     document.addEventListener('DOMContentLoaded', function () {
+        // Check initial model selection for system prompt handling
+        const initialModel = document.getElementById('model').value;
+        if (initialModel.startsWith('o')) {
+            const systemPromptInput = document.getElementById('system-prompt');
+            const systemPromptMessage = document.getElementById('system-prompt-message');
+
+            // Disable system prompt for 'o' models
+            systemPromptInput.disabled = true;
+            systemPromptInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+            systemPromptMessage.classList.remove('hidden');
+        }
+
         const dropArea = document.querySelector('.border-dashed');
         const fileInput = document.getElementById('csv-file');
 
@@ -348,5 +399,21 @@
                 alert('Please upload a CSV file');
             }
         }
+    });
+
+    // Validate form before submission
+    document.getElementById('batch-form').addEventListener('submit', function (event) {
+        const modelName = document.getElementById('model').value;
+        const systemPrompt = document.getElementById('system-prompt');
+
+        // Only require system prompt for non-'o' models
+        if (!modelName.startsWith('o') && !systemPrompt.value.trim()) {
+            event.preventDefault();
+            alert('System prompt is required for this model.');
+            systemPrompt.focus();
+            return false;
+        }
+
+        return true;
     });
 </script>

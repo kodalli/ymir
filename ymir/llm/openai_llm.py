@@ -113,18 +113,25 @@ class OpenAIBatchProcessor:
             "url": "/v1/chat/completions",
             "body": {
                 "model": model,
-                "messages": [
-                    {"role": "system", "content": system_message},
-                    {"role": "user", "content": user_message},
-                ],
+                "messages": [],
                 "max_tokens": max_tokens,
             },
         }
+
+        # For 'o' models (reasoning models), only include user message as system messages are not supported
+        if model.startswith("o"):
+            template["body"]["messages"] = [{"role": "user", "content": user_message}]
+        else:
+            template["body"]["messages"] = [
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": user_message},
+            ]
+
         if seed is not None:
             template["body"]["seed"] = seed
         if temperature is not None:
             template["body"]["temperature"] = temperature
-        if reasoning_effort is not None:
+        if reasoning_effort is not None and model.startswith("o"):
             template["body"]["reasoning_effort"] = reasoning_effort
         return template
 

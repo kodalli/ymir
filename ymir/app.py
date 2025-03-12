@@ -823,6 +823,11 @@ async def process_batch(
                 formatted_system = formatted_system.replace(f"{{{key}}}", str(value))
                 formatted_user = formatted_user.replace(f"{{{key}}}", str(value))
 
+            # For 'o' models, try to include any system instructions in the user prompt
+            if model.startswith("o") and formatted_system.strip():
+                # Only add system content to user prompt if system prompt is not empty
+                formatted_user = f"Instructions: {formatted_system}\n\n{formatted_user}"
+
             return formatted_system, formatted_user
 
         # Prepare template arguments - convert DataFrame to list of dicts

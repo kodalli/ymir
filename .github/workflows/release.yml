@@ -27,9 +27,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install uv
-        run: |
-          curl -sSf https://astral.sh/uv/install.sh | bash
-          echo "${HOME}/.uv/bin" >> $GITHUB_PATH
+        uses: astral-sh/setup-uv@v5
 
       - name: Install dependencies
         run: |

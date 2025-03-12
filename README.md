@@ -1,4 +1,4 @@
-# Ymir: RLHF Dataset Builder
+# Ymir: RLHF Dataset Builder (WIP)
 
 Ymir is a tool for creating and managing RLHF (Reinforcement Learning from Human Feedback) datasets for language models.
 

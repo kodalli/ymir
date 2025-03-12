@@ -118,9 +118,12 @@ class OpenAIBatchProcessor:
             },
         }
 
-        # For 'o' models (reasoning models), only include user message as system messages are not supported
+        # For 'o' models (reasoning models), use developer role instead of system
         if model.startswith("o"):
-            template["body"]["messages"] = [{"role": "user", "content": user_message}]
+            template["body"]["messages"] = [
+                {"role": "developer", "content": system_message},
+                {"role": "user", "content": user_message},
+            ]
         else:
             template["body"]["messages"] = [
                 {"role": "system", "content": system_message},

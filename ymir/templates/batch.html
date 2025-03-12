@@ -70,21 +70,22 @@
                     Prompt Configuration
                 </h2>
                 <div class="mb-4" id="system-prompt-container">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">System Prompt</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" id="system-prompt-label">System
+                        Prompt</label>
                     <textarea id="system-prompt" name="system_prompt" rows="4"
                         class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
                         placeholder="Enter system prompt with format placeholders like {column_name}"
-                        hx-on:input="generatePreview()"></textarea>
+                        hx-on:input="generatePreview()" required></textarea>
                     <p class="text-sm text-gray-500 mt-1">Use {column_name} to reference CSV columns (e.g., {question})
                     </p>
-                    <p id="system-prompt-message" class="text-sm text-orange-600 mt-1 hidden">
+                    <p id="system-prompt-message" class="text-sm text-blue-600 mt-1 hidden">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" viewBox="0 0 20 20"
                             fill="currentColor">
                             <path fill-rule="evenodd"
-                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
                                 clip-rule="evenodd" />
                         </svg>
-                        System prompts are not supported for "o" models. This field will be ignored.
+                        For "o" models, this will be sent as a "developer" message instead of a system message.
                     </p>
                 </div>
                 <div class="mb-4">
@@ -125,13 +126,6 @@
                             step="50"
                             class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500">
                     </div>
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Temperature</label>
-                        <input type="range" id="temperature-range" name="temperature" value="0.7" min="0" max="2"
-                            step="0.1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                            oninput="document.getElementById('temperature-value').innerText = this.value">
-                        <span id="temperature-value" class="text-sm text-gray-600">0.7</span>
-                    </div>
                     <div class="mb-4" id="reasoning-effort-container">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Reasoning Effort</label>
                         <select id="reasoning-effort" name="reasoning_effort"
@@ -140,6 +134,13 @@
                             <option value="medium" selected>Medium</option>
                             <option value="high">High</option>
                         </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Temperature</label>
+                        <input type="range" id="temperature-range" name="temperature" value="0.7" min="0" max="2"
+                            step="0.1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                            oninput="document.getElementById('temperature-value').innerText = this.value">
+                        <span id="temperature-value" class="text-sm text-gray-600">0.7</span>
                     </div>
                 </div>
             </div>
@@ -176,10 +177,17 @@
             <!-- Submit Button -->
             <div class="flex justify-center">
                 <button type="submit"
-                    class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-md transition-colors duration-200 flex items-center">
-                    <span id="submit-indicator" class="htmx-indicator mr-2">
-                        <div class="spinner"></div>
-                    </span>
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-md transition-colors duration-200 flex items-center justify-center shadow-md">
+                    <div id="submit-indicator" class="htmx-indicator mr-3 hidden">
+                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                    </div>
                     Start Batch Processing
                 </button>
             </div>
@@ -195,12 +203,29 @@
     let csvData = [];
     let csvHeaders = [];
 
+    // CSS for HTMX indicators
+    document.addEventListener('DOMContentLoaded', function () {
+        // Add CSS for HTMX indicator
+        const style = document.createElement('style');
+        style.textContent = `
+            .htmx-indicator {
+                display: none;
+            }
+            .htmx-request .htmx-indicator {
+                display: inline-block;
+            }
+            .htmx-request.htmx-indicator {
+                display: inline-block;
+            }
+        `;
+        document.head.appendChild(style);
+    });
+
     // Show/hide reasoning effort option based on model selection
     document.getElementById('model').addEventListener('change', function () {
         const modelName = this.value;
         const reasoningContainer = document.getElementById('reasoning-effort-container');
-        const systemPromptContainer = document.getElementById('system-prompt-container');
-        const systemPromptInput = document.getElementById('system-prompt');
+        const systemPromptLabel = document.getElementById('system-prompt-label');
         const systemPromptMessage = document.getElementById('system-prompt-message');
 
         // Handle reasoning models (o models)
@@ -208,17 +233,15 @@
             // Show reasoning effort options
             reasoningContainer.classList.remove('hidden');
 
-            // Disable system prompt
-            systemPromptInput.disabled = true;
-            systemPromptInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+            // Update system prompt label and show info message
+            systemPromptLabel.textContent = 'Developer Message';
             systemPromptMessage.classList.remove('hidden');
         } else {
             // Hide reasoning effort options
             reasoningContainer.classList.add('hidden');
 
-            // Enable system prompt
-            systemPromptInput.disabled = false;
-            systemPromptInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+            // Restore system prompt label and hide info message
+            systemPromptLabel.textContent = 'System Prompt';
             systemPromptMessage.classList.add('hidden');
         }
 
@@ -316,6 +339,7 @@
         const previewContainer = document.getElementById('preview-container');
         const modelName = document.getElementById('model').value;
         const systemPromptContainer = document.getElementById('preview-system-container');
+        const systemPromptLabel = document.querySelector('#preview-system-container .text-sm.font-medium');
 
         // Use the first row of data for preview
         const dataRow = csvData[0];
@@ -329,14 +353,14 @@
             formattedUserPrompt = formattedUserPrompt.replace(placeholder, dataRow[index]);
         });
 
-        // Handle system prompt preview for 'o' models
+        // Update system/developer message label in preview
         if (modelName.startsWith('o')) {
-            systemPromptContainer.classList.add('hidden');
+            systemPromptLabel.textContent = 'Developer Message:';
         } else {
-            systemPromptContainer.classList.remove('hidden');
-            previewSystem.textContent = formattedSystemPrompt;
+            systemPromptLabel.textContent = 'System Prompt:';
         }
 
+        previewSystem.textContent = formattedSystemPrompt;
         previewUser.textContent = formattedUserPrompt;
         previewContainer.classList.remove('hidden');
     }
@@ -346,12 +370,11 @@
         // Check initial model selection for system prompt handling
         const initialModel = document.getElementById('model').value;
         if (initialModel.startsWith('o')) {
-            const systemPromptInput = document.getElementById('system-prompt');
+            const systemPromptLabel = document.getElementById('system-prompt-label');
             const systemPromptMessage = document.getElementById('system-prompt-message');
 
-            // Disable system prompt for 'o' models
-            systemPromptInput.disabled = true;
-            systemPromptInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+            // Update system prompt to developer message for 'o' models
+            systemPromptLabel.textContent = 'Developer Message';
             systemPromptMessage.classList.remove('hidden');
         }
 
@@ -399,21 +422,5 @@
                 alert('Please upload a CSV file');
             }
         }
-    });
-
-    // Validate form before submission
-    document.getElementById('batch-form').addEventListener('submit', function (event) {
-        const modelName = document.getElementById('model').value;
-        const systemPrompt = document.getElementById('system-prompt');
-
-        // Only require system prompt for non-'o' models
-        if (!modelName.startsWith('o') && !systemPrompt.value.trim()) {
-            event.preventDefault();
-            alert('System prompt is required for this model.');
-            systemPrompt.focus();
-            return false;
-        }
-
-        return true;
     });
 </script>

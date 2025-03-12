@@ -1,5 +1,5 @@
 from loguru import logger
-from langchain.schema import Runnable
+from langchain_core.runnables import Runnable
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 

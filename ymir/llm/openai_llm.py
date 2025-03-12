@@ -10,7 +10,6 @@ OPENAI_CHAT_MODELS = [
     "gpt-4o",
     "gpt-4o-mini",
     "o3-mini",
-    "o3-mini-high",
     "o1-mini",
     "o1-preview",
 ]

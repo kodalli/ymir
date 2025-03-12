@@ -2,17 +2,14 @@ import asyncio
 import json
 import re
 import os
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional
 from dataclasses import dataclass
 import tiktoken
-
-# Add LangChain imports
-from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI, OpenAI as OpenAILLM
-from langchain_anthropic import ChatAnthropic
-from langchain_community.llms import HuggingFaceEndpoint, LlamaCpp
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import JsonOutputParser
 import logging
+from ymir.llm.get_llm import get_llm
+from ymir.llm.invoke import invoke_with_retry
 
 # Constants for formatting
 TUPLE_DELIMITER = "<|>"
@@ -190,6 +187,39 @@ def relationship_to_triplet(relationship: Relationship) -> Triplet:
     )
 
 
+def get_entity_types_prompt(text: str, language: str = DEFAULT_LANGUAGE) -> str:
+    """Generate a prompt for extracting entity types from text."""
+    # Sample the text if it's too long
+    if len(text) > 10000:
+        # Sample beginning, middle, and end of text
+        chunk_size = 3000
+        text_sample = (
+            text[:chunk_size]
+            + "\n...\n"
+            + text[len(text) // 2 - chunk_size // 2 : len(text) // 2 + chunk_size // 2]
+            + "\n...\n"
+            + text[-chunk_size:]
+        )
+    else:
+        text_sample = text
+
+    return f"""
+-Goal-
+Given a text document, identify the most relevant entity types that should be extracted from the text.
+The entity types should be specific enough to categorize the entities in the text, but general enough to be broadly applicable.
+Use {language} as output language.
+
+-Steps-
+1. Read and analyze the text carefully to understand the domains and contexts it covers.
+2. Identify the main types of entities present in the text (e.g., organization, person, location, technology, product, etc.).
+3. Return 3-10 entity types that best categorize the entities in the text, in an array format.
+4. Return the array as a valid JSON array of strings.
+
+Text: {text_sample}
+Output:
+"""
+
+
 def get_entity_extraction_prompt(
     text: str,
     entity_types: List[str] = DEFAULT_ENTITY_TYPES,
@@ -230,74 +260,73 @@ Output:
 """
 
 
-def get_langchain_model(
-    provider: str, model_name: str, api_key: Optional[str] = None
-) -> Any:
+async def extract_entity_types_with_llm(text: str, model_name: str) -> List[str]:
     """
-    Initialize and return the appropriate LangChain LLM based on provider and model.
+    Extract entity types from text using LLM.
 
     Args:
-        provider: The LLM provider name (e.g., "openai", "anthropic", "huggingface")
+        text: The input text to extract entity types from
         model_name: The specific model to use
-        api_key: API key for the provider (optional)
 
     Returns:
-        A LangChain LLM instance
+        A list of entity types
     """
-    # Set API key if provided
-    if api_key:
-        if provider.lower() == "openai":
-            os.environ["OPENAI_API_KEY"] = api_key
-        elif provider.lower() == "anthropic":
-            os.environ["ANTHROPIC_API_KEY"] = api_key
-        elif provider.lower() == "huggingface":
-            os.environ["HUGGINGFACE_API_KEY"] = api_key
+    # Get the LangChain model
+    llm = get_llm(model_name)
 
-    # Initialize the appropriate LLM based on provider
-    if provider.lower() == "openai":
-        if "gpt" in model_name.lower() and "chat" in model_name.lower():
-            return ChatOpenAI(model_name=model_name, temperature=0.2)
-        else:
-            return OpenAILLM(model=model_name, temperature=0.2)
+    # Get the prompt template
+    prompt_str = get_entity_types_prompt(text=text, language=DEFAULT_LANGUAGE)
 
-    elif provider.lower() == "anthropic":
-        return ChatAnthropic(model=model_name, temperature=0.2)
+    # Initialize prompt template - use raw string as we've already formatted it
+    prompt_template = PromptTemplate(
+        input_variables=[],
+        template=prompt_str,
+    )
 
-    elif provider.lower() == "huggingface":
-        return HuggingFaceEndpoint(repo_id=model_name, temperature=0.2, max_length=2048)
+    # Create the LLM chain
+    chain = prompt_template | llm | JsonOutputParser()
 
-    elif provider.lower() == "local":
-        # For local models using llama.cpp
-        return LlamaCpp(
-            model_path=model_name, temperature=0.2, max_tokens=2048, n_ctx=4096
+    # Sample the text if it's too long - handled in the get_entity_types_prompt function
+
+    try:
+        response = await invoke_with_retry(
+            chain, {"text": text, "language": DEFAULT_LANGUAGE}
         )
+        return response
 
-    else:
-        raise ValueError(f"Unsupported provider: {provider}")
+    except Exception as e:
+        logging.error(f"Error extracting entity types: {e}")
+
+    # Return empty list if extraction fails
+    return []
 
 
 async def extract_triplets_with_llm(
     text: str,
-    provider: str,
     model_name: str,
-    api_key: Optional[str] = None,
-    entity_types: List[str] = DEFAULT_ENTITY_TYPES,
+    entity_types: Optional[List[str]] = None,
+    detect_entity_types: bool = True,
 ) -> Dict:
     """
     Extract triplets from text using LangChain with the specified provider and model.
 
     Args:
         text: The input text to extract triplets from
-        provider: The LLM provider to use
         model_name: The specific model to use
-        api_key: API key for the provider (optional)
-        entity_types: List of entity types to extract
+        entity_types: List of entity types to extract (optional)
+        detect_entity_types: Whether to automatically detect entity types (default: True)
 
     Returns:
         A dictionary containing entities, relationships, and triplets
     """
     # Get the LangChain model
-    llm = get_langchain_model(provider, model_name, api_key)
+    llm = get_llm(model_name)
+
+    # Detect entity types if requested and not provided
+    if detect_entity_types and entity_types is None:
+        entity_types = await extract_entity_types_with_llm(text, model_name)
+    elif entity_types is None:
+        entity_types = DEFAULT_ENTITY_TYPES
 
     # Initialize prompt template
     prompt_template = PromptTemplate(
@@ -337,7 +366,7 @@ Output:
     )
 
     # Create the LLM chain
-    chain = LLMChain(llm=llm, prompt=prompt_template)
+    chain = prompt_template | llm
 
     # Generate chunks to handle long texts
     chunks = chunking_by_token_size(text, overlap_token_size=100, max_token_size=1200)
@@ -351,10 +380,13 @@ Output:
 
         # Call the LLM chain with the current chunk
         try:
-            response = await chain.arun(
-                text=chunk["content"],
-                entity_types=", ".join(entity_types),
-                language=DEFAULT_LANGUAGE,
+            response = await invoke_with_retry(
+                chain,
+                {
+                    "text": chunk["content"],
+                    "entity_types": ", ".join(entity_types),
+                    "language": DEFAULT_LANGUAGE,
+                },
             )
         except Exception as e:
             logging.error(f"Error calling LLM: {e}")
@@ -395,6 +427,7 @@ Output:
         "entities": list(entities.values()),
         "relationships": list(relationships.values()),
         "triplets": triplets,
+        "entity_types": entity_types,  # Return the detected entity types
     }
 
 
@@ -438,6 +471,8 @@ def extract_triplets(
     provider: str = "openai",
     model_name: str = "gpt-4o-mini",
     api_key: str = None,
+    entity_types: List[str] = None,
+    detect_entity_types: bool = True,
 ) -> Dict:
     """
     Synchronous wrapper to extract triplets from text.
@@ -447,6 +482,8 @@ def extract_triplets(
         provider: The LLM provider to use (e.g., "openai", "anthropic", "huggingface")
         model_name: The specific model to use
         api_key: API key for the provider (optional, will use environment variable if not provided)
+        entity_types: List of entity types to extract (optional)
+        detect_entity_types: Whether to automatically detect entity types (default: True)
 
     Returns:
         A dictionary containing entities, relationships, and triplets
@@ -456,7 +493,10 @@ def extract_triplets(
 
     async def run():
         return await extract_triplets_with_llm(
-            text=text, provider=provider, model_name=model_name, api_key=api_key
+            text=text,
+            model_name=model_name,
+            entity_types=entity_types,
+            detect_entity_types=detect_entity_types,
         )
 
     loop = asyncio.get_event_loop()
@@ -478,14 +518,33 @@ if __name__ == "__main__":
     The company's hardware products include the iPhone, the Mac computer, the iPad, the Apple Watch, and Apple TV.
     """
 
-    # Extract triplets using OpenAI by default
-    result = extract_triplets(
-        text=sample_text, provider="openai", model_name="gpt-4o-mini"
+    print("------ Using automatic entity type detection ------")
+    # Extract triplets using OpenAI with automatic entity type detection
+    result_auto = extract_triplets(
+        text=sample_text,
+        provider="openai",
+        model_name="gpt-4o-mini",
+        detect_entity_types=True,
     )
 
-    # Print results
-    print(triplets_to_json(result))
+    # Print results with auto-detected entity types
+    print(f"Detected entity types: {result_auto['entity_types']}")
+    print(triplets_to_json(result_auto))
+
+    print("\n------ Using specific entity types ------")
+    # Extract triplets with manually specified entity types
+    result_manual = extract_triplets(
+        text=sample_text,
+        provider="openai",
+        model_name="gpt-4o-mini",
+        entity_types=["company", "product", "person", "location"],
+        detect_entity_types=False,
+    )
+
+    # Print results with manual entity types
+    print(f"Manual entity types: {result_manual['entity_types']}")
+    print(triplets_to_json(result_manual))
 
     # Save triplets to CSV
-    csv_file = triplets_to_csv(result["triplets"])
-    print(f"Triplets saved to {csv_file}")
+    csv_file = triplets_to_csv(result_auto["triplets"])
+    print(f"\nTriplets saved to {csv_file}")

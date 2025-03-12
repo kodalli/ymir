@@ -47,7 +47,7 @@ jobs:
           git fetch --tags
 
           # Run semantic release to determine new version
-          semantic-release version --prerelease --prerelease-token alpha
+          semantic-release version --define-preset-from=simple --prerelease --prerelease-token alpha
 
           # Capture the new version from pyproject.toml
           NEW_VERSION=$(grep -Po '(?<=version = ")[^"]*' pyproject.toml)
@@ -57,7 +57,7 @@ jobs:
           echo "new_version=v${NEW_VERSION}" >> $GITHUB_OUTPUT
 
           # Publish the release
-          semantic-release publish --prerelease --prerelease-token alpha
+          semantic-release publish --define-preset-from=simple --prerelease --prerelease-token alpha
 
       - name: Generate release notes
         id: release_notes

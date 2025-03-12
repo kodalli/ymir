@@ -56,29 +56,11 @@ jobs:
           # Add v prefix for GitHub release
           echo "new_version=v${NEW_VERSION}" >> $GITHUB_OUTPUT
 
+          # Generate release notes using semantic-release (store them in a file)
+          semantic-release changelog
+
           # Publish the release
           semantic-release publish
-
-      - name: Generate release notes
-        id: release_notes
-        if: steps.semantic_release.outputs.new_version != ''
-        run: |
-          # Get the previous tag
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-
-          if [ -z "$PREV_TAG" ]; then
-              echo "No previous tag found. Generating release notes from the beginning."
-              NOTES=$(git log --pretty=format:"- %s")
-          else
-              echo "Generating release notes from $PREV_TAG to current commit."
-              NOTES=$(git log "$PREV_TAG"..HEAD --pretty=format:"- %s")
-          fi
-
-          # Properly escape the notes for GitHub Actions
-          NOTES="${NOTES//'%'/'%25'}"
-          NOTES="${NOTES//$'\n'/'%0A'}"
-          NOTES="${NOTES//$'\r'/'%0D'}"
-          echo "notes=$NOTES" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         if: steps.semantic_release.outputs.new_version != ''
@@ -86,5 +68,5 @@ jobs:
         with:
           tag: ${{ steps.semantic_release.outputs.new_version }}
           name: "Release ${{ steps.semantic_release.outputs.new_version }}"
-          body: ${{ steps.release_notes.outputs.notes }}
+          bodyFile: "CHANGELOG.md"
           token: ${{ secrets.GITHUB_TOKEN }}

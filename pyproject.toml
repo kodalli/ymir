@@ -43,10 +43,20 @@ packages = ["ymir"]
 version_source = "pep621"
 branch = "master"
 upload_to_pypi = false
-changelog = "CHANGELOG.md"
 build_command = "pip install build && python -m build"
 dist_path = "dist/"
 major_on_zero = false
 tag_format = "v{version}"
 prerelease = true
 prerelease_token = "alpha"
+
+[tool.semantic_release.changelog]
+template_dir = "templates"
+changelog_file = "CHANGELOG.md"
+mode = "init"
+
+[tool.semantic_release.changelog.environment]
+trim_blocks = true
+lstrip_blocks = true
+keep_trailing_newline = true
+extensions = []

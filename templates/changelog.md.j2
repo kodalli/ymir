@@ -1,0 +1,13 @@
+# Changelog
+
+{% for version, release in releases.items() %}
+## {{ version }} ({{ release.tagged_date.strftime('%Y-%m-%d') }})
+
+{% for type, commits in release.elements_by_type.items() %}
+### {{ type }}
+
+{% for commit in commits %}
+* {{ commit.message.rstrip() }} ([{{ commit.short_hash }}]({{ commit.hexsha | commit_hash_url }}))
+{% endfor %}
+{% endfor %}
+{% endfor %}

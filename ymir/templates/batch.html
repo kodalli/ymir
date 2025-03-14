@@ -256,23 +256,34 @@
         // Update the file information display
         updateFileInfo(file);
 
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            const content = e.target.result;
-            const lines = content.split('\n');
-            csvHeaders = lines[0].split(',').map(header => header.trim());
+        // Create FormData and append the file
+        const formData = new FormData();
+        formData.append('csv_file', file);
 
-            csvData = [];
-            for (let i = 1; i < Math.min(lines.length, 6); i++) { // Show up to 5 data rows
-                if (lines[i].trim() === '') continue;
-                const row = lines[i].split(',').map(cell => cell.trim());
-                csvData.push(row);
-            }
+        // Send file to server for parsing
+        fetch('/parse_csv', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
 
-            displayCSVPreview();
-            generatePreview();
-        };
-        reader.readAsText(file);
+                // Store parsed data
+                csvHeaders = data.headers;
+                csvData = data.rows;
+
+                // Display CSV preview
+                displayCSVPreview();
+                generatePreview();
+            })
+            .catch(error => {
+                console.error('Error parsing CSV:', error);
+                alert('Error parsing CSV file. Please try again.');
+            });
     }
 
     function updateFileInfo(file) {
@@ -306,6 +317,7 @@
         csvHeaders.forEach(header => {
             const th = document.createElement('th');
             th.className = 'px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider';
+            // Display header string as-is (server already handles whitespace)
             th.textContent = header;
             headerRow.appendChild(th);
         });
@@ -313,10 +325,11 @@
         // Add data rows
         csvData.forEach(row => {
             const tr = document.createElement('tr');
-            row.forEach(cell => {
+            row.forEach((cell, index) => {
                 const td = document.createElement('td');
                 td.className = 'px-3 py-2 whitespace-nowrap text-sm text-gray-500';
-                td.textContent = cell;
+                // Ensure cell is properly displayed as a string
+                td.textContent = cell !== null ? String(cell) : '';
                 tr.appendChild(td);
             });
             csvBody.appendChild(tr);
@@ -345,8 +358,9 @@
         // Replace placeholders in the prompts
         csvHeaders.forEach((header, index) => {
             const placeholder = new RegExp(`\\{${header}\\}`, 'g');
-            formattedSystemPrompt = formattedSystemPrompt.replace(placeholder, dataRow[index]);
-            formattedUserPrompt = formattedUserPrompt.replace(placeholder, dataRow[index]);
+            const value = dataRow[index] !== null ? String(dataRow[index]) : '';
+            formattedSystemPrompt = formattedSystemPrompt.replace(placeholder, value);
+            formattedUserPrompt = formattedUserPrompt.replace(placeholder, value);
         });
 
         // Update system/developer message label in preview

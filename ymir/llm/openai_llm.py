@@ -176,6 +176,9 @@ class OpenAIBatchProcessor:
 
     def submit(self) -> "OpenAIBatchProcessor":
         """Submit batch job to OpenAI and return self for chaining."""
+        # TODO: reenable after testing
+        return
+
         if not self.jsonl_path:
             raise ValueError("No JSONL file created. Call create_batch first.")
 
@@ -198,6 +201,9 @@ class OpenAIBatchProcessor:
 
     def monitor(self) -> "OpenAIBatchProcessor":
         """Monitor batch status and download results when complete."""
+        # TODO: reenable after testing
+        return
+
         if not self.batch_id:
             raise ValueError("No batch job submitted. Call submit first.")
 

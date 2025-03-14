@@ -803,7 +803,7 @@ async def process_batch(
             content = await csv_file.read()
             temp_file.write(content)
 
-        # Read the CSV file
+        # Read the CSV file with pandas for robust parsing
         df = pd.read_csv(temp_file_path)
         os.unlink(temp_file_path)  # Clean up temp file
 
@@ -838,8 +838,12 @@ async def process_batch(
 
             # Replace placeholders with values from the row
             for key, value in row_dict.items():
-                formatted_system = formatted_system.replace(f"{{{key}}}", str(value))
-                formatted_user = formatted_user.replace(f"{{{key}}}", str(value))
+                if value is not None:  # Handle None values
+                    value_str = str(value)
+                else:
+                    value_str = ""
+                formatted_system = formatted_system.replace(f"{{{key}}}", value_str)
+                formatted_user = formatted_user.replace(f"{{{key}}}", value_str)
 
             # No need to include system content in user prompt for 'o' models
             # as we now use the developer role
@@ -1322,6 +1326,40 @@ async def get_pdf_progress(job_id: str):
         return pdf_processing_progress[job_id]
     else:
         return {"error": "Job not found", "percent": 0, "message": "Unknown job ID"}
+
+
+@app.post("/parse_csv")
+async def parse_csv(request: Request, csv_file: UploadFile = File(...)):
+    """Parse a CSV file and return headers and a preview of rows"""
+    try:
+        # Create temp file to store uploaded CSV
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as temp_file:
+            temp_file_path = temp_file.name
+            content = await csv_file.read()
+            temp_file.write(content)
+
+        # Read the CSV file with pandas for robust parsing
+        df = pd.read_csv(temp_file_path)
+        os.unlink(temp_file_path)  # Clean up temp file
+
+        # Validate CSV content
+        if df.empty:
+            return JSONResponse(content={"error": "The CSV file is empty."})
+
+        # Get headers (column names)
+        headers = df.columns.tolist()
+
+        # Get a preview of rows (first 5 rows)
+        # Convert to list of lists for simpler JSON serialization
+        preview_rows = df.head(5).values.tolist()
+
+        return JSONResponse(content={"headers": headers, "rows": preview_rows})
+
+    except Exception as e:
+        logger.error(f"Error parsing CSV: {str(e)}")
+        return JSONResponse(
+            content={"error": f"Error parsing CSV file: {str(e)}"}, status_code=400
+        )
 
 
 if __name__ == "__main__":

@@ -14,6 +14,7 @@ import time
 from openai import OpenAI
 import csv
 from pathlib import Path
+from contextlib import asynccontextmanager
 
 from ymir.llm import (
     get_llm,
@@ -27,8 +28,20 @@ from ymir.triplets.text_to_triplets import extract_triplets
 from ymir.prompt.pdf import extract_chapter_starts, split_pdf_by_chapters
 import pandas as pd
 
+
+# Define lifespan context manager for startup/shutdown events
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup logic
+    rlhf_builder.load_dataset_jsonl()
+    logger.info("Ymir RLHF application started")
+    yield
+    # Shutdown logic (if any)
+    logger.info("Shutting down Ymir RLHF application")
+
+
 # Initialize global variables
-app = FastAPI(title="Ymir AI Dataset Tools")
+app = FastAPI(title="Ymir AI Dataset Tools", lifespan=lifespan)
 rlhf_builder = RLHFDatasetBuilder()
 templates = Jinja2Templates(directory="ymir/templates")
 
@@ -756,12 +769,6 @@ async def provider_models(provider: str):
         return {"error": str(e), "models": []}
 
 
-@app.on_event("startup")
-async def startup_event():
-    rlhf_builder.load_dataset_jsonl()
-    logger.info("Ymir RLHF application started")
-
-
 @app.get("/batch", response_class=HTMLResponse)
 async def batch_page(request: Request):
     """Render the Batch Dataset Builder page"""
@@ -930,27 +937,33 @@ async def document_page(request: Request):
 async def upload_pdf(request: Request, pdf_file: UploadFile = File(...)):
     """Upload a PDF file and return basic information about it"""
     try:
+        logger.info(f"PDF upload received: {pdf_file.filename}")
+
         # Create data directory if it doesn't exist
         data_dir = Path("ymir/data/documents")
         data_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Using data directory: {data_dir.absolute()}")
 
         # Save the uploaded file
         timestamp = int(time.time())
         filename = f"{timestamp}_{pdf_file.filename}"
         file_path = data_dir / filename
+        logger.info(f"Saving file to: {file_path.absolute()}")
 
         with open(file_path, "wb") as f:
             content = await pdf_file.read()
             f.write(content)
+            logger.info(f"Wrote {len(content)} bytes to file")
 
         # Get basic PDF info
         from pypdf import PdfReader
 
         reader = PdfReader(file_path)
         num_pages = len(reader.pages)
+        logger.info(f"PDF has {num_pages} pages")
 
         # Return PDF info
-        return templates.TemplateResponse(
+        response = templates.TemplateResponse(
             "document_pdf_info.html",
             {
                 "request": request,
@@ -959,8 +972,10 @@ async def upload_pdf(request: Request, pdf_file: UploadFile = File(...)):
                 "num_pages": num_pages,
             },
         )
+        logger.info("Returning PDF info template response")
+        return response
     except Exception as e:
-        logger.error(f"Error uploading PDF: {e}")
+        logger.error(f"Error uploading PDF: {e}", exc_info=True)
         return templates.TemplateResponse(
             "document_error.html",
             {

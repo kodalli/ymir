@@ -40,6 +40,13 @@
                             <p class="text-xs text-gray-500">
                                 PDF files only, up to 50MB
                             </p>
+                            <!-- Add a visible upload indicator -->
+                            <div id="pdf-upload-indicator" class="htmx-indicator flex justify-center mt-2">
+                                <div
+                                    class="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-ymir-500">
+                                </div>
+                                <span class="ml-2 text-ymir-500">Uploading PDF...</span>
+                            </div>
                         </div>
                     </div>
                     <div class="mt-4 flex justify-center">
@@ -54,8 +61,12 @@
         </div>
 
         <!-- PDF Information Section -->
-        <div id="pdf-info" class="hidden">
+        <div id="pdf-info">
             <!-- This will be populated by the server after PDF upload -->
+            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mt-2 mb-2">
+                <p>PDF Info section is present but empty. If you're seeing this after upload, the response isn't being
+                    properly received.</p>
+            </div>
         </div>
 
         <!-- TOC Detection Section (shown after PDF upload) -->
@@ -258,20 +269,49 @@
 
         // Listen for events to show/hide sections
         document.body.addEventListener('htmx:afterSwap', function (evt) {
+            console.log('htmx:afterSwap event fired for target:', evt.target.id);
+
             // If PDF info was loaded, show TOC detection section
             if (evt.target.id === 'pdf-info' && evt.target.innerHTML.trim() !== '') {
+                console.log('PDF info loaded, showing TOC detection section');
                 document.getElementById('toc-detection').classList.remove('hidden');
+
+                // Also show a notice that the upload was successful
+                const notice = document.createElement('div');
+                notice.className = 'bg-green-100 border-l-4 border-green-500 p-4 mb-4';
+                notice.innerHTML = '<p class="text-green-700">PDF upload successful! TOC detection section is now available.</p>';
+                evt.target.prepend(notice);
             }
 
             // If TOC results were loaded, show PDF processing section
             if (evt.target.id === 'toc-results' && evt.target.innerHTML.trim() !== '') {
+                console.log('TOC results loaded, showing PDF processing section');
                 document.getElementById('pdf-processing').classList.remove('hidden');
             }
 
             // If processing results were loaded, scroll to them
             if (evt.target.id === 'processing-results' && evt.target.innerHTML.trim() !== '') {
+                console.log('Processing results loaded, scrolling into view');
                 evt.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
+        });
+
+        // Listen for HTMX errors
+        document.body.addEventListener('htmx:responseError', function (evt) {
+            console.error('HTMX response error:', evt.detail.xhr.status, evt.detail.xhr.statusText);
+            console.error('Error response:', evt.detail.xhr.responseText);
+
+            // Show error in the PDF info section
+            const pdfInfo = document.getElementById('pdf-info');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'bg-red-100 border-l-4 border-red-500 p-4 mb-4';
+            errorDiv.innerHTML = `
+                <p class="text-red-700 font-bold">Error uploading PDF:</p>
+                <p class="text-red-700">Status: ${evt.detail.xhr.status} ${evt.detail.xhr.statusText}</p>
+                <p class="text-red-700">Please check the browser console for more details.</p>
+            `;
+            pdfInfo.innerHTML = '';
+            pdfInfo.appendChild(errorDiv);
         });
     });
 </script>

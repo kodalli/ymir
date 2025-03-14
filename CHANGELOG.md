@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.0.0-alpha.7 (2025-03-12)
+
+### Code Style
+
+- Update color palette to use custom 'ymir' colors across templates and stylesheets
+  ([`0d55de4`](https://github.com/kodalli/ymir/commit/0d55de4632bebccf34ada058e76725e4236f232c))
+
+
 ## v0.0.0-alpha.6 (2025-03-12)
 
 ### Refactoring

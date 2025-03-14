@@ -1,12 +1,29 @@
 # CHANGELOG
 
 
+## v0.0.0-alpha.8 (2025-03-14)
+
+
 ## v0.0.0-alpha.7 (2025-03-12)
 
 ### Code Style
 
 - Update color palette to use custom 'ymir' colors across templates and stylesheets
   ([`0d55de4`](https://github.com/kodalli/ymir/commit/0d55de4632bebccf34ada058e76725e4236f232c))
+
+### Features
+
+- Add progress tracking for PDF processing and enhance logging for better user feedback, currently
+  loading bar disabled wip
+  ([`27a70c5`](https://github.com/kodalli/ymir/commit/27a70c51b7b9bd0ff7305f376d4d80c9ed5cc0f0))
+
+- Enhance TOC detection process with improved logging, user instructions, and UI updates for better
+  user experience
+  ([`dfb2967`](https://github.com/kodalli/ymir/commit/dfb29675041402b293ceb7c51f6c3eb11563c046))
+
+- Implement async lifespan context manager for app startup/shutdown and enhance PDF upload handling
+  with improved logging and user feedback
+  ([`ab7c402`](https://github.com/kodalli/ymir/commit/ab7c402ec5701098d70e86279f801f6cb861d7e2))
 
 
 ## v0.0.0-alpha.6 (2025-03-12)

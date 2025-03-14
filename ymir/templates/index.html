@@ -199,8 +199,12 @@
                         </a>
                         <a href="#"
                             class="nav-item border-transparent text-gray-500 hover:text-ymir-500 inline-flex items-center px-1 pt-1 text-sm font-medium"
-                            hx-get="/document" hx-target="#main-content" hx-swap="innerHTML"
-                            _="on click remove .active from .nav-item then add .active to me">
+                            hx-get="/document" hx-target="#main-content" hx-swap="innerHTML" _="on click remove .active from .nav-item then add .active to me
+                               then wait 10ms
+                               then if #pdf-info exists set #pdf-info.innerHTML to ''
+                               then if #toc-detection exists add .hidden to #toc-detection
+                               then if #pdf-processing exists add .hidden to #pdf-processing
+                               then if #processing-results exists add .hidden to #processing-results">
                             Document Processor
                         </a>
                         <a href="#"

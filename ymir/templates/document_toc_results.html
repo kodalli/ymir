@@ -12,12 +12,16 @@
             <h3 class="text-sm font-medium text-green-800">Table of Contents Detected</h3>
             <div class="mt-2 text-sm text-green-700">
                 <p>Found {{ chapters|length }} chapters in the document.</p>
+                <p class="mt-1">You can now proceed to the PDF Processing section below to split your document into
+                    chapters or extract text.</p>
             </div>
         </div>
     </div>
 </div>
 
-<div class="overflow-x-auto hover-card transition duration-300 ease-in-out">
+<div
+    class="overflow-x-auto bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6 hover-card transition duration-300 ease-in-out">
+    <h4 class="text-lg font-semibold mb-2 text-gray-800">Detected Chapters</h4>
     <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
@@ -42,5 +46,41 @@
     </table>
 </div>
 
+<div class="flex justify-end">
+    <button
+        class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded transition duration-200 shadow-sm"
+        onclick="showProcessingSection()">
+        Continue to Processing Options
+    </button>
+</div>
+
 <input type="hidden" name="chapter_starts" value="{{ chapter_starts }}">
 <input type="hidden" name="pdf_path" value="{{ pdf_path }}">
+
+<script>
+    // Function to show the PDF processing section
+    function showProcessingSection() {
+        const processingSection = document.getElementById('pdf-processing');
+        if (processingSection) {
+            processingSection.classList.remove('hidden');
+            processingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    // Automatically show the PDF processing section when TOC results are loaded
+    document.addEventListener('DOMContentLoaded', function () {
+        // Execute after a small delay to ensure the DOM is updated
+        setTimeout(function () {
+            showProcessingSection();
+        }, 200);
+    });
+
+    // Trigger the DOMContentLoaded event since we might be loading this via HTMX
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+            showProcessingSection();
+        });
+    } else {
+        showProcessingSection();
+    }
+</script>

@@ -80,38 +80,63 @@
                 </svg>
                 Table of Contents Detection
             </h2>
-            <div class="mb-4">
-                <div class="flex items-center mb-4">
-                    {% set button_text = "Auto-Detect Table of Contents" %}
-                    {% set button_color = "blue" %}
-                    {% set button_id = "detect-toc-btn" %}
-                    {% set button_loading_indicator = true %}
-                    {% set button_indicator_id = "toc-indicator" %}
-                    {% set button_htmx_attrs = 'hx-post="/detect_toc" hx-target="#toc-results"
-                    hx-indicator="#toc-indicator" hx-include="[name=\'pdf_path\']"' %}
-                    {% include "components/button.html" %}
-                    <span class="text-sm text-gray-600 ml-4">or manually specify the page range:</span>
-                </div>
 
-                <div class="flex items-center space-x-4">
-                    <div class="w-1/4">
-                        <label for="toc-start-page" class="block text-sm font-medium text-gray-700 mb-1">Start
-                            Page</label>
-                        <input type="number" id="toc-start-page" name="toc_start_page" min="1"
-                            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ymir-500 focus:border-ymir-500"
-                            placeholder="1">
-                    </div>
-                    <div class="w-1/4">
-                        <label for="toc-end-page" class="block text-sm font-medium text-gray-700 mb-1">End Page</label>
-                        <input type="number" id="toc-end-page" name="toc_end_page" min="1"
-                            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ymir-500 focus:border-ymir-500"
-                            placeholder="3">
-                    </div>
-                </div>
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                <p class="text-sm text-blue-700">
+                    <strong>Instructions:</strong> You can either automatically detect the table of contents or specify
+                    a page range where the TOC is located.
+                    The algorithm will look for chapter links in your PDF to identify the beginning of each chapter.
+                </p>
             </div>
 
-            <div id="toc-results" class="mb-4">
-                <!-- This will be populated with TOC detection results -->
+            <div class="mb-4">
+                <div class="mb-4">
+                    <div class="flex items-center space-x-4 mb-2">
+                        <div class="w-1/4">
+                            <label for="toc-start-page" class="block text-sm font-medium text-gray-700 mb-1">TOC Start
+                                Page</label>
+                            <input type="number" id="toc-start-page" name="toc_start_page" min="1"
+                                class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ymir-500 focus:border-ymir-500"
+                                placeholder="1">
+                        </div>
+                        <div class="w-1/4">
+                            <label for="toc-end-page" class="block text-sm font-medium text-gray-700 mb-1">TOC End
+                                Page</label>
+                            <input type="number" id="toc-end-page" name="toc_end_page" min="1"
+                                class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ymir-500 focus:border-ymir-500"
+                                placeholder="3">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center mt-4">
+                        <button id="detect-toc-btn"
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-md transition-colors duration-200 flex items-center shadow-sm"
+                            hx-post="/detect_toc" hx-target="#toc-results" hx-indicator="#toc-indicator"
+                            hx-include="[name='pdf_path'], [name='toc_start_page'], [name='toc_end_page']">
+                            <div class="w-5 flex-shrink-0 flex justify-start mr-2">
+                                <div id="toc-indicator" class="htmx-indicator inline-flex">
+                                    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+                                        fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                        </path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <span class="flex-grow text-center">Detect Table of Contents</span>
+                            <div class="w-5 flex-shrink-0 flex justify-end ml-2 invisible"></div>
+                        </button>
+                        <p class="text-sm text-gray-600 ml-4">
+                            This will use the functions from <code>pdf.py</code> to detect chapters in your document.
+                        </p>
+                    </div>
+                </div>
+
+                <div id="toc-results" class="mb-4 mt-6">
+                    <!-- This will be populated with TOC detection results -->
+                </div>
             </div>
         </div>
 
@@ -125,42 +150,70 @@
                 </svg>
                 PDF Processing Options
             </h2>
-            <div class="mb-4">
+
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                <p class="text-sm text-blue-700">
+                    <strong>Instructions:</strong> Now that we've identified chapters in your PDF, you can select
+                    processing options below.
+                    You can split the PDF into separate chapter files, extract text for each chapter, and create a CSV
+                    dataset for batch processing.
+                </p>
+            </div>
+
+            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
+                <h3 class="text-lg font-semibold mb-4">Processing Options</h3>
                 <div class="flex flex-col space-y-4">
                     <div class="flex items-center">
                         <input type="checkbox" id="split-chapters" name="split_chapters"
                             class="h-4 w-4 text-ymir-600 focus:ring-ymir-500 border-gray-300 rounded">
-                        <label for="split-chapters" class="ml-2 block text-sm text-gray-700">Split PDF into individual
-                            chapter files</label>
+                        <label for="split-chapters" class="ml-2 block text-sm text-gray-700">
+                            <span class="font-medium">Split PDF into individual chapter files</span>
+                            <span class="text-xs text-gray-500 block">This will create a separate PDF file for each
+                                detected chapter</span>
+                        </label>
                     </div>
 
                     <div class="flex items-center">
                         <input type="checkbox" id="extract-text" name="extract_text"
                             class="h-4 w-4 text-ymir-600 focus:ring-ymir-500 border-gray-300 rounded" checked>
-                        <label for="extract-text" class="ml-2 block text-sm text-gray-700">Extract text content from
-                            chapters</label>
+                        <label for="extract-text" class="ml-2 block text-sm text-gray-700">
+                            <span class="font-medium">Extract text content from chapters</span>
+                            <span class="text-xs text-gray-500 block">The text from each chapter will be extracted and
+                                saved</span>
+                        </label>
                     </div>
 
                     <div class="flex items-center">
                         <input type="checkbox" id="create-csv" name="create_csv"
                             class="h-4 w-4 text-ymir-600 focus:ring-ymir-500 border-gray-300 rounded" checked>
-                        <label for="create-csv" class="ml-2 block text-sm text-gray-700">Generate CSV dataset for Batch
-                            Processing</label>
+                        <label for="create-csv" class="ml-2 block text-sm text-gray-700">
+                            <span class="font-medium">Generate CSV dataset for Batch Processing</span>
+                            <span class="text-xs text-gray-500 block">Creates a CSV file with chapter data that can be
+                                used with the Batch Processing tool</span>
+                        </label>
                     </div>
                 </div>
 
                 <div class="mt-6">
-                    {% set button_text = "Process Document" %}
-                    {% set button_type = "button" %}
-                    {% set button_color = "green" %}
-                    {% set button_id = "process-pdf-btn" %}
-                    {% set button_loading_indicator = true %}
-                    {% set button_indicator_id = "processing-indicator" %}
-                    {% set button_htmx_attrs = 'hx-post="/process_pdf" hx-target="#processing-results"
-                    hx-indicator="#processing-indicator" hx-include="[name=\'pdf_path\'], [name=\'toc_start_page\'],
-                    [name=\'toc_end_page\'], [name=\'split_chapters\'], [name=\'extract_text\'], [name=\'create_csv\'],
-                    [name=\'chapter_starts\']"' %}
-                    {% include "components/button.html" %}
+                    <button id="process-pdf-btn"
+                        class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-md transition-colors duration-200 flex items-center shadow-sm"
+                        hx-post="/process_pdf" hx-target="#processing-results" hx-indicator="#processing-indicator"
+                        hx-include="[name='pdf_path'], [name='toc_start_page'], [name='toc_end_page'], [name='split_chapters'], [name='extract_text'], [name='create_csv'], [name='chapter_starts']">
+                        <div class="w-5 flex-shrink-0 flex justify-start mr-2">
+                            <div id="processing-indicator" class="htmx-indicator inline-flex">
+                                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+                                    fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                    </path>
+                                </svg>
+                            </div>
+                        </div>
+                        <span class="flex-grow text-center">Process Document</span>
+                        <div class="w-5 flex-shrink-0 flex justify-end ml-2 invisible"></div>
+                    </button>
                 </div>
             </div>
         </div>
@@ -272,15 +325,24 @@
             console.log('htmx:afterSwap event fired for target:', evt.target.id);
 
             // If PDF info was loaded, show TOC detection section
-            if (evt.target.id === 'pdf-info' && evt.target.innerHTML.trim() !== '') {
-                console.log('PDF info loaded, showing TOC detection section');
-                document.getElementById('toc-detection').classList.remove('hidden');
+            if (evt.target.id === 'pdf-info') {
+                console.log('PDF info section updated, checking content...');
+                console.log('Content:', evt.target.innerHTML);
 
-                // Also show a notice that the upload was successful
-                const notice = document.createElement('div');
-                notice.className = 'bg-green-100 border-l-4 border-green-500 p-4 mb-4';
-                notice.innerHTML = '<p class="text-green-700">PDF upload successful! TOC detection section is now available.</p>';
-                evt.target.prepend(notice);
+                // Force show TOC detection regardless of content
+                const tocSection = document.getElementById('toc-detection');
+                if (tocSection) {
+                    console.log('Found TOC detection section, removing hidden class');
+                    tocSection.classList.remove('hidden');
+
+                    // Also show a notice that the upload was successful
+                    const notice = document.createElement('div');
+                    notice.className = 'bg-green-100 border-l-4 border-green-500 p-4 mb-4';
+                    notice.innerHTML = '<p class="text-green-700">PDF upload successful! TOC detection section is now available.</p>';
+                    evt.target.prepend(notice);
+                } else {
+                    console.error('TOC detection section not found in the DOM');
+                }
             }
 
             // If TOC results were loaded, show PDF processing section
@@ -313,5 +375,24 @@
             pdfInfo.innerHTML = '';
             pdfInfo.appendChild(errorDiv);
         });
+
+        // Add manual check function to reveal TOC Detection section
+        function checkForPdfPath() {
+            const pdfPathInput = document.querySelector('input[name="pdf_path"]');
+            if (pdfPathInput && pdfPathInput.value) {
+                console.log("Found PDF path input with value:", pdfPathInput.value);
+                document.getElementById('toc-detection').classList.remove('hidden');
+                return true;
+            }
+            return false;
+        }
+
+        // Set up a timer to periodically check for the PDF path
+        const checkInterval = setInterval(function () {
+            if (checkForPdfPath()) {
+                clearInterval(checkInterval);
+                console.log("Successfully showed TOC detection section");
+            }
+        }, 500); // Check every 500ms
     });
 </script>

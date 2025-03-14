@@ -15,6 +15,15 @@
                 <p><strong>Pages:</strong> {{ num_pages }}</p>
                 <p class="text-xs text-blue-600 mt-1">The PDF has been saved and is ready for processing.</p>
             </div>
+
+            <!-- Add continue button -->
+            <div class="mt-4">
+                <button
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition duration-200 shadow-sm"
+                    onclick="document.getElementById('toc-detection').classList.remove('hidden'); this.parentNode.removeChild(this);">
+                    Continue to TOC Detection
+                </button>
+            </div>
         </div>
     </div>
     <input type="hidden" name="pdf_path" value="{{ file_path }}">

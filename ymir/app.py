@@ -994,16 +994,32 @@ async def detect_toc(
 ):
     """Detect table of contents in a PDF file"""
     try:
+        logger.info(f"Detecting TOC in PDF: {pdf_path}")
+        logger.info(f"TOC page range provided: {toc_start_page}-{toc_end_page}")
+
         # Check if manual TOC range was provided
         toc_page_range = None
         if toc_start_page is not None and toc_end_page is not None:
             toc_page_range = (toc_start_page, toc_end_page)
+            logger.info(f"Using manually specified TOC page range: {toc_page_range}")
 
-        # Extract chapter starts
+        # Extract chapter starts using the function from pdf.py
         chapter_starts = extract_chapter_starts(pdf_path, toc_page_range)
+        logger.info(f"Detected chapter starts (0-indexed): {chapter_starts}")
+
+        if not chapter_starts:
+            logger.warning("No chapter starts detected in the PDF")
+            return templates.TemplateResponse(
+                "document_error.html",
+                {
+                    "request": request,
+                    "error_message": "No chapters detected in the PDF. Try specifying a manual TOC page range where the table of contents is located.",
+                },
+            )
 
         # Convert to 1-indexed for display
         chapter_pages = [page + 1 for page in chapter_starts]
+        logger.info(f"Chapter pages (1-indexed for display): {chapter_pages}")
 
         # Create chapter info
         chapters = []
@@ -1030,7 +1046,7 @@ async def detect_toc(
             },
         )
     except Exception as e:
-        logger.error(f"Error detecting TOC: {e}")
+        logger.error(f"Error detecting TOC: {e}", exc_info=True)
         return templates.TemplateResponse(
             "document_error.html",
             {

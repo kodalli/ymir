@@ -1,7 +1,8 @@
-<div class="bg-green-50 border-l-4 border-green-500 p-4 mb-6 hover-card transition duration-300 ease-in-out">
+<div
+    class="bg-ymir-50 dark:bg-ymir-950/20 border-l-4 border-ymir-400 dark:border-ymir-600 p-4 mb-6 transition duration-300 ease-in-out hover:bg-ymir-100 dark:hover:bg-ymir-900/30">
     <div class="flex">
         <div class="flex-shrink-0">
-            <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+            <svg class="h-5 w-5 text-ymir-400 dark:text-ymir-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
                 fill="currentColor">
                 <path fill-rule="evenodd"
                     d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -9,8 +10,8 @@
             </svg>
         </div>
         <div class="ml-3">
-            <h3 class="text-sm font-medium text-green-800">PDF Processing Complete</h3>
-            <div class="mt-2 text-sm text-green-700">
+            <h3 class="text-sm font-medium text-ymir-800 dark:text-ymir-300">PDF Processing Complete</h3>
+            <div class="mt-2 text-sm text-ymir-700 dark:text-ymir-400">
                 <p>Successfully processed the document.</p>
             </div>
         </div>
@@ -18,22 +19,24 @@
 </div>
 
 <div
-    class="bg-white rounded-lg shadow-md p-6 border border-gray-100 mb-6 hover-card transition duration-300 ease-in-out">
-    <h3 class="text-lg font-semibold mb-4">Processing Results</h3>
+    class="bg-white dark:bg-dark-surface rounded-lg shadow-md p-6 border border-gray-100 dark:border-gray-700 mb-6 transition duration-300 ease-in-out hover:shadow-lg hover:border-ymir-200 dark:hover:border-ymir-800">
+    <h3 class="text-lg font-semibold mb-4 dark:text-dark-text-primary">Processing Results</h3>
 
     {% if results.chapters_processed > 0 %}
     <div class="mb-4">
-        <p class="text-gray-700"><strong>Chapters Processed:</strong> {{ results.chapters_processed }}</p>
+        <p class="text-gray-700 dark:text-gray-300"><strong>Chapters Processed:</strong> {{ results.chapters_processed
+            }}</p>
     </div>
     {% endif %}
 
     {% if results.csv_path %}
     <div class="mb-4">
-        <p class="text-gray-700"><strong>CSV Dataset:</strong> <span class="text-sm text-gray-500">{{ results.csv_path
+        <p class="text-gray-700 dark:text-gray-300"><strong>CSV Dataset:</strong> <span
+                class="text-sm text-gray-500 dark:text-gray-400">{{ results.csv_path
                 }}</span></p>
         <div class="mt-2">
             <a href="/download?file={{ results.csv_path }}"
-                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-ymir-600 hover:bg-ymir-700 dark:bg-ymir-500 dark:hover:bg-ymir-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ymir-500 dark:focus:ring-ymir-400">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd"
                         d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
@@ -42,7 +45,7 @@
                 Download CSV
             </a>
             <a href="/batch" hx-get="/batch" hx-target="#main-content" hx-swap="innerHTML"
-                class="ml-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                class="ml-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-ymir-600 hover:bg-ymir-700 dark:bg-ymir-500 dark:hover:bg-ymir-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ymir-500 dark:focus:ring-ymir-400">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd"
                         d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z"
@@ -56,14 +59,17 @@
 
     {% if results.chapter_pdfs %}
     <div class="mt-6">
-        <h4 class="text-md font-medium mb-2">Individual Chapter PDFs:</h4>
-        <div class="bg-gray-50 p-4 rounded-md max-h-60 overflow-y-auto">
+        <h4 class="text-md font-medium mb-2 dark:text-gray-200">Individual Chapter PDFs:</h4>
+        <div
+            class="bg-gray-50 dark:bg-dark-surface-lighter p-4 rounded-md max-h-60 overflow-y-auto border border-gray-100 dark:border-gray-700 transition duration-200 hover:border-ymir-200 dark:hover:border-ymir-800">
             <ul class="space-y-2">
                 {% for pdf_path in results.chapter_pdfs %}
                 <li class="text-sm">
-                    <div class="flex items-center justify-between">
-                        <span class="text-gray-700">{{ pdf_path.split('/')[-1] }}</span>
-                        <a href="/download?file={{ pdf_path }}" class="text-blue-600 hover:text-blue-800">
+                    <div
+                        class="flex items-center justify-between p-2 rounded transition-colors duration-150 hover:bg-white dark:hover:bg-dark-surface">
+                        <span class="text-gray-700 dark:text-gray-300">{{ pdf_path.split('/')[-1] }}</span>
+                        <a href="/download?file={{ pdf_path }}"
+                            class="text-ymir-600 hover:text-ymir-800 dark:text-ymir-500 dark:hover:text-ymir-400">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
                                 fill="currentColor">
                                 <path fill-rule="evenodd"
@@ -82,7 +88,7 @@
 
 <div class="flex space-x-4">
     <a href="/document" hx-get="/document" hx-target="#main-content" hx-swap="innerHTML"
-        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ymir-500">
+        class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-dark-surface-lighter focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ymir-500 dark:focus:ring-ymir-400 dark:focus:ring-offset-dark-surface">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd"
                 d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
@@ -91,3 +97,8 @@
         Process Another Document
     </a>
 </div>
+
+<!-- Hidden input for job_id (used by progress tracking) -->
+{% if results.job_id %}
+<input type="hidden" name="job_id" value="{{ results.job_id }}">
+{% endif %}

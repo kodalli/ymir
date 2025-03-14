@@ -1,7 +1,8 @@
-<div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 hover-card transition duration-300 ease-in-out">
+<div
+    class="bg-ymir-50 dark:bg-ymir-950/20 border-l-4 border-ymir-400 dark:border-ymir-600 p-4 mb-6 transition duration-300 ease-in-out hover:bg-ymir-100 dark:hover:bg-ymir-900/30">
     <div class="flex">
         <div class="flex-shrink-0">
-            <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+            <svg class="h-5 w-5 text-ymir-400 dark:text-ymir-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
                 fill="currentColor">
                 <path fill-rule="evenodd"
                     d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
@@ -9,17 +10,18 @@
             </svg>
         </div>
         <div class="ml-3">
-            <h3 class="text-sm font-medium text-blue-800">PDF Successfully Uploaded</h3>
-            <div class="mt-2 text-sm text-blue-700">
+            <h3 class="text-sm font-medium text-ymir-800 dark:text-ymir-300">PDF Successfully Uploaded</h3>
+            <div class="mt-2 text-sm text-ymir-700 dark:text-ymir-400">
                 <p><strong>Filename:</strong> {{ filename }}</p>
                 <p><strong>Pages:</strong> {{ num_pages }}</p>
-                <p class="text-xs text-blue-600 mt-1">The PDF has been saved and is ready for processing.</p>
+                <p class="text-xs text-ymir-600 dark:text-ymir-500 mt-1">The PDF has been saved and is ready for
+                    processing.</p>
             </div>
 
             <!-- Add continue button -->
             <div class="mt-4">
                 <button
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition duration-200 shadow-sm"
+                    class="bg-ymir-600 hover:bg-ymir-700 dark:bg-ymir-500 dark:hover:bg-ymir-600 text-white font-medium py-2 px-4 rounded transition duration-200 shadow-sm"
                     onclick="document.getElementById('toc-detection').classList.remove('hidden'); this.parentNode.removeChild(this);">
                     Continue to TOC Detection
                 </button>

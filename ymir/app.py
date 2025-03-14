@@ -34,10 +34,10 @@ import pandas as pd
 async def lifespan(app: FastAPI):
     # Startup logic
     rlhf_builder.load_dataset_jsonl()
-    logger.info("Ymir RLHF application started")
+    logger.info("Ymir Dataset Tools application started")
     yield
     # Shutdown logic (if any)
-    logger.info("Shutting down Ymir RLHF application")
+    logger.info("Shutting down Ymir Dataset Tools application")
 
 
 # Initialize global variables
@@ -47,6 +47,9 @@ templates = Jinja2Templates(directory="ymir/templates")
 
 # Initialize an empty triplet dataset (this would be replaced by a proper database in production)
 triplet_dataset = []
+
+# Progress tracking for PDF processing
+pdf_processing_progress = {}
 
 # Create static files directory for CSS and JS
 try:
@@ -1069,13 +1072,23 @@ async def process_pdf(
 ):
     """Process a PDF file based on detected chapters"""
     try:
+        # Generate a unique job ID for tracking progress
+        job_id = f"pdf_job_{int(time.time())}"
+
+        # Initialize progress tracking
+        update_progress(job_id, "init", 0, 100, "Starting PDF processing")
+
         # Parse chapter starts
         chapter_starts_list = [int(page) for page in chapter_starts.split(",")]
+        update_progress(
+            job_id, "chapters", 1, 3, f"Identified {len(chapter_starts_list)} chapters"
+        )
 
         # Create output directory
         timestamp = int(time.time())
         output_dir = Path("ymir/data/documents") / f"output_{timestamp}"
         output_dir.mkdir(parents=True, exist_ok=True)
+        update_progress(job_id, "prepare", 2, 3, "Created output directory")
 
         # Base filename for outputs
         pdf_filename = os.path.basename(pdf_path)
@@ -1086,19 +1099,47 @@ async def process_pdf(
             "chapters_processed": 0,
             "csv_path": None,
             "chapter_pdfs": [],
+            "job_id": job_id,  # Include job ID in results
         }
+
+        update_progress(job_id, "processing", 3, 3, "Starting PDF operations")
 
         # Split PDF if requested
         if split_chapters:
-            chapter_contents = split_pdf_by_chapters(
-                pdf_path, output_prefix, chapter_starts_list
+            # Define a progress callback to track PDF splitting
+            def progress_callback(current, total, message=""):
+                # progress_percent = 10 + int(
+                #     (current / total) * 60
+                # )  # Scale to 10-70% range
+                update_progress(job_id, "splitting", current, total, message)
+
+            update_progress(
+                job_id, "splitting", 0, 100, "Starting PDF chapter splitting"
             )
+
+            # Call split_pdf_by_chapters with the progress callback
+            chapter_contents = split_pdf_by_chapters(
+                pdf_path,
+                output_prefix,
+                chapter_starts_list,
+                progress_callback=progress_callback,
+            )
+
             results["chapters_processed"] = len(chapter_contents)
             results["chapter_pdfs"] = list(chapter_contents.keys())
+
+            update_progress(
+                job_id,
+                "splitting",
+                100,
+                100,
+                f"Split PDF into {len(chapter_contents)} chapters",
+            )
 
         # Create CSV if requested
         if create_csv:
             csv_path = f"{output_prefix}_chapters.csv"
+            update_progress(job_id, "csv", 0, 100, "Creating CSV dataset")
 
             # If we already have chapter contents from splitting
             if split_chapters and extract_text:
@@ -1106,6 +1147,7 @@ async def process_pdf(
                     writer = csv.writer(csvfile)
                     writer.writerow(["chapter", "pages", "content"])
 
+                    total_chapters = len(chapter_contents)
                     for i, (pdf_path, content) in enumerate(chapter_contents.items()):
                         chapter_num = i + 1
                         start_page = chapter_starts_list[i] + 1  # Convert to 1-indexed
@@ -1118,11 +1160,23 @@ async def process_pdf(
 
                         # Join all page content
                         full_content = "\n\n".join(content)
-
                         writer.writerow([chapter_num, pages, full_content])
+
+                        # Update progress (70-90% range for CSV creation)
+                        # progress_percent = 70 + int((i / total_chapters) * 20)
+                        update_progress(
+                            job_id,
+                            "csv",
+                            i + 1,
+                            total_chapters,
+                            f"Processing chapter {chapter_num} for CSV",
+                        )
 
             # If we need to extract text without splitting
             elif extract_text:
+                update_progress(
+                    job_id, "extracting_text", 0, 100, "Extracting text from PDF"
+                )
                 from pypdf import PdfReader
 
                 reader = PdfReader(pdf_path)
@@ -1131,7 +1185,8 @@ async def process_pdf(
                     writer = csv.writer(csvfile)
                     writer.writerow(["chapter", "pages", "content"])
 
-                    for i in range(len(chapter_starts_list) - 1):
+                    total_chapters = len(chapter_starts_list) - 1
+                    for i in range(total_chapters):
                         chapter_num = i + 1
                         start_page = chapter_starts_list[i]
                         end_page = chapter_starts_list[i + 1]
@@ -1139,13 +1194,38 @@ async def process_pdf(
 
                         # Extract text from all pages in this chapter
                         chapter_content = []
-                        for page_num in range(start_page, end_page):
+                        total_pages = end_page - start_page
+                        for page_idx, page_num in enumerate(
+                            range(start_page, end_page)
+                        ):
                             if page_num < len(reader.pages):
                                 page_text = reader.pages[page_num].extract_text()
                                 chapter_content.append(page_text)
 
+                                # Update progress for each page processed
+                                # sub_progress = int(
+                                #     (page_idx / max(total_pages, 1)) * 100
+                                # )
+                                update_progress(
+                                    job_id,
+                                    "extracting_page",
+                                    page_idx + 1,
+                                    total_pages,
+                                    f"Extracting text from chapter {chapter_num}, page {page_num + 1}",
+                                )
+
                         full_content = "\n\n".join(chapter_content)
                         writer.writerow([chapter_num, pages, full_content])
+
+                        # Update overall progress (70-90% range)
+                        # progress_percent = 70 + int((i / total_chapters) * 20)
+                        update_progress(
+                            job_id,
+                            "csv",
+                            i + 1,
+                            total_chapters,
+                            f"Added chapter {chapter_num} to CSV",
+                        )
 
             # Just create a CSV with chapter info but no content
             else:
@@ -1153,7 +1233,8 @@ async def process_pdf(
                     writer = csv.writer(csvfile)
                     writer.writerow(["chapter", "pages", "content"])
 
-                    for i in range(len(chapter_starts_list) - 1):
+                    total_chapters = len(chapter_starts_list) - 1
+                    for i in range(total_chapters):
                         chapter_num = i + 1
                         start_page = chapter_starts_list[i] + 1  # Convert to 1-indexed
                         end_page = chapter_starts_list[i + 1]
@@ -1161,7 +1242,18 @@ async def process_pdf(
 
                         writer.writerow([chapter_num, pages, ""])
 
+                        # Update progress
+                        # progress_percent = 70 + int((i / total_chapters) * 20)
+                        update_progress(
+                            job_id,
+                            "csv",
+                            i + 1,
+                            total_chapters,
+                            f"Added chapter {chapter_num} info to CSV",
+                        )
+
             results["csv_path"] = csv_path
+            update_progress(job_id, "completed", 100, 100, "PDF processing complete")
 
         # Return processing results
         return templates.TemplateResponse(
@@ -1173,7 +1265,7 @@ async def process_pdf(
             },
         )
     except Exception as e:
-        logger.error(f"Error processing PDF: {e}")
+        logger.error(f"Error processing PDF: {e}", exc_info=True)
         return templates.TemplateResponse(
             "document_error.html",
             {
@@ -1204,6 +1296,32 @@ async def delete_triplet(request: Request, triplet_id: int):
             "message": f"Triplet with ID {triplet_id} not found",
         }
     )
+
+
+def update_progress(
+    job_id: str, step: str, current: int, total: int, message: str = ""
+):
+    """Update the progress for a given job ID"""
+    progress = {
+        "step": step,
+        "current": current,
+        "total": total,
+        "percent": int((current / max(total, 1)) * 100),
+        "message": message,
+        "time": time.time(),
+    }
+    pdf_processing_progress[job_id] = progress
+    logger.info(f"Progress update for job {job_id}: {progress['percent']}% - {message}")
+    return progress
+
+
+@app.get("/pdf_progress/{job_id}")
+async def get_pdf_progress(job_id: str):
+    """Get the progress for a PDF processing job"""
+    if job_id in pdf_processing_progress:
+        return pdf_processing_progress[job_id]
+    else:
+        return {"error": "Job not found", "percent": 0, "message": "Unknown job ID"}
 
 
 if __name__ == "__main__":

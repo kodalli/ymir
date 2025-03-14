@@ -1,14 +1,15 @@
 <!-- Document Processor Content -->
 <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold text-center mb-4">Document Processor</h1>
-    <p class="text-center mb-8 text-gray-700">Process PDF documents to create structured datasets for batch processing
+    <p class="text-center mb-8 text-gray-700 dark:text-gray-300">Process PDF documents to create structured datasets for
+        batch processing
     </p>
 
     <div
-        class="bg-white rounded-lg shadow-md p-6 border border-gray-100 tool-card hover-card transition duration-300 ease-in-out">
+        class="bg-white dark:bg-dark-surface rounded-lg shadow-md p-6 border border-gray-100 dark:border-dark-border tool-card hover-card transition duration-300 ease-in-out">
         <!-- PDF Upload Section -->
         <div class="mb-6">
-            <h2 class="text-xl font-semibold mb-4 flex items-center text-ymir-700">
+            <h2 class="text-xl font-semibold mb-4 flex items-center text-ymir-700 dark:text-dark-text-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd"
                         d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
@@ -20,32 +21,32 @@
                 <form id="pdf-upload-form" hx-encoding="multipart/form-data" hx-post="/upload_pdf" hx-target="#pdf-info"
                     hx-indicator="#pdf-upload-indicator">
                     <div
-                        class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                        class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-dark-border border-dashed rounded-md">
                         <div class="space-y-1 text-center">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none"
-                                viewBox="0 0 48 48" aria-hidden="true">
+                            <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" stroke="currentColor"
+                                fill="none" viewBox="0 0 48 48" aria-hidden="true">
                                 <path
                                     d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
-                            <div class="flex justify-center text-sm text-gray-600">
+                            <div class="flex justify-center text-sm text-gray-600 dark:text-gray-400">
                                 <label for="pdf-file"
-                                    class="relative cursor-pointer bg-white rounded-md font-medium text-ymir-600 hover:text-ymir-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-ymir-500">
+                                    class="relative cursor-pointer bg-white dark:bg-transparent rounded-md font-medium text-ymir-600 dark:text-ymir-500 hover:text-ymir-500 dark:hover:text-ymir-400 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-ymir-500 dark:focus-within:ring-offset-dark-surface">
                                     <span>Upload a PDF file</span>
                                     <input id="pdf-file" name="pdf_file" type="file" class="sr-only" accept=".pdf"
                                         required>
                                 </label>
-                                <p class="pl-1">or drag and drop</p>
+                                <p class="pl-1 dark:text-gray-400">or drag and drop</p>
                             </div>
-                            <p class="text-xs text-gray-500">
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
                                 PDF files only, up to 50MB
                             </p>
                             <!-- Add a visible upload indicator -->
                             <div id="pdf-upload-indicator" class="htmx-indicator flex justify-center mt-2">
                                 <div
-                                    class="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-ymir-500">
+                                    class="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-ymir-500 dark:border-ymir-400">
                                 </div>
-                                <span class="ml-2 text-ymir-500">Uploading PDF...</span>
+                                <span class="ml-2 text-ymir-500 dark:text-ymir-400">Uploading PDF...</span>
                             </div>
                         </div>
                     </div>
@@ -63,15 +64,17 @@
         <!-- PDF Information Section -->
         <div id="pdf-info">
             <!-- This will be populated by the server after PDF upload -->
-            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mt-2 mb-2">
-                <p>PDF Info section is present but empty. If you're seeing this after upload, the response isn't being
+            <div
+                class="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500 dark:border-yellow-600 p-4 mt-2 mb-2">
+                <p class="text-yellow-700 dark:text-yellow-300">PDF Info section is present but empty. If you're seeing
+                    this after upload, the response isn't being
                     properly received.</p>
             </div>
         </div>
 
         <!-- TOC Detection Section (shown after PDF upload) -->
         <div id="toc-detection" class="hidden mb-6">
-            <h2 class="text-xl font-semibold mb-4 flex items-center text-ymir-700">
+            <h2 class="text-xl font-semibold mb-4 flex items-center text-ymir-700 dark:text-dark-text-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
                     <path fill-rule="evenodd"
@@ -81,8 +84,8 @@
                 Table of Contents Detection
             </h2>
 
-            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
-                <p class="text-sm text-blue-700">
+            <div class="bg-ymir-50 dark:bg-ymir-950/20 border-l-4 border-ymir-400 dark:border-ymir-600 p-4 mb-6">
+                <p class="text-sm text-ymir-700 dark:text-ymir-300">
                     <strong>Instructions:</strong> You can either automatically detect the table of contents or specify
                     a page range where the TOC is located.
                     The algorithm will look for chapter links in your PDF to identify the beginning of each chapter.
@@ -93,24 +96,26 @@
                 <div class="mb-4">
                     <div class="flex items-center space-x-4 mb-2">
                         <div class="w-1/4">
-                            <label for="toc-start-page" class="block text-sm font-medium text-gray-700 mb-1">TOC Start
+                            <label for="toc-start-page"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">TOC Start
                                 Page</label>
                             <input type="number" id="toc-start-page" name="toc_start_page" min="1"
-                                class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ymir-500 focus:border-ymir-500"
+                                class="w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-dark-surface-lighter text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-ymir-500 focus:border-ymir-500"
                                 placeholder="1">
                         </div>
                         <div class="w-1/4">
-                            <label for="toc-end-page" class="block text-sm font-medium text-gray-700 mb-1">TOC End
+                            <label for="toc-end-page"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">TOC End
                                 Page</label>
                             <input type="number" id="toc-end-page" name="toc_end_page" min="1"
-                                class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ymir-500 focus:border-ymir-500"
+                                class="w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-dark-surface-lighter text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-ymir-500 focus:border-ymir-500"
                                 placeholder="3">
                         </div>
                     </div>
 
                     <div class="flex items-center mt-4">
                         <button id="detect-toc-btn"
-                            class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-md transition-colors duration-200 flex items-center shadow-sm"
+                            class="bg-ymir-600 hover:bg-ymir-700 dark:bg-ymir-500 dark:hover:bg-ymir-600 text-white font-medium py-2 px-6 rounded-md transition-colors duration-200 flex items-center shadow-sm"
                             hx-post="/detect_toc" hx-target="#toc-results" hx-indicator="#toc-indicator"
                             hx-include="[name='pdf_path'], [name='toc_start_page'], [name='toc_end_page']">
                             <div class="w-5 flex-shrink-0 flex justify-start mr-2">
@@ -128,8 +133,10 @@
                             <span class="flex-grow text-center">Detect Table of Contents</span>
                             <div class="w-5 flex-shrink-0 flex justify-end ml-2 invisible"></div>
                         </button>
-                        <p class="text-sm text-gray-600 ml-4">
-                            This will use the functions from <code>pdf.py</code> to detect chapters in your document.
+                        <p class="text-sm text-gray-600 dark:text-gray-400 ml-4">
+                            This will use the functions from <code
+                                class="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">pdf.py</code> to detect
+                            chapters in your document.
                         </p>
                     </div>
                 </div>
@@ -142,7 +149,7 @@
 
         <!-- PDF Processing Section (shown after TOC detection) -->
         <div id="pdf-processing" class="hidden mb-6">
-            <h2 class="text-xl font-semibold mb-4 flex items-center text-ymir-700">
+            <h2 class="text-xl font-semibold mb-4 flex items-center text-ymir-700 dark:text-dark-text-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd"
                         d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15 13.586V12a1 1 0 011-1z"
@@ -151,8 +158,8 @@
                 PDF Processing Options
             </h2>
 
-            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
-                <p class="text-sm text-blue-700">
+            <div class="bg-ymir-50 dark:bg-ymir-950/20 border-l-4 border-ymir-400 dark:border-ymir-600 p-4 mb-6">
+                <p class="text-sm text-ymir-700 dark:text-ymir-300">
                     <strong>Instructions:</strong> Now that we've identified chapters in your PDF, you can select
                     processing options below.
                     You can split the PDF into separate chapter files, extract text for each chapter, and create a CSV
@@ -160,35 +167,41 @@
                 </p>
             </div>
 
-            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
-                <h3 class="text-lg font-semibold mb-4">Processing Options</h3>
+            <div
+                class="bg-white dark:bg-dark-surface-lighter p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+                <h3 class="text-lg font-semibold mb-4 dark:text-dark-text-primary">Processing Options</h3>
                 <div class="flex flex-col space-y-4">
                     <div class="flex items-center">
                         <input type="checkbox" id="split-chapters" name="split_chapters"
-                            class="h-4 w-4 text-ymir-600 focus:ring-ymir-500 border-gray-300 rounded">
-                        <label for="split-chapters" class="ml-2 block text-sm text-gray-700">
+                            class="h-4 w-4 text-ymir-600 dark:text-ymir-500 focus:ring-ymir-500 dark:focus:ring-ymir-400 border-gray-300 dark:border-gray-600 rounded">
+                        <label for="split-chapters" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                             <span class="font-medium">Split PDF into individual chapter files</span>
-                            <span class="text-xs text-gray-500 block">This will create a separate PDF file for each
+                            <span class="text-xs text-gray-500 dark:text-gray-400 block">This will create a separate PDF
+                                file for each
                                 detected chapter</span>
                         </label>
                     </div>
 
                     <div class="flex items-center">
                         <input type="checkbox" id="extract-text" name="extract_text"
-                            class="h-4 w-4 text-ymir-600 focus:ring-ymir-500 border-gray-300 rounded" checked>
-                        <label for="extract-text" class="ml-2 block text-sm text-gray-700">
+                            class="h-4 w-4 text-ymir-600 dark:text-ymir-500 focus:ring-ymir-500 dark:focus:ring-ymir-400 border-gray-300 dark:border-gray-600 rounded"
+                            checked>
+                        <label for="extract-text" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                             <span class="font-medium">Extract text content from chapters</span>
-                            <span class="text-xs text-gray-500 block">The text from each chapter will be extracted and
+                            <span class="text-xs text-gray-500 dark:text-gray-400 block">The text from each chapter will
+                                be extracted and
                                 saved</span>
                         </label>
                     </div>
 
                     <div class="flex items-center">
                         <input type="checkbox" id="create-csv" name="create_csv"
-                            class="h-4 w-4 text-ymir-600 focus:ring-ymir-500 border-gray-300 rounded" checked>
-                        <label for="create-csv" class="ml-2 block text-sm text-gray-700">
+                            class="h-4 w-4 text-ymir-600 dark:text-ymir-500 focus:ring-ymir-500 dark:focus:ring-ymir-400 border-gray-300 dark:border-gray-600 rounded"
+                            checked>
+                        <label for="create-csv" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                             <span class="font-medium">Generate CSV dataset for Batch Processing</span>
-                            <span class="text-xs text-gray-500 block">Creates a CSV file with chapter data that can be
+                            <span class="text-xs text-gray-500 dark:text-gray-400 block">Creates a CSV file with chapter
+                                data that can be
                                 used with the Batch Processing tool</span>
                         </label>
                     </div>
@@ -196,8 +209,9 @@
 
                 <div class="mt-6">
                     <button id="process-pdf-btn"
-                        class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-md transition-colors duration-200 flex items-center shadow-sm"
-                        hx-post="/process_pdf" hx-target="#processing-results" hx-indicator="#processing-indicator"
+                        class="bg-ymir-600 hover:bg-ymir-700 dark:bg-ymir-500 dark:hover:bg-ymir-600 text-white font-medium py-2 px-6 rounded-md transition-colors duration-200 flex items-center shadow-sm"
+                        hx-post="/process_pdf" hx-target="#processing-results" hx-swap="innerHTML"
+                        hx-indicator="#processing-indicator"
                         hx-include="[name='pdf_path'], [name='toc_start_page'], [name='toc_end_page'], [name='split_chapters'], [name='extract_text'], [name='create_csv'], [name='chapter_starts']">
                         <div class="w-5 flex-shrink-0 flex justify-start mr-2">
                             <div id="processing-indicator" class="htmx-indicator inline-flex">
@@ -219,7 +233,7 @@
         </div>
 
         <!-- Processing Results Section -->
-        <div id="processing-results" class="hidden">
+        <div id="processing-results" class="mt-6 mb-6">
             <!-- This will be populated with processing results -->
         </div>
     </div>
@@ -272,11 +286,11 @@
             });
 
             function highlight() {
-                dropArea.classList.add('border-ymir-300', 'bg-ymir-50');
+                dropArea.classList.add('border-ymir-300', 'bg-ymir-50', 'dark:border-ymir-700', 'dark:bg-ymir-950/20');
             }
 
             function unhighlight() {
-                dropArea.classList.remove('border-ymir-300', 'bg-ymir-50');
+                dropArea.classList.remove('border-ymir-300', 'bg-ymir-50', 'dark:border-ymir-700', 'dark:bg-ymir-950/20');
             }
 
             // Handle dropped files
@@ -314,8 +328,8 @@
 
                 // Create and append file info element
                 const fileInfo = document.createElement('p');
-                fileInfo.classList.add('text-xs', 'text-gray-700', 'mt-2', 'file-info');
-                fileInfo.innerHTML = `<strong>Selected:</strong> ${fileName} <span class="text-gray-500">(${fileSize} MB)</span>`;
+                fileInfo.classList.add('text-xs', 'text-gray-700', 'dark:text-gray-300', 'mt-2', 'file-info');
+                fileInfo.innerHTML = `<strong>Selected:</strong> ${fileName} <span class="text-gray-500 dark:text-gray-400">(${fileSize} MB)</span>`;
                 uploadArea.appendChild(fileInfo);
             }
         }
@@ -337,8 +351,8 @@
 
                     // Also show a notice that the upload was successful
                     const notice = document.createElement('div');
-                    notice.className = 'bg-green-100 border-l-4 border-green-500 p-4 mb-4';
-                    notice.innerHTML = '<p class="text-green-700">PDF upload successful! TOC detection section is now available.</p>';
+                    notice.className = 'bg-green-100 dark:bg-green-900/20 border-l-4 border-green-500 dark:border-green-600 p-4 mb-4';
+                    notice.innerHTML = '<p class="text-green-700 dark:text-green-300">PDF upload successful! TOC detection section is now available.</p>';
                     evt.target.prepend(notice);
                 } else {
                     console.error('TOC detection section not found in the DOM');
@@ -366,11 +380,11 @@
             // Show error in the PDF info section
             const pdfInfo = document.getElementById('pdf-info');
             const errorDiv = document.createElement('div');
-            errorDiv.className = 'bg-red-100 border-l-4 border-red-500 p-4 mb-4';
+            errorDiv.className = 'bg-red-100 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-600 p-4 mb-4';
             errorDiv.innerHTML = `
-                <p class="text-red-700 font-bold">Error uploading PDF:</p>
-                <p class="text-red-700">Status: ${evt.detail.xhr.status} ${evt.detail.xhr.statusText}</p>
-                <p class="text-red-700">Please check the browser console for more details.</p>
+                <p class="text-red-700 dark:text-red-300 font-bold">Error uploading PDF:</p>
+                <p class="text-red-700 dark:text-red-300">Status: ${evt.detail.xhr.status} ${evt.detail.xhr.statusText}</p>
+                <p class="text-red-700 dark:text-red-300">Please check the browser console for more details.</p>
             `;
             pdfInfo.innerHTML = '';
             pdfInfo.appendChild(errorDiv);

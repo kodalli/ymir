@@ -299,10 +299,10 @@ def extract_chapter_starts(
 
 
 def process_chapter(
-    args: Tuple[str, str, int, List[int], int],
+    args: Tuple[str, str, int, List[int], int, Optional[callable]],
 ) -> Tuple[int, int, int, str, List[str]]:
     """Process a single chapter extraction - designed for parallel processing"""
-    pdf_path, output_prefix, i, chapter_starts, num_chapters = args
+    pdf_path, output_prefix, i, chapter_starts, num_chapters, progress_callback = args
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
     start_page = chapter_starts[i]
@@ -321,6 +321,12 @@ def process_chapter(
     with open(output_path, "wb") as output_file:
         writer.write(output_file)
 
+    # Report progress after each chapter is processed if callback is provided
+    if progress_callback:
+        progress_callback(
+            i + 1, num_chapters, f"Processed chapter {i + 1}/{num_chapters}"
+        )
+
     return i, start_page, end_page, output_path, pages_content
 
 
@@ -329,6 +335,7 @@ def split_pdf_by_chapters(
     output_prefix: str,
     chapter_starts: Optional[List[int]] = None,
     num_workers: Optional[int] = None,
+    progress_callback=None,
 ) -> Dict[str, List[str]]:
     reader = PdfReader(pdf_path)
 
@@ -360,7 +367,7 @@ def split_pdf_by_chapters(
 
     # Create tasks for the pool
     tasks = [
-        (pdf_path, output_prefix, i, chapter_starts, num_chapters)
+        (pdf_path, output_prefix, i, chapter_starts, num_chapters, progress_callback)
         for i in range(num_chapters)
     ]
 
@@ -373,6 +380,13 @@ def split_pdf_by_chapters(
                 desc="Splitting chapters",
             )
         )
+
+        # Report progress after each chapter is processed if callback is provided
+        if progress_callback:
+            for i, result in enumerate(results):
+                progress_callback(
+                    i + 1, num_chapters, f"Processed chapter {i + 1}/{num_chapters}"
+                )
 
     # Log results
     final_pdf_paths = {}

@@ -70,6 +70,33 @@
                             clip-rule="evenodd" />
                     </svg>
                     Prompt Configuration
+                    <div class="ml-auto flex space-x-2">
+                        <button type="button" id="save-config-btn"
+                            class="text-sm bg-ymir-600 hover:bg-ymir-700 text-white px-3 py-1 rounded-md flex items-center"
+                            onclick="savePromptConfig()">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path
+                                    d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 112 0v2H9V4z" />
+                            </svg>
+                            Save Config
+                        </button>
+                        <div class="relative inline-block">
+                            <button type="button" id="load-config-btn"
+                                class="text-sm bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded-md flex items-center"
+                                onclick="document.getElementById('config-file-input').click()">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20"
+                                    fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                Load Config
+                            </button>
+                            <input type="file" id="config-file-input" accept=".yaml,.yml" class="hidden"
+                                onchange="loadPromptConfig(this.files[0])">
+                        </div>
+                    </div>
                 </h2>
                 <div class="mb-4" id="system-prompt-container">
                     <label class="block text-sm font-medium text-gray-700 mb-1" id="system-prompt-label">System
@@ -98,6 +125,10 @@
                         hx-on:input="generatePreview()"></textarea>
                     <p class="text-sm text-gray-500 mt-1">Use {column_name} to reference CSV columns (e.g., {question})
                     </p>
+                </div>
+                <!-- Config feedback message area -->
+                <div id="config-feedback" class="mb-4 hidden">
+                    <div class="p-4 rounded-md"></div>
                 </div>
             </div>
 
@@ -433,4 +464,165 @@
             }
         }
     });
+
+    // Prompt configuration saving and loading functions
+    function savePromptConfig() {
+        // Get form values
+        const systemPrompt = document.getElementById('system-prompt').value;
+        const userPrompt = document.getElementById('user-prompt').value;
+        const model = document.getElementById('model').value;
+        const maxTokens = document.getElementById('max-tokens').value;
+        const temperature = document.getElementById('temperature-range').value;
+
+        // Get reasoning effort if it exists
+        let reasoningEffort = null;
+        const reasoningEffortElement = document.getElementById('reasoning-effort');
+        if (reasoningEffortElement && !reasoningEffortElement.closest('.hidden')) {
+            reasoningEffort = reasoningEffortElement.value;
+        }
+
+        // Check if required fields are filled
+        if (!systemPrompt || !userPrompt) {
+            showConfigFeedback('Please fill in both system and user prompts', 'error');
+            return;
+        }
+
+        // Create FormData
+        const formData = new FormData();
+        formData.append('system_prompt', systemPrompt);
+        formData.append('user_prompt', userPrompt);
+        formData.append('model', model);
+        formData.append('max_tokens', maxTokens);
+        formData.append('temperature', temperature);
+        if (reasoningEffort) {
+            formData.append('reasoning_effort', reasoningEffort);
+        }
+
+        // Send to server
+        fetch('/save_prompt_config', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showConfigFeedback(data.error, 'error');
+                    return;
+                }
+
+                // Show success message
+                showConfigFeedback('Prompt configuration saved successfully', 'success');
+
+                // Create download link
+                const link = document.createElement('a');
+                link.href = 'data:text/yaml;charset=utf-8,' + encodeURIComponent(data.yaml_content);
+                link.download = data.file_name;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            })
+            .catch(error => {
+                console.error('Error saving prompt configuration:', error);
+                showConfigFeedback('Error saving prompt configuration', 'error');
+            });
+    }
+
+    function loadPromptConfig(file) {
+        if (!file) return;
+
+        // Validate file type
+        if (!file.name.toLowerCase().endsWith('.yaml') && !file.name.toLowerCase().endsWith('.yml')) {
+            showConfigFeedback('Please upload a YAML file (.yaml or .yml)', 'error');
+            return;
+        }
+
+        // Create FormData
+        const formData = new FormData();
+        formData.append('config_file', file);
+
+        // Send to server
+        fetch('/load_prompt_config', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showConfigFeedback(data.error, 'error');
+                    return;
+                }
+
+                // Update form values
+                document.getElementById('system-prompt').value = data.system_prompt;
+                document.getElementById('user-prompt').value = data.user_prompt;
+
+                // Set model
+                const modelSelect = document.getElementById('model');
+                for (let i = 0; i < modelSelect.options.length; i++) {
+                    if (modelSelect.options[i].value === data.model) {
+                        modelSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+
+                // Trigger model change event to update UI elements
+                const event = new Event('change');
+                modelSelect.dispatchEvent(event);
+
+                // Set max tokens and temperature
+                document.getElementById('max-tokens').value = data.max_tokens;
+                const temperatureRange = document.getElementById('temperature-range');
+                temperatureRange.value = data.temperature;
+                document.getElementById('temperature-value').innerText = data.temperature;
+
+                // Set reasoning effort if it exists
+                if (data.reasoning_effort) {
+                    const reasoningEffort = document.getElementById('reasoning-effort');
+                    if (reasoningEffort) {
+                        for (let i = 0; i < reasoningEffort.options.length; i++) {
+                            if (reasoningEffort.options[i].value === data.reasoning_effort) {
+                                reasoningEffort.selectedIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Show success message
+                showConfigFeedback('Prompt configuration loaded successfully', 'success');
+
+                // Generate preview if CSV data is available
+                if (csvData.length > 0) {
+                    generatePreview();
+                }
+            })
+            .catch(error => {
+                console.error('Error loading prompt configuration:', error);
+                showConfigFeedback('Error loading prompt configuration', 'error');
+            });
+    }
+
+    function showConfigFeedback(message, type) {
+        const feedbackContainer = document.getElementById('config-feedback');
+        const feedbackContent = feedbackContainer.querySelector('div');
+
+        // Set style based on type
+        if (type === 'error') {
+            feedbackContent.className = 'p-4 rounded-md bg-red-100 text-red-700';
+        } else if (type === 'success') {
+            feedbackContent.className = 'p-4 rounded-md bg-green-100 text-green-700';
+        }
+
+        // Set message
+        feedbackContent.textContent = message;
+
+        // Show the container
+        feedbackContainer.classList.remove('hidden');
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            feedbackContainer.classList.add('hidden');
+        }, 5000);
+    }
 </script>

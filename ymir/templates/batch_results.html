@@ -53,10 +53,27 @@
                 <p class="text-sm text-gray-600 mb-1">Input File:</p>
                 <p class="text-sm font-medium break-all">{{ input_file }}</p>
             </div>
-            <div>
+            <div class="mb-3">
                 <p class="text-sm text-gray-600 mb-1">Output File:</p>
                 <p class="text-sm font-medium break-all">{{ output_file }}</p>
             </div>
+            {% if config_path %}
+            <div>
+                <p class="text-sm text-gray-600 mb-1">Prompt Configuration:</p>
+                <p class="text-sm font-medium break-all">{{ config_path }}
+                    <a href="/download?file={{ config_path | urlencode }}"
+                        class="text-ymir-600 hover:text-ymir-700 ml-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        Download
+                    </a>
+                </p>
+            </div>
+            {% endif %}
         </div>
     </div>
 

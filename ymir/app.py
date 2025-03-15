@@ -831,24 +831,25 @@ async def process_batch(
             reasoning_effort=reasoning_effort if reasoning_effort else None,
         )
 
+        # Create a PromptConfig for formatting
+        from ymir.prompt.config import PromptConfig
+
+        prompt_config = PromptConfig(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            model=model,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            reasoning_effort=reasoning_effort,
+        )
+
+        # Save the prompt configuration for reference
+        config_path = prompt_config.save_to_file()
+        logger.info(f"Saved prompt configuration to {config_path}")
+
         # Define the template function that formats prompts using CSV data
         def format_prompts(row_dict):
-            formatted_system = system_prompt
-            formatted_user = user_prompt
-
-            # Replace placeholders with values from the row
-            for key, value in row_dict.items():
-                if value is not None:  # Handle None values
-                    value_str = str(value)
-                else:
-                    value_str = ""
-                formatted_system = formatted_system.replace(f"{{{key}}}", value_str)
-                formatted_user = formatted_user.replace(f"{{{key}}}", value_str)
-
-            # No need to include system content in user prompt for 'o' models
-            # as we now use the developer role
-
-            return formatted_system, formatted_user
+            return prompt_config.format_prompts(row_dict)
 
         # Prepare template arguments - convert DataFrame to list of dicts
         template_args = df.to_dict(orient="records")
@@ -877,6 +878,7 @@ async def process_batch(
                 "num_rows": len(df),
                 "model": model,
                 "timestamp": timestamp,
+                "config_path": config_path,
             },
         )
     except Exception as e:
@@ -1164,7 +1166,7 @@ async def process_pdf(
 
                         # Join all page content
                         full_content = "\n\n".join(content)
-                        writer.writerow([chapter_num, pages, full_content])
+                        writer.writerow([chapter_num, pages, full_content.strip()])
 
                         # Update progress (70-90% range for CSV creation)
                         # progress_percent = 70 + int((i / total_chapters) * 20)
@@ -1209,7 +1211,6 @@ async def process_pdf(
                                 # Update progress for each page processed
                                 # sub_progress = int(
                                 #     (page_idx / max(total_pages, 1)) * 100
-                                # )
                                 update_progress(
                                     job_id,
                                     "extracting_page",
@@ -1359,6 +1360,80 @@ async def parse_csv(request: Request, csv_file: UploadFile = File(...)):
         logger.error(f"Error parsing CSV: {str(e)}")
         return JSONResponse(
             content={"error": f"Error parsing CSV file: {str(e)}"}, status_code=400
+        )
+
+
+@app.post("/save_prompt_config")
+async def save_prompt_config(
+    system_prompt: str = Form(...),
+    user_prompt: str = Form(...),
+    model: str = Form(...),
+    max_tokens: int = Form(1000),
+    temperature: float = Form(0.7),
+    reasoning_effort: Optional[str] = Form(None),
+):
+    """Save prompt configuration to a YAML file and return it for download"""
+    try:
+        from ymir.prompt.config import PromptConfig
+
+        # Create config object
+        config = PromptConfig(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            model=model,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            reasoning_effort=reasoning_effort,
+        )
+
+        # Save the config to a file using the model's method
+        file_path = config.save_to_file()
+
+        # Get the YAML content
+        yaml_content = config.to_yaml()
+
+        # Get just the filename
+        filename = os.path.basename(file_path)
+
+        # Return the file content and path for download
+        return JSONResponse(
+            {
+                "status": "success",
+                "message": "Prompt configuration saved",
+                "file_path": file_path,
+                "file_name": filename,
+                "yaml_content": yaml_content,
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Error saving prompt configuration: {str(e)}")
+        return JSONResponse(
+            content={"error": f"Error saving prompt configuration: {str(e)}"},
+            status_code=400,
+        )
+
+
+@app.post("/load_prompt_config")
+async def load_prompt_config(config_file: UploadFile = File(...)):
+    """Load prompt configuration from a YAML file"""
+    try:
+        # Read the uploaded file content
+        content = await config_file.read()
+
+        # Parse the YAML using PromptConfig
+        from ymir.prompt.config import PromptConfig
+
+        config = PromptConfig.from_yaml(content.decode("utf-8"))
+
+        # Return the configuration dictionary
+        return JSONResponse(content=config.dict())
+
+    except Exception as e:
+        logger.error(f"Error loading prompt configuration: {str(e)}")
+        return JSONResponse(
+            content={"error": f"Error loading prompt configuration: {str(e)}"},
+            status_code=400,
         )
 
 

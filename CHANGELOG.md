@@ -1,7 +1,20 @@
 # CHANGELOG
 
 
+## v0.0.0-alpha.10 (2025-03-15)
+
+
 ## v0.0.0-alpha.9 (2025-03-14)
+
+### Features
+
+- Implement CSV file parsing endpoint with robust error handling and preview functionality,
+  enhancing user experience in data uploads
+  ([`d28076b`](https://github.com/kodalli/ymir/commit/d28076b8eea9f6d10d52534e48d061969b7908b3))
+
+- Introduce prompt configuration management with YAML support, enabling users to save and load
+  prompt settings through the UI, enhancing flexibility in prompt customization
+  ([`0e3ffd4`](https://github.com/kodalli/ymir/commit/0e3ffd452c4f31823744536067120c75a7862fee))
 
 
 ## v0.0.0-alpha.8 (2025-03-14)

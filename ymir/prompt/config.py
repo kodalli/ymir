@@ -85,6 +85,9 @@ class PromptConfig(BaseModel):
         """
         Format the system and user prompts with the given variables
         Returns a tuple of (formatted_system_prompt, formatted_user_prompt)
+
+        Unused keys in variables (those that don't have corresponding {key} placeholders)
+        are silently ignored.
         """
         formatted_system = self.system_prompt
         formatted_user = self.user_prompt
@@ -96,8 +99,15 @@ class PromptConfig(BaseModel):
             else:
                 value_str = ""
 
-            formatted_system = formatted_system.replace(f"{{{key}}}", value_str)
-            formatted_user = formatted_user.replace(f"{{{key}}}", value_str)
+            # Check if the key is actually used in either prompt
+            system_has_key = f"{{{key}}}" in formatted_system
+            user_has_key = f"{{{key}}}" in formatted_user
+
+            # Only perform the replacement if the key is found
+            if system_has_key:
+                formatted_system = formatted_system.replace(f"{{{key}}}", value_str)
+            if user_has_key:
+                formatted_user = formatted_user.replace(f"{{{key}}}", value_str)
 
         return formatted_system, formatted_user
 

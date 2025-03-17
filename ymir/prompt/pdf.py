@@ -314,7 +314,7 @@ def process_chapter(
     pages_content = []
     for j in range(start_page, end_page):
         writer.add_page(reader.pages[j])
-        pages_content.append(reader.pages[j].extract_text())
+        pages_content.append(reader.pages[j].extract_text().strip())
 
     # Use a more readable filename format
     output_path = f"{output_prefix}_{chapter_title}.pdf"

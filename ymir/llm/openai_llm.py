@@ -5,6 +5,7 @@ from tqdm import tqdm
 from openai import OpenAI
 from loguru import logger
 import time
+import tiktoken
 
 OPENAI_CHAT_MODELS = [
     "gpt-4o",
@@ -53,6 +54,11 @@ def get_openai_llm(model_name: str, config: Optional[Dict] = None) -> ChatOpenAI
     if config is None:
         config = {}
     return ChatOpenAI(model=model_name, **config)
+
+
+def count_tokens(text: str) -> int:
+    encoding = tiktoken.encoding_for_model("gpt-4o")
+    return len(encoding.encode(text))
 
 
 class OpenAIBatchProcessor:

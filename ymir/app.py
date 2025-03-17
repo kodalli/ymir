@@ -1165,7 +1165,7 @@ async def process_pdf(
                         pages = f"{start_page}-{end_page}"
 
                         # Join all page content
-                        full_content = "\n\n".join(content)
+                        full_content = "\n\n".join(content.strip())
                         writer.writerow([chapter_num, pages, full_content.strip()])
 
                         # Update progress (70-90% range for CSV creation)
@@ -1205,7 +1205,9 @@ async def process_pdf(
                             range(start_page, end_page)
                         ):
                             if page_num < len(reader.pages):
-                                page_text = reader.pages[page_num].extract_text()
+                                page_text = (
+                                    reader.pages[page_num].extract_text().strip()
+                                )
                                 chapter_content.append(page_text)
 
                                 # Update progress for each page processed
@@ -1434,6 +1436,81 @@ async def load_prompt_config(config_file: UploadFile = File(...)):
         return JSONResponse(
             content={"error": f"Error loading prompt configuration: {str(e)}"},
             status_code=400,
+        )
+
+
+@app.post("/calculate_token_stats")
+async def calculate_token_stats(
+    system_prompt: str = Form(...),
+    user_prompt: str = Form(...),
+    csv_data: str = Form(...),
+    headers: str = Form(...),
+):
+    """Calculate token statistics for formatted prompts using the CSV data"""
+    try:
+        # Import token counting function
+        from ymir.llm.openai_llm import count_tokens
+
+        # Parse CSV data and headers from JSON strings
+        import json
+
+        csv_data = json.loads(csv_data)
+        headers = json.loads(headers)
+
+        # Create PromptConfig for formatting
+        from ymir.prompt.config import PromptConfig
+
+        config = PromptConfig(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            model="gpt-4o",  # Default model for token counting
+            max_tokens=1000,
+            temperature=0.7,
+        )
+
+        # Calculate token counts for each row
+        token_counts = []
+        for row in csv_data:
+            # Convert row to dictionary with headers as keys
+            row_dict = {
+                header: row[i] if i < len(row) else ""
+                for i, header in enumerate(headers)
+            }
+
+            # Format prompts
+            formatted_system, formatted_user = config.format_prompts(row_dict)
+
+            # Count tokens in combined prompt
+            combined_prompt = formatted_system + "\n" + formatted_user
+            token_count = count_tokens(combined_prompt)
+            token_counts.append(token_count)
+
+        # Calculate statistics
+        if token_counts:
+            min_tokens = min(token_counts)
+            max_tokens = max(token_counts)
+            avg_tokens = sum(token_counts) / len(token_counts)
+
+            return JSONResponse(
+                {
+                    "min_tokens": min_tokens,
+                    "max_tokens": max_tokens,
+                    "avg_tokens": round(avg_tokens),
+                    "total_rows": len(token_counts),
+                    "sample_counts": token_counts[
+                        :5
+                    ],  # Include first 5 counts for reference
+                }
+            )
+        else:
+            return JSONResponse(
+                {"error": "No data to calculate token statistics"}, status_code=400
+            )
+
+    except Exception as e:
+        logger.error(f"Error calculating token statistics: {str(e)}")
+        return JSONResponse(
+            {"error": f"Error calculating token statistics: {str(e)}"}, status_code=400
         )
 
 

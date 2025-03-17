@@ -5,3 +5,5 @@
 *.csv
 *.md
 *.html
+*.yaml
+*.yml

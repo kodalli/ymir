@@ -60,6 +60,29 @@
                 </div>
             </div>
 
+            <!-- Token Statistics Section -->
+            <div id="token-stats-container" class="mt-4 p-4 bg-gray-50 rounded-lg shadow-sm hidden mb-2">
+                <h3 class="text-lg font-medium text-ymir-700 mb-3">Token Usage Statistics</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Min Tokens -->
+                    <div class="p-3 bg-gray-50 border border-gray-200 rounded">
+                        <div class="text-ymir-600 font-medium">Minimum Tokens</div>
+                        <div class="text-2xl text-gray-700 font-semibold" id="min-tokens-display">-</div>
+                    </div>
+                    <!-- Avg Tokens -->
+                    <div class="p-3 bg-gray-50 border border-gray-200 rounded">
+                        <div class="text-ymir-600 font-medium">Average Tokens</div>
+                        <div class="text-2xl text-gray-700 font-semibold" id="avg-tokens-display">-</div>
+                    </div>
+                    <!-- Max Tokens -->
+                    <div class="p-3 bg-gray-50 border border-gray-200 rounded">
+                        <div class="text-ymir-600 font-medium">Maximum Tokens</div>
+                        <div class="text-2xl text-gray-700 font-semibold" id="max-tokens-display">-</div>
+                    </div>
+                </div>
+                <div class="mt-3" id="token-recommendation"></div>
+            </div>
+
             <!-- Prompt Configuration -->
             <div class="mb-6">
                 <h2 class="text-xl font-semibold mb-4 flex items-center text-ymir-700">
@@ -70,7 +93,7 @@
                             clip-rule="evenodd" />
                     </svg>
                     Prompt Configuration
-                    <div class="ml-auto flex space-x-2">
+                    <div class="ml-auto flex space-x-2 mt-2">
                         <button type="button" id="save-config-btn"
                             class="text-sm bg-ymir-600 hover:bg-ymir-700 text-white px-3 py-1 rounded-md flex items-center"
                             onclick="savePromptConfig()">
@@ -104,7 +127,7 @@
                     <textarea id="system-prompt" name="system_prompt" rows="4"
                         class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ymir-500 focus:border-ymir-500"
                         placeholder="Enter system prompt with format placeholders like {column_name}"
-                        hx-on:input="generatePreview()" required></textarea>
+                        hx-on:input="generatePreview()" oninput="onPromptChange()" required></textarea>
                     <p class="text-sm text-gray-500 mt-1">Use {column_name} to reference CSV columns (e.g., {question})
                     </p>
                     <p id="system-prompt-message" class="text-sm text-blue-600 mt-1 hidden">
@@ -122,7 +145,7 @@
                     <textarea id="user-prompt" name="user_prompt" rows="4"
                         class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ymir-500 focus:border-ymir-500"
                         placeholder="Enter user prompt with format placeholders like {column_name}" required
-                        hx-on:input="generatePreview()"></textarea>
+                        hx-on:input="generatePreview()" oninput="onPromptChange()"></textarea>
                     <p class="text-sm text-gray-500 mt-1">Use {column_name} to reference CSV columns (e.g., {question})
                     </p>
                 </div>
@@ -157,7 +180,8 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Max Tokens</label>
                         <input type="number" id="max-tokens" name="max_tokens" value="1000" min="50" max="64000"
                             step="50"
-                            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ymir-500 focus:border-ymir-500">
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ymir-500 focus:border-ymir-500"
+                            oninput="updateTokenRecommendation()">
                     </div>
                     <div class="mb-4" id="reasoning-effort-container">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Reasoning Effort</label>
@@ -310,6 +334,9 @@
                 // Display CSV preview
                 displayCSVPreview();
                 generatePreview();
+
+                // Calculate token statistics
+                calculateTokenStats();
             })
             .catch(error => {
                 console.error('Error parsing CSV:', error);
@@ -595,6 +622,7 @@
                 // Generate preview if CSV data is available
                 if (csvData.length > 0) {
                     generatePreview();
+                    calculateTokenStats();
                 }
             })
             .catch(error => {
@@ -624,5 +652,98 @@
         setTimeout(() => {
             feedbackContainer.classList.add('hidden');
         }, 5000);
+    }
+
+    function calculateTokenStats() {
+        // Get current prompt values
+        const systemPrompt = document.getElementById('system-prompt').value;
+        const userPrompt = document.getElementById('user-prompt').value;
+
+        // Check if we have both prompts and CSV data
+        if (!systemPrompt || !userPrompt || !csvData.length) {
+            return;
+        }
+
+        // Create form data with prompts and CSV data
+        const formData = new FormData();
+        formData.append('system_prompt', systemPrompt);
+        formData.append('user_prompt', userPrompt);
+        formData.append('csv_data', JSON.stringify(csvData));
+        formData.append('headers', JSON.stringify(csvHeaders));
+
+        // Send to server to calculate token statistics
+        fetch('/calculate_token_stats', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Error calculating token statistics:', data.error);
+                    return;
+                }
+
+                // Update the token stats UI
+                document.getElementById('min-tokens-display').textContent = data.min_tokens.toLocaleString();
+                document.getElementById('avg-tokens-display').textContent = data.avg_tokens.toLocaleString();
+                document.getElementById('max-tokens-display').textContent = data.max_tokens.toLocaleString();
+
+                // Show token stats section
+                document.getElementById('token-stats-container').classList.remove('hidden');
+
+                // Add recommendation based on max tokens
+                const maxTokensInput = parseInt(document.getElementById('max-tokens').value);
+                if (data.max_tokens > maxTokensInput) {
+                    document.getElementById('token-recommendation').innerHTML =
+                        `<span class="text-amber-700">⚠️ Your maximum token count (${data.max_tokens.toLocaleString()}) exceeds your current setting (${maxTokensInput.toLocaleString()}). Consider increasing the Max Tokens.</span>`;
+                } else if (data.max_tokens > maxTokensInput * 0.8) {
+                    document.getElementById('token-recommendation').innerHTML =
+                        `<span class="text-amber-600">⚠️ Your maximum token count (${data.max_tokens.toLocaleString()}) is approaching your current setting (${maxTokensInput.toLocaleString()}). You might want to increase the Max Tokens.</span>`;
+                } else {
+                    document.getElementById('token-recommendation').innerHTML =
+                        `<span class="text-ymir-600">✓ Your current Max Tokens setting (${maxTokensInput.toLocaleString()}) is sufficient for your data.</span>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error calculating token statistics:', error);
+            });
+    }
+
+    function onPromptChange() {
+        // Debounce to avoid calling the server too often
+        clearTimeout(window.tokenStatsDebounce);
+        window.tokenStatsDebounce = setTimeout(() => {
+            if (csvData.length > 0) {
+                calculateTokenStats();
+            }
+        }, 500);
+    }
+
+    function updateTokenRecommendation() {
+        // Update recommendation based on new Max Tokens setting
+        const tokenStatsContainer = document.getElementById('token-stats-container');
+        if (tokenStatsContainer.classList.contains('hidden')) {
+            return;  // Don't update if token stats aren't shown yet
+        }
+
+        const maxTokens = parseInt(document.getElementById('max-tokens').value);
+        const maxTokensDisplay = document.getElementById('max-tokens-display');
+        if (!maxTokensDisplay || maxTokensDisplay.textContent === '-') {
+            return;  // Don't update if we don't have statistics yet
+        }
+
+        const maxTokensValue = parseInt(document.getElementById('max-tokens-display').textContent.replace(/,/g, ''));
+
+        // Update recommendation based on max tokens
+        if (maxTokensValue > maxTokens) {
+            document.getElementById('token-recommendation').innerHTML =
+                `<span class="text-amber-700">⚠️ Your maximum token count (${maxTokensValue.toLocaleString()}) exceeds your current setting (${maxTokens.toLocaleString()}). Consider increasing the Max Tokens.</span>`;
+        } else if (maxTokensValue > maxTokens * 0.8) {
+            document.getElementById('token-recommendation').innerHTML =
+                `<span class="text-amber-600">⚠️ Your maximum token count (${maxTokensValue.toLocaleString()}) is approaching your current setting (${maxTokens.toLocaleString()}). You might want to increase the Max Tokens.</span>`;
+        } else {
+            document.getElementById('token-recommendation').innerHTML =
+                `<span class="text-ymir-600">✓ Your current Max Tokens setting (${maxTokens.toLocaleString()}) is sufficient for your data.</span>`;
+        }
     }
 </script>

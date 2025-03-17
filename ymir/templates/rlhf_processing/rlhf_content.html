@@ -45,7 +45,7 @@
 
             <div id="llm1-chat" class="chat-container bg-gray-50 rounded-lg p-3 mb-4 border border-gray-200">
                 {% with chat_history=chat_history_1 %}
-                {% include "rlhf_chat.html" %}
+                {% include "rlhf_processing/rlhf_chat.html" %}
                 {% endwith %}
             </div>
 
@@ -176,7 +176,7 @@
 
             <div id="llm2-chat" class="chat-container bg-gray-50 rounded-lg p-3 mb-4 border border-gray-200">
                 {% with chat_history=chat_history_2 %}
-                {% include "rlhf_chat.html" %}
+                {% include "rlhf_processing/rlhf_chat.html" %}
                 {% endwith %}
             </div>
 

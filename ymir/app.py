@@ -157,7 +157,7 @@ async def root(request: Request):
 async def rlhf_page(request: Request):
     """Render the RLHF tool page content only (not the entire index.html)"""
     return templates.TemplateResponse(
-        "rlhf_content.html",
+        "rlhf_processing/rlhf_content.html",
         {
             "request": request,
             "providers": get_supported_providers(),
@@ -175,7 +175,7 @@ async def rlhf_page(request: Request):
 async def triplet_page(request: Request):
     """Render the Triplet Generation tool page"""
     return templates.TemplateResponse(
-        "triplet.html",
+        "triplet_processing/triplet.html",
         {
             "request": request,
             "providers": get_supported_providers(),
@@ -187,7 +187,7 @@ async def triplet_page(request: Request):
 async def datasets_page(request: Request):
     """Render the Datasets Management page"""
     return templates.TemplateResponse(
-        "datasets.html",
+        "datasets_processing/datasets.html",
         {
             "request": request,
         },
@@ -279,7 +279,7 @@ async def chat(request: ChatRequest):
 
     # Return the updated chat history for this LLM
     return templates.TemplateResponse(
-        "rlhf_chat.html",
+        "rlhf_processing/rlhf_chat.html",
         {
             "chat_history": chat_history[request.llm_key],
         },
@@ -484,7 +484,7 @@ async def get_rlhf_data(request: Request, format: str = "table", query: str = ""
 
     # Otherwise return as HTML table
     return templates.TemplateResponse(
-        "rlhf_table.html",
+        "rlhf_processing/rlhf_table.html",
         {
             "request": request,
             "data": formatted_data,
@@ -606,7 +606,7 @@ async def process_triplets(
 
         # Return HTML for displaying the results
         return templates.TemplateResponse(
-            "triplet_extraction_results.html",
+            "triplet_processing/triplet_extraction_results.html",
             {
                 "triplets": formatted_triplets,
                 "count": len(formatted_triplets),
@@ -669,7 +669,7 @@ async def view_triplets(request: Request, format: str = "table", query: str = ""
 
     # Otherwise return as HTML table
     return templates.TemplateResponse(
-        "triplet_table.html",
+        "triplet_processing/triplet_table.html",
         {
             "request": request,
             "data": data,
@@ -776,7 +776,7 @@ async def provider_models(provider: str):
 async def batch_page(request: Request):
     """Render the Batch Dataset Builder page"""
     return templates.TemplateResponse(
-        "batch.html",
+        "batch_processing/batch.html",
         {
             "request": request,
             "openai_models": OPENAI_CHAT_MODELS,
@@ -810,7 +810,7 @@ async def process_batch(
         # Validate CSV content
         if df.empty:
             return templates.TemplateResponse(
-                "batch_error.html",
+                "batch_processing/batch_error.html",
                 {
                     "request": request,
                     "error_message": "The CSV file is empty.",
@@ -869,7 +869,7 @@ async def process_batch(
 
         # Return the batch status and monitoring info
         return templates.TemplateResponse(
-            "batch_results.html",
+            "batch_processing/batch_results.html",
             {
                 "request": request,
                 "batch_id": batch_processor.batch_id,
@@ -884,7 +884,7 @@ async def process_batch(
     except Exception as e:
         logger.error(f"Error processing batch: {e}")
         return templates.TemplateResponse(
-            "batch_error.html",
+            "batch_processing/batch_error.html",
             {
                 "request": request,
                 "error_message": f"Error processing batch: {str(e)}",
@@ -935,7 +935,7 @@ async def download_file(request: Request, file: str):
 async def document_page(request: Request):
     """Render the Document Processor page"""
     return templates.TemplateResponse(
-        "document_processor.html",
+        "document_processing/document_processor.html",
         {
             "request": request,
         },
@@ -973,7 +973,7 @@ async def upload_pdf(request: Request, pdf_file: UploadFile = File(...)):
 
         # Return PDF info
         response = templates.TemplateResponse(
-            "document_pdf_info.html",
+            "document_processing/document_pdf_info.html",
             {
                 "request": request,
                 "filename": pdf_file.filename,
@@ -986,7 +986,7 @@ async def upload_pdf(request: Request, pdf_file: UploadFile = File(...)):
     except Exception as e:
         logger.error(f"Error uploading PDF: {e}", exc_info=True)
         return templates.TemplateResponse(
-            "document_error.html",
+            "document_processing/document_error.html",
             {
                 "request": request,
                 "error_message": f"Error uploading PDF: {str(e)}",
@@ -1019,7 +1019,7 @@ async def detect_toc(
         if not chapter_starts:
             logger.warning("No chapter starts detected in the PDF")
             return templates.TemplateResponse(
-                "document_error.html",
+                "document_processing/document_error.html",
                 {
                     "request": request,
                     "error_message": "No chapters detected in the PDF. Try specifying a manual TOC page range where the table of contents is located.",
@@ -1046,7 +1046,7 @@ async def detect_toc(
 
         # Return chapter info
         return templates.TemplateResponse(
-            "document_toc_results.html",
+            "document_processing/document_toc_results.html",
             {
                 "request": request,
                 "chapters": chapters,
@@ -1057,7 +1057,7 @@ async def detect_toc(
     except Exception as e:
         logger.error(f"Error detecting TOC: {e}", exc_info=True)
         return templates.TemplateResponse(
-            "document_error.html",
+            "document_processing/document_error.html",
             {
                 "request": request,
                 "error_message": f"Error detecting table of contents: {str(e)}",
@@ -1264,7 +1264,7 @@ async def process_pdf(
 
         # Return processing results
         return templates.TemplateResponse(
-            "document_processing_results.html",
+            "document_processing/document_processing_results.html",
             {
                 "request": request,
                 "results": results,
@@ -1274,7 +1274,7 @@ async def process_pdf(
     except Exception as e:
         logger.error(f"Error processing PDF: {e}", exc_info=True)
         return templates.TemplateResponse(
-            "document_error.html",
+            "document_processing/document_error.html",
             {
                 "request": request,
                 "error_message": f"Error processing PDF: {str(e)}",

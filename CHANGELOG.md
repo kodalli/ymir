@@ -1,7 +1,24 @@
 # CHANGELOG
 
 
+## v0.0.0-alpha.11 (2025-03-18)
+
+
 ## v0.0.0-alpha.10 (2025-03-15)
+
+### Chores
+
+- Organized templates in separate folders
+  ([`28f4025`](https://github.com/kodalli/ymir/commit/28f40258f1c55c40065f43527bce6ab6f758da95))
+
+### Features
+
+- Add token statistics calculation endpoint and UI integration for enhanced prompt management,
+  including token usage display and recommendations based on user input
+  ([`d9ee60b`](https://github.com/kodalli/ymir/commit/d9ee60bb742b18f9275be779578cccd140476641))
+
+- Refactor application structure by modularizing routes.
+  ([`8dd7cf2`](https://github.com/kodalli/ymir/commit/8dd7cf2a8a3db2fb076a011156d8968f362b497a))
 
 
 ## v0.0.0-alpha.9 (2025-03-14)

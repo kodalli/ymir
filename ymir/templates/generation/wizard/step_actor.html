@@ -33,7 +33,7 @@
             <label class="relative flex cursor-pointer">
                 <input
                     type="radio"
-                    name="actor_mode"
+                    name="mode_toggle"
                     value="single"
                     checked
                     class="peer sr-only"
@@ -41,7 +41,6 @@
                        if my.checked
                          show #single-fields
                          hide #simulated-fields
-                         set #wizard-mode.value to 'single'
                        end"
                 >
                 <div class="flex-1 border-2 border-slate-700 rounded-lg p-6 transition-all
@@ -63,14 +62,13 @@
             <label class="relative flex cursor-pointer">
                 <input
                     type="radio"
-                    name="actor_mode"
+                    name="mode_toggle"
                     value="simulated"
                     class="peer sr-only"
                     _="on change
                        if my.checked
                          hide #single-fields
                          show #simulated-fields
-                         set #wizard-mode.value to 'simulated'
                        end"
                 >
                 <div class="flex-1 border-2 border-slate-700 rounded-lg p-6 transition-all
@@ -90,12 +88,6 @@
         </div>
     </div>
 
-    <!-- Hidden inputs for wizard state -->
-    <input type="hidden" id="wizard-mode" name="wizard_mode" value="single">
-    <input type="hidden" id="wizard-user-query" name="user_query" value="">
-    <input type="hidden" id="wizard-user-background" name="user_background" value="">
-    <input type="hidden" id="wizard-user-goal" name="user_goal" value="">
-
     <!-- Single Query Fields -->
     <div id="single-fields" class="space-y-4">
         <div>
@@ -104,12 +96,12 @@
             </label>
             <textarea
                 id="query-input"
+                name="user_query_input"
                 rows="4"
                 class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg
                        text-white placeholder-slate-500 focus:outline-none focus:ring-2
                        focus:ring-ymir-500 focus:border-transparent resize-none"
                 placeholder="Enter the query the user will ask the agent..."
-                _="on input set #wizard-user-query.value to my.value"
             ></textarea>
         </div>
 
@@ -124,9 +116,7 @@
                     type="button"
                     class="px-3 py-2 text-sm bg-slate-800 hover:bg-slate-700 text-slate-300
                            rounded-lg border border-slate-700 hover:border-slate-600 transition-colors"
-                    _="on click set #query-input.value to '{{ query|replace("'", "\\'") }}'
-                       then set #wizard-user-query.value to '{{ query|replace("'", "\\'") }}'
-                       then trigger input on #query-input"
+                    _="on click set #query-input.value to '{{ query|replace("'", "\\'") }}'"
                 >
                     {{ query }}
                 </button>
@@ -159,15 +149,7 @@
                          add .bg-ymir-500/5 to me
                          set #persona-background.value to my @data-background
                          set #persona-goal.value to my @data-goal
-                         set #wizard-user-background.value to my @data-background
-                         set #wizard-user-goal.value to my @data-goal
-                         show #persona-form
-                         if my @data-persona-id is 'custom'
-                           set #persona-background.value to ''
-                           set #persona-goal.value to ''
-                           set #wizard-user-background.value to ''
-                           set #wizard-user-goal.value to ''
-                         end"
+                         show #persona-form"
                 >
                     <div class="flex items-start gap-3 mb-3">
                         <div class="flex-shrink-0 p-2 rounded-lg bg-slate-800">
@@ -208,8 +190,6 @@
                          add .bg-ymir-500/5 to me
                          set #persona-background.value to ''
                          set #persona-goal.value to ''
-                         set #wizard-user-background.value to ''
-                         set #wizard-user-goal.value to ''
                          show #persona-form"
                 >
                     <div class="flex items-start gap-3 mb-3">
@@ -233,12 +213,12 @@
                     </label>
                     <textarea
                         id="persona-background"
+                        name="user_background_input"
                         rows="4"
                         class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg
                                text-white placeholder-slate-500 focus:outline-none focus:ring-2
                                focus:ring-ymir-500 focus:border-transparent resize-none"
                         placeholder="E.g., A 65-year-old patient with diabetes who needs to schedule a follow-up appointment..."
-                        _="on input set #wizard-user-background.value to my.value"
                     ></textarea>
                 </div>
 
@@ -249,12 +229,12 @@
                     </label>
                     <textarea
                         id="persona-goal"
+                        name="user_goal_input"
                         rows="3"
                         class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg
                                text-white placeholder-slate-500 focus:outline-none focus:ring-2
                                focus:ring-ymir-500 focus:border-transparent resize-none"
                         placeholder="E.g., Schedule an appointment with Dr. Smith next week and get a prescription refilled..."
-                        _="on input set #wizard-user-goal.value to my.value"
                     ></textarea>
                 </div>
             </div>

@@ -1,19 +1,30 @@
-from .document_processing import router as document_processing_router
-from .batch_processing import router as batch_processing_router
-from .datasets_processing import router as datasets_processing_router
-from .rlhf_processing import router as rlhf_processing_router
-from .rlhf_processing import lifespan
-from .triplet_processing import router as triplet_processing_router
-from .shared import router as shared_router
-from .shared import templates
+from fastapi.templating import Jinja2Templates
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+
+from .functions import router as functions_router
+from .generation import router as generation_router
+from .conversion import router as conversion_router
+from .annotation import router as annotation_router
+from .export import router as export_router
+
+templates = Jinja2Templates(directory="ymir/templates")
 
 routers = [
-    document_processing_router,
-    batch_processing_router,
-    datasets_processing_router,
-    rlhf_processing_router,
-    triplet_processing_router,
-    shared_router,
+    functions_router,
+    generation_router,
+    conversion_router,
+    annotation_router,
+    export_router,
 ]
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan handler."""
+    # Startup
+    yield
+    # Shutdown
+
 
 __all__ = ["routers", "templates", "lifespan"]

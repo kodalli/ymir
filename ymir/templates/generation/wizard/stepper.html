@@ -1,0 +1,44 @@
+{% set steps = [
+    {'num': 1, 'name': 'Scenario'},
+    {'num': 2, 'name': 'Tools'},
+    {'num': 3, 'name': 'Actor'},
+    {'num': 4, 'name': 'Generate'}
+] %}
+
+<div class="flex items-center justify-between max-w-3xl mx-auto mb-8">
+    {% for s in steps %}
+        {% set is_current = s.num == step %}
+        {% set is_completed = s.num < step %}
+        {% set is_pending = s.num > step %}
+
+        <div class="flex items-center {% if not loop.last %}flex-1{% endif %}">
+            <!-- Step Circle -->
+            <div class="flex flex-col items-center relative z-10">
+                {% if is_completed %}
+                    <button
+                        class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center transition-all hover:bg-emerald-600"
+                        _="on click trigger stepNavigate(step: {{ s.num }}) on closest <form/>">
+                        <i data-lucide="check" class="w-5 h-5"></i>
+                    </button>
+                {% elif is_current %}
+                    <div class="w-10 h-10 rounded-full bg-ymir-500 text-white border-2 border-ymir-500 flex items-center justify-center font-semibold shadow-lg shadow-ymir-500/30">
+                        {{ s.num }}
+                    </div>
+                {% else %}
+                    <div class="w-10 h-10 rounded-full bg-slate-800 text-slate-500 border-2 border-slate-700 flex items-center justify-center font-semibold">
+                        {{ s.num }}
+                    </div>
+                {% endif %}
+
+                <span class="mt-2 text-sm font-medium {% if is_current %}text-ymir-500{% elif is_completed %}text-emerald-500{% else %}text-slate-500{% endif %}">
+                    {{ s.name }}
+                </span>
+            </div>
+
+            <!-- Connector Line -->
+            {% if not loop.last %}
+                <div class="flex-1 h-0.5 mx-3 {% if is_completed %}bg-emerald-500{% else %}bg-slate-700{% endif %} transition-colors"></div>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>

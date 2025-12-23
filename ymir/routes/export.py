@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from ymir.converters import TrainingDataExporter
 from ymir.core import TrajectoryStatus
 from ymir.storage import get_store
-from ymir.routes import templates
+from ymir.routes.shared import templates
 
 router = APIRouter(prefix="/export", tags=["export"])
 

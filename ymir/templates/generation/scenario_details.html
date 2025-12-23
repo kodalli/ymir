@@ -1,0 +1,33 @@
+<div class="animate-in fade-in slide-in-from-left-4 duration-500">
+    <div class="mb-6 p-4 bg-ymir-500/5 border border-ymir-500/20 rounded-xl">
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-8 h-8 bg-ymir-500/10 rounded-lg flex items-center justify-center text-ymir-500">
+                <i data-lucide="info" class="w-4 h-4"></i>
+            </div>
+            <h3 class="font-bold text-slate-200">Scenario Context</h3>
+        </div>
+        <p class="text-sm text-slate-400 leading-relaxed">{{ scenario.description }}</p>
+    </div>
+
+    <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2 px-1">
+        <i data-lucide="wrench" class="w-3 h-3 text-ymir-500"></i>
+        Available Agent Tools ({{ scenario.functions|length }})
+    </h4>
+    
+    <div class="grid grid-cols-1 gap-2">
+        {% for func in scenario.functions %}
+        <div class="bg-slate-800/40 border border-slate-700/50 p-3 rounded-lg group hover:border-ymir-500/30 transition-all">
+            <div class="flex items-center justify-between mb-1">
+                <span class="font-mono text-xs font-bold text-ymir-400">{{ func.name }}</span>
+                <span class="text-[8px] font-black text-slate-600 uppercase tracking-tighter">{{ func.category }}</span>
+            </div>
+            <p class="text-[11px] text-slate-500 line-clamp-1 group-hover:line-clamp-none transition-all">{{ func.description }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        if (window.lucide) lucide.createIcons();
+    </script>
+</div>
+

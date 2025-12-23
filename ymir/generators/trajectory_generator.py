@@ -18,6 +18,7 @@ from ymir.functions import ScenarioTemplate
 from ymir.llm import OllamaLLM
 
 from .observation_simulator import ObservationSimulator
+from .user_simulator import UserSimulator
 
 
 class TrajectoryGenerator:
@@ -34,6 +35,7 @@ class TrajectoryGenerator:
         self.temperature = temperature
         self.llm: OllamaLLM | None = None
         self.observation_simulator: ObservationSimulator | None = None
+        self.user_simulator: UserSimulator | None = None
 
     def _ensure_llm(self) -> None:
         """Ensure LLM is initialized."""
@@ -43,10 +45,20 @@ class TrajectoryGenerator:
                 temperature=self.temperature,
             )
             self.observation_simulator = ObservationSimulator(llm=self.llm)
+            self.user_simulator = UserSimulator(
+                model=self.model,
+                temperature=self.temperature,
+            )
 
     def _build_system_prompt(self, scenario: ScenarioTemplate) -> str:
         """Build system prompt with tool definitions."""
-        tools_text = self._format_tools_for_prompt(scenario.functions)
+        return self._build_system_prompt_with_functions(scenario, scenario.functions)
+
+    def _build_system_prompt_with_functions(
+        self, scenario: ScenarioTemplate, functions: list
+    ) -> str:
+        """Build system prompt with specific tool definitions."""
+        tools_text = self._format_tools_for_prompt(functions)
 
         base_prompt = scenario.system_prompt or DEFAULT_AGENT_SYSTEM_PROMPT
 
@@ -90,25 +102,52 @@ Available tools:
                 })
         return result
 
+    def _filter_functions(
+        self, scenario: ScenarioTemplate, enabled_tools: list[str] | None
+    ) -> list:
+        """Filter scenario functions to only include enabled tools."""
+        if enabled_tools is None:
+            return scenario.functions
+        return [f for f in scenario.functions if f.name in enabled_tools]
+
     async def generate(
         self,
         scenario: ScenarioTemplate,
         user_query: str,
+        user_background: str | None = None,
+        user_goal: str | None = None,
+        enabled_tools: list[str] | None = None,
     ) -> Trajectory:
         """
-        Generate a complete multi-turn trajectory.
+        Generate a multi-turn trajectory.
+        If user_background and user_goal are provided, it simulates a conversation.
+        Otherwise, it generates a single-query response trajectory.
 
-        Flow:
-        1. User provides initial query
-        2. LLM generates response (may include tool calls)
-        3. If tool call: simulate observation, add to context
-        4. Continue until LLM provides final response or max turns
+        Args:
+            enabled_tools: Optional list of tool names to enable. If None, all tools are enabled.
+        """
+        if user_background and user_goal:
+            return await self.generate_simulated(
+                scenario, user_background, user_goal, user_query, enabled_tools
+            )
+
+        return await self._generate_single_turn(scenario, user_query, enabled_tools)
+
+    async def _generate_single_turn(
+        self,
+        scenario: ScenarioTemplate,
+        user_query: str,
+        enabled_tools: list[str] | None = None,
+    ) -> Trajectory:
+        """
+        Original generation flow: one user query, agent acts until done.
         """
         self._ensure_llm()
 
         messages: list[Message] = []
-        tools = scenario.get_tools()
-        system_prompt = self._build_system_prompt(scenario)
+        functions = self._filter_functions(scenario, enabled_tools)
+        tools = [f.to_openai_format() for f in functions]
+        system_prompt = self._build_system_prompt_with_functions(scenario, functions)
 
         # Set mock data for observation simulator
         if self.observation_simulator and scenario.mock_responses:
@@ -177,6 +216,85 @@ Available tools:
             system_prompt=system_prompt,
             messages=messages,
             source="generated",
+        )
+
+    async def generate_simulated(
+        self,
+        scenario: ScenarioTemplate,
+        user_background: str,
+        user_goal: str,
+        initial_query: str | None = None,
+        enabled_tools: list[str] | None = None,
+    ) -> Trajectory:
+        """
+        Simulate a full interaction between a user (patient) and an agent.
+        """
+        self._ensure_llm()
+        messages: list[Message] = []
+        functions = self._filter_functions(scenario, enabled_tools)
+        tools = [f.to_openai_format() for f in functions]
+        system_prompt = self._build_system_prompt_with_functions(scenario, functions)
+
+        if self.observation_simulator and scenario.mock_responses:
+            self.observation_simulator.set_mock_data(scenario.mock_responses)
+
+        # 1. Start with initial query or generate one from background
+        if initial_query:
+            current_user_msg = initial_query
+        else:
+            current_user_msg = await self.user_simulator.generate_response(
+                user_background, user_goal, []
+            )
+
+        conv_turn = 0
+        max_conv_turns = 5 # Prevent infinite loops
+
+        while conv_turn < max_conv_turns:
+            # --- AGENT TURN ---
+            messages.append(Message(role=MessageRole.USER, content=current_user_msg))
+            
+            # Agent reasoning loop (tool calls)
+            agent_done = False
+            agent_loop_turn = 0
+            while not agent_done and agent_loop_turn < self.max_turns:
+                llm_messages = self._build_messages_for_llm(messages)
+                response = await self.llm.agenerate(
+                    messages=llm_messages, system=system_prompt, tools=tools
+                )
+                
+                tool_calls = ToolCall.parse(response)
+                if tool_calls:
+                    messages.append(Message(role=MessageRole.ASSISTANT, content=response, tool_calls=tool_calls))
+                    for tool_call in tool_calls:
+                        result = await self.observation_simulator.execute(tool_call, scenario.mock_responses)
+                        messages.append(Message(role=MessageRole.TOOL_RESULT, content=json.dumps(result.result, indent=2), tool_result=result))
+                else:
+                    messages.append(Message(role=MessageRole.ASSISTANT, content=response))
+                    agent_done = True
+                agent_loop_turn += 1
+
+            # --- USER TURN ---
+            # Generate user's next response to the agent's final message
+            current_user_msg = await self.user_simulator.generate_response(
+                user_background, user_goal, messages
+            )
+            
+            # If the agent has provided a final confirmation or the task seems done, we might break
+            # For now, let's just use max_conv_turns
+            conv_turn += 1
+            
+            # Heuristic to detect if conversation is over (e.g. user says "Thanks")
+            if any(word in current_user_msg.lower() for word in ["thank you", "thanks", "that's all", "goodbye"]):
+                messages.append(Message(role=MessageRole.USER, content=current_user_msg))
+                break
+
+        return Trajectory(
+            scenario_id=scenario.id,
+            scenario_description=scenario.description,
+            tools=tools,
+            system_prompt=system_prompt,
+            messages=messages,
+            source="simulated",
         )
 
     def generate_sync(

@@ -1,84 +1,396 @@
-<div class="max-w-6xl mx-auto">
-    <h1 class="text-2xl font-bold mb-6">Generate Trajectories</h1>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Configuration Panel -->
-        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
-            <h2 class="text-xl font-semibold mb-4">Configuration</h2>
-
-            <form hx-post="/generation/generate" hx-target="#trajectory-preview" hx-swap="innerHTML"
-                hx-indicator="#generate-spinner">
-
-                <!-- Scenario Selection -->
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Scenario</label>
-                    <select name="scenario_id" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white">
-                        {% for scenario in scenarios %}
-                        <option value="{{ scenario.id }}">{{ scenario.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <!-- Model Selection -->
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Model</label>
-                    <select name="model" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white">
-                        {% for model in models %}
-                        <option value="{{ model }}">{{ model }}</option>
-                        {% endfor %}
-                        {% if not models %}
-                        <option value="llama3.2">llama3.2 (not running)</option>
-                        {% endif %}
-                    </select>
-                </div>
-
-                <!-- Temperature -->
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Temperature</label>
-                    <input type="range" name="temperature" min="0" max="1" step="0.1" value="0.7"
-                        class="w-full" oninput="this.nextElementSibling.value = this.value">
-                    <output class="text-sm text-gray-400">0.7</output>
-                </div>
-
-                <!-- User Query -->
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-300 mb-2">User Query</label>
-                    <textarea name="user_query" rows="3"
-                        class="w-full bg-gray-700 border border-gray-600 rounded-md p-3 text-white"
-                        placeholder="Enter the initial user query...">I need to schedule an appointment with Dr. Smith for next week</textarea>
-                </div>
-
-                <!-- Save Option -->
-                <div class="mb-4">
-                    <label class="flex items-center">
-                        <input type="checkbox" name="save" value="true" checked
-                            class="rounded bg-gray-700 border-gray-600 text-ymir-500">
-                        <span class="ml-2 text-sm text-gray-300">Save trajectory to storage</span>
-                    </label>
-                </div>
-
-                <!-- Generate Button -->
-                <button type="submit"
-                    class="w-full bg-ymir-500 hover:bg-ymir-600 text-white font-medium py-2 px-4 rounded-md flex items-center justify-center">
-                    <span id="generate-spinner" class="htmx-indicator mr-2">
-                        <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                        </svg>
-                    </span>
-                    Generate Trajectory
-                </button>
-            </form>
-        </div>
-
-        <!-- Preview Panel -->
-        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
-            <h2 class="text-xl font-semibold mb-4">Preview</h2>
-            <div id="trajectory-preview" class="min-h-[400px]">
-                <p class="text-gray-500 text-center py-12">
-                    Configure settings and click Generate to create a trajectory.
-                </p>
+<div class="max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8 pb-6 border-b border-slate-800">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight">Agent Generation Wizard</h1>
+                <p class="text-slate-400 mt-1">Create multi-turn agent training data in 4 simple steps</p>
             </div>
+            <span id="generate-spinner" class="htmx-indicator flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-lg text-slate-300 text-sm border border-slate-700">
+                <i data-lucide="loader-2" class="w-4 h-4 animate-spin text-ymir-500"></i>
+                Processing...
+            </span>
         </div>
     </div>
+
+    <!-- Stepper -->
+    <div id="wizard-stepper" class="mb-8">
+        {% with step=1 %}
+        {% include "generation/wizard/stepper.html" %}
+        {% endwith %}
+    </div>
+
+    <!-- Wizard Form -->
+    <form id="wizard-form" class="space-y-6">
+        <!-- Hidden fields for wizard state -->
+        <input type="hidden" id="wizard-scenario-id" name="scenario_id" value="{{ default_scenario.id if default_scenario else '' }}">
+        <input type="hidden" id="wizard-enabled-tools" name="enabled_tools" value="[]">
+        <input type="hidden" id="wizard-mode" name="mode_toggle" value="single">
+        <input type="hidden" id="wizard-user-query" name="user_query" value="">
+        <input type="hidden" id="wizard-user-background" name="user_background" value="">
+        <input type="hidden" id="wizard-user-goal" name="user_goal" value="">
+        <input type="hidden" id="wizard-current-step" value="1">
+
+        <!-- Step Content -->
+        <div id="wizard-step-content" class="card p-8 min-h-[500px]">
+            {% with step=1, scenario=default_scenario %}
+            {% include "generation/wizard/step_scenario.html" %}
+            {% endwith %}
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div id="wizard-nav" class="flex items-center justify-between">
+            <button type="button" id="wizard-back"
+                class="btn-secondary flex items-center gap-2 px-6 py-3 invisible"
+                _="on click call goToPrevStep()">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span>Back</span>
+            </button>
+
+            <div class="flex items-center gap-2 text-sm text-slate-500">
+                <span id="step-indicator">Step 1 of 4</span>
+            </div>
+
+            <button type="button" id="wizard-next"
+                class="btn-primary flex items-center gap-2 px-6 py-3"
+                _="on click call goToNextStep()">
+                <span>Next</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </form>
 </div>
+
+<script>
+// Wizard state
+let currentStep = 1;
+const totalSteps = 4;
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    updateNavButtons();
+    initializeToolsList();
+    lucide.createIcons();
+});
+
+// Re-initialize icons after HTMX swaps
+document.body.addEventListener('htmx:afterSwap', function(e) {
+    lucide.createIcons();
+    if (e.detail.target.id === 'wizard-step-content') {
+        // Re-initialize any step-specific behavior
+        if (currentStep === 2) {
+            initializeToolsList();
+        }
+    }
+});
+
+function initializeToolsList() {
+    // Initialize enabled tools with all tools from current scenario
+    const scenarioId = document.getElementById('wizard-scenario-id').value;
+    if (scenarioId) {
+        const toolCheckboxes = document.querySelectorAll('input[data-tool-name]');
+        const enabledTools = [];
+        toolCheckboxes.forEach(cb => {
+            if (cb.checked) {
+                enabledTools.push(cb.dataset.toolName);
+            }
+        });
+        if (enabledTools.length > 0) {
+            document.getElementById('wizard-enabled-tools').value = JSON.stringify(enabledTools);
+        }
+    }
+}
+
+function goToNextStep() {
+    if (currentStep >= totalSteps) return;
+
+    // Validate current step
+    if (!validateStep(currentStep)) return;
+
+    // Sync form values before navigation
+    syncFormValues();
+
+    currentStep++;
+    loadStep(currentStep);
+}
+
+function goToPrevStep() {
+    if (currentStep <= 1) return;
+
+    // Sync form values before navigation
+    syncFormValues();
+
+    currentStep--;
+    loadStep(currentStep);
+}
+
+function goToStep(step) {
+    if (step < 1 || step > totalSteps) return;
+    if (step > currentStep) {
+        // Can only go forward if current step is valid
+        for (let s = currentStep; s < step; s++) {
+            if (!validateStep(s)) return;
+        }
+    }
+
+    syncFormValues();
+    currentStep = step;
+    loadStep(currentStep);
+}
+
+function syncFormValues() {
+    // Sync any visible input values to hidden fields
+
+    // Sync mode toggle
+    const modeRadio = document.querySelector('input[name="mode_toggle"]:checked');
+    if (modeRadio) {
+        document.getElementById('wizard-mode').value = modeRadio.value;
+    }
+
+    // Sync user query
+    const queryInput = document.querySelector('textarea[name="user_query_input"]');
+    if (queryInput) {
+        document.getElementById('wizard-user-query').value = queryInput.value;
+    }
+
+    // Sync background
+    const bgInput = document.querySelector('textarea[name="user_background_input"]');
+    if (bgInput) {
+        document.getElementById('wizard-user-background').value = bgInput.value;
+    }
+
+    // Sync goal
+    const goalInput = document.querySelector('textarea[name="user_goal_input"]');
+    if (goalInput) {
+        document.getElementById('wizard-user-goal').value = goalInput.value;
+    }
+
+    // Sync enabled tools
+    const toolCheckboxes = document.querySelectorAll('input[data-tool-name]');
+    if (toolCheckboxes.length > 0) {
+        const enabledTools = [];
+        toolCheckboxes.forEach(cb => {
+            if (cb.checked) {
+                enabledTools.push(cb.dataset.toolName);
+            }
+        });
+        document.getElementById('wizard-enabled-tools').value = JSON.stringify(enabledTools);
+    }
+}
+
+function validateStep(step) {
+    switch (step) {
+        case 1:
+            const scenarioId = document.getElementById('wizard-scenario-id').value;
+            if (!scenarioId) {
+                showToast('Please select a scenario', 'error');
+                return false;
+            }
+            return true;
+        case 2:
+            const enabledTools = document.getElementById('wizard-enabled-tools').value;
+            try {
+                const tools = JSON.parse(enabledTools);
+                if (tools.length === 0) {
+                    showToast('Please enable at least one tool', 'error');
+                    return false;
+                }
+            } catch (e) {
+                // No tools parsed, might be initial state
+            }
+            return true;
+        case 3:
+            const mode = document.getElementById('wizard-mode').value;
+            if (mode === 'single') {
+                const query = document.getElementById('wizard-user-query').value;
+                if (!query.trim()) {
+                    showToast('Please enter a query', 'error');
+                    return false;
+                }
+            } else {
+                const bg = document.getElementById('wizard-user-background').value;
+                const goal = document.getElementById('wizard-user-goal').value;
+                if (!bg.trim() || !goal.trim()) {
+                    showToast('Please fill in both background and goal', 'error');
+                    return false;
+                }
+            }
+            return true;
+        default:
+            return true;
+    }
+}
+
+function loadStep(step) {
+    const scenarioId = document.getElementById('wizard-scenario-id').value;
+    const url = `/generation/step/${step}?scenario_id=${encodeURIComponent(scenarioId)}`;
+
+    htmx.ajax('GET', url, {
+        target: '#wizard-step-content',
+        swap: 'innerHTML'
+    }).then(() => {
+        updateNavButtons();
+        updateStepper();
+        document.getElementById('wizard-current-step').value = step;
+
+        // Restore form values for the step
+        restoreFormValues(step);
+    });
+}
+
+function restoreFormValues(step) {
+    setTimeout(() => {
+        if (step === 2) {
+            // Restore tool selections
+            const enabledTools = document.getElementById('wizard-enabled-tools').value;
+            try {
+                const tools = JSON.parse(enabledTools);
+                document.querySelectorAll('input[data-tool-name]').forEach(cb => {
+                    cb.checked = tools.includes(cb.dataset.toolName);
+                });
+                updateToolCount();
+            } catch (e) {}
+        }
+
+        if (step === 3) {
+            // Restore mode selection
+            const mode = document.getElementById('wizard-mode').value;
+            const modeRadio = document.querySelector(`input[name="mode_toggle"][value="${mode}"]`);
+            if (modeRadio) {
+                modeRadio.checked = true;
+                modeRadio.dispatchEvent(new Event('change'));
+            }
+
+            // Restore query
+            const query = document.getElementById('wizard-user-query').value;
+            const queryInput = document.querySelector('textarea[name="user_query_input"]');
+            if (queryInput) queryInput.value = query;
+
+            // Restore background/goal
+            const bg = document.getElementById('wizard-user-background').value;
+            const goal = document.getElementById('wizard-user-goal').value;
+            const bgInput = document.querySelector('textarea[name="user_background_input"]');
+            const goalInput = document.querySelector('textarea[name="user_goal_input"]');
+            if (bgInput) bgInput.value = bg;
+            if (goalInput) goalInput.value = goal;
+        }
+
+        if (step === 4) {
+            // Update summary display
+            updateGenerateSummary();
+
+            // Restore model/temperature
+            const model = document.getElementById('wizard-model');
+            const temp = document.getElementById('wizard-temperature');
+            // These keep their values from the form
+        }
+
+        lucide.createIcons();
+    }, 100);
+}
+
+function updateToolCount() {
+    const checkboxes = document.querySelectorAll('input[data-tool-name]');
+    const total = checkboxes.length;
+    const enabled = Array.from(checkboxes).filter(cb => cb.checked).length;
+    const counter = document.getElementById('tool-count');
+    if (counter) {
+        counter.textContent = `${enabled} of ${total} tools enabled`;
+    }
+}
+
+function updateNavButtons() {
+    const backBtn = document.getElementById('wizard-back');
+    const nextBtn = document.getElementById('wizard-next');
+    const stepIndicator = document.getElementById('step-indicator');
+
+    // Show/hide back button
+    if (currentStep === 1) {
+        backBtn.classList.add('invisible');
+    } else {
+        backBtn.classList.remove('invisible');
+    }
+
+    // Change next button text on last step
+    if (currentStep === totalSteps) {
+        nextBtn.classList.add('hidden');
+    } else {
+        nextBtn.classList.remove('hidden');
+        nextBtn.innerHTML = `<span>Next</span><i data-lucide="arrow-right" class="w-4 h-4"></i>`;
+    }
+
+    // Update step indicator
+    stepIndicator.textContent = `Step ${currentStep} of ${totalSteps}`;
+
+    lucide.createIcons();
+}
+
+function updateStepper() {
+    // Update stepper via HTMX
+    htmx.ajax('GET', `/generation/step/${currentStep}?partial=stepper`, {
+        target: '#wizard-stepper',
+        swap: 'innerHTML'
+    });
+
+    // Manually update stepper classes
+    for (let i = 1; i <= totalSteps; i++) {
+        const stepEl = document.querySelector(`[data-step="${i}"]`);
+        if (stepEl) {
+            stepEl.classList.remove('step-pending', 'step-current', 'step-completed');
+            if (i < currentStep) {
+                stepEl.classList.add('step-completed');
+            } else if (i === currentStep) {
+                stepEl.classList.add('step-current');
+            } else {
+                stepEl.classList.add('step-pending');
+            }
+        }
+    }
+}
+
+function updateGenerateSummary() {
+    const scenarioId = document.getElementById('wizard-scenario-id').value;
+    const enabledTools = document.getElementById('wizard-enabled-tools').value;
+    const mode = document.getElementById('wizard-mode').value;
+
+    const scenarioEl = document.getElementById('summary-scenario');
+    const toolsEl = document.getElementById('summary-tools');
+    const modeEl = document.getElementById('summary-mode');
+
+    if (scenarioEl) {
+        scenarioEl.textContent = scenarioId || 'Not selected';
+    }
+
+    if (toolsEl) {
+        try {
+            const tools = JSON.parse(enabledTools);
+            toolsEl.textContent = `${tools.length} tool${tools.length !== 1 ? 's' : ''} enabled`;
+        } catch (e) {
+            toolsEl.textContent = 'All enabled';
+        }
+    }
+
+    if (modeEl) {
+        modeEl.textContent = mode === 'simulated' ? 'Simulated Actor' : 'Single Query';
+    }
+}
+
+function showToast(message, type = 'info') {
+    // Simple toast notification
+    const toast = document.createElement('div');
+    toast.className = `fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 animate-in slide-in-from-right ${
+        type === 'error' ? 'bg-red-500/90 text-white' : 'bg-slate-800 text-white border border-slate-700'
+    }`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+// Listen for step navigation from stepper clicks
+document.addEventListener('stepNavigate', function(e) {
+    goToStep(e.detail.step);
+});
+</script>

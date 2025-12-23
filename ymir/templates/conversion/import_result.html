@@ -1,17 +1,38 @@
 {% if success %}
-<div class="bg-green-900 border border-green-700 text-green-300 p-4 rounded-md">
-    <h3 class="font-medium">Import Successful</h3>
-    <p class="text-sm mt-2">
-        Imported <span class="font-bold">{{ count }}</span> trajectories from
-        <span class="font-mono">{{ filename }}</span> ({{ format }})
-    </p>
-    {% if errors > 0 %}
-    <p class="text-sm text-yellow-400 mt-1">{{ errors }} records skipped due to errors</p>
-    {% endif %}
+<div class="card bg-emerald-500/5 border-emerald-500/20 p-6 animate-in fade-in slide-in-from-top-4 duration-500">
+    <div class="flex items-start gap-4">
+        <div class="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 shrink-0">
+            <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+        </div>
+        <div class="flex-grow">
+            <h3 class="text-lg font-bold text-emerald-400">Import Successful</h3>
+            <p class="text-sm text-slate-300 mt-1 leading-relaxed">
+                Imported <span class="font-black text-white px-1.5 py-0.5 bg-emerald-500/20 rounded">{{ count }}</span> trajectories from
+                <span class="font-mono text-xs bg-slate-800 px-2 py-1 rounded text-slate-400 border border-slate-700">{{ filename }}</span>
+            </p>
+            <div class="flex items-center gap-4 mt-4 pt-4 border-t border-emerald-500/10">
+                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Format: {{ format }}</div>
+                {% if errors > 0 %}
+                <div class="text-[10px] font-bold text-amber-500 uppercase tracking-widest flex items-center gap-1.5">
+                    <i data-lucide="alert-triangle" class="w-3 h-3"></i>
+                    {{ errors }} records skipped
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </div>
 {% else %}
-<div class="bg-red-900 border border-red-700 text-red-300 p-4 rounded-md">
-    <h3 class="font-medium">Import Failed</h3>
-    <p class="text-sm mt-2">{{ error }}</p>
+<div class="card bg-red-500/5 border-red-500/20 p-6 animate-in fade-in slide-in-from-top-4 duration-500">
+    <div class="flex items-start gap-4">
+        <div class="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center text-red-500 shrink-0">
+            <i data-lucide="x-circle" class="w-6 h-6"></i>
+        </div>
+        <div>
+            <h3 class="text-lg font-bold text-red-400">Import Failed</h3>
+            <p class="text-sm text-slate-300 mt-1">{{ error }}</p>
+            <button class="mt-4 text-xs font-bold text-red-500 uppercase tracking-widest hover:text-red-400 transition-colors" onclick="this.closest('.card').remove()">Dismiss</button>
+        </div>
+    </div>
 </div>
 {% endif %}

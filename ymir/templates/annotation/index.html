@@ -1,23 +1,62 @@
 <div class="max-w-6xl mx-auto">
-    <h1 class="text-2xl font-bold mb-6">Annotation Queue</h1>
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight">Annotation Queue</h1>
+            <p class="text-slate-400">Review and refine generated trajectories for quality control</p>
+        </div>
+        <div class="flex gap-3">
+            <button class="btn-secondary flex items-center gap-2" hx-get="/annotation" hx-target="#main-content" hx-swap="innerHTML">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                Refresh Queue
+            </button>
+        </div>
+    </div>
 
     <!-- Stats Bar -->
-    <div class="grid grid-cols-4 gap-4 mb-6">
-        <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 text-center">
-            <div class="text-2xl font-bold text-yellow-500">{{ stats.pending }}</div>
-            <div class="text-sm text-gray-400">Pending</div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+        <div class="card p-5 border-l-4 border-l-yellow-500 bg-yellow-500/5">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-yellow-500/10 rounded-lg flex items-center justify-center text-yellow-500">
+                    <i data-lucide="clock" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <div class="text-xl font-bold text-white">{{ stats.pending }}</div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Pending</div>
+                </div>
+            </div>
         </div>
-        <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 text-center">
-            <div class="text-2xl font-bold text-green-500">{{ stats.approved }}</div>
-            <div class="text-sm text-gray-400">Approved</div>
+        <div class="card p-5 border-l-4 border-l-green-500 bg-green-500/5">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center text-green-500">
+                    <i data-lucide="check-circle" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <div class="text-xl font-bold text-white">{{ stats.approved }}</div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Approved</div>
+                </div>
+            </div>
         </div>
-        <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 text-center">
-            <div class="text-2xl font-bold text-red-500">{{ stats.rejected }}</div>
-            <div class="text-sm text-gray-400">Rejected</div>
+        <div class="card p-5 border-l-4 border-l-red-500 bg-red-500/5">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-red-500/10 rounded-lg flex items-center justify-center text-red-500">
+                    <i data-lucide="x-circle" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <div class="text-xl font-bold text-white">{{ stats.rejected }}</div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Rejected</div>
+                </div>
+            </div>
         </div>
-        <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 text-center">
-            <div class="text-2xl font-bold text-blue-500">{{ stats.needs_edit }}</div>
-            <div class="text-sm text-gray-400">Needs Edit</div>
+        <div class="card p-5 border-l-4 border-l-blue-500 bg-blue-500/5">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-500">
+                    <i data-lucide="edit-3" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <div class="text-xl font-bold text-white">{{ stats.needs_edit }}</div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Needs Edit</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -26,8 +65,17 @@
         {% if trajectory %}
         {% include "annotation/trajectory_card.html" %}
         {% else %}
-        <div class="bg-gray-800 rounded-lg p-12 border border-gray-700 text-center">
-            <p class="text-gray-500">No trajectories pending review.</p>
+        <div class="card p-20 text-center flex flex-col items-center justify-center">
+            <div class="w-20 h-20 bg-slate-800 rounded-3xl flex items-center justify-center mb-8 text-slate-600">
+                <i data-lucide="coffee" class="w-10 h-10"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-200 mb-2">Queue Empty!</h2>
+            <p class="text-slate-400 max-w-sm">There are no trajectories pending review at the moment. Great job!</p>
+            <button class="btn-primary mt-8 flex items-center gap-2"
+                hx-get="/generation" hx-target="#main-content" hx-swap="innerHTML">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                Generate More
+            </button>
         </div>
         {% endif %}
     </div>

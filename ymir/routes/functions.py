@@ -5,7 +5,7 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from ymir.functions import FunctionDefinition, ScenarioTemplate, get_registry
-from ymir.routes import templates
+from ymir.routes.shared import templates
 
 router = APIRouter(prefix="/functions", tags=["functions"])
 
@@ -84,28 +84,30 @@ async def delete_function(name: str):
     return JSONResponse({"success": success})
 
 
-@router.get("/scenarios", response_class=HTMLResponse)
-async def list_scenarios(request: Request, category: str = None):
-    """List scenario templates."""
+@router.get("/scenario-details", response_class=HTMLResponse)
+async def scenario_details(request: Request, scenario_id: str):
+    """Get HTML details for a scenario (tools, description)."""
     registry = get_registry()
-    scenarios = registry.list_scenarios(category)
-
+    scenario = registry.get_scenario(scenario_id)
     return templates.TemplateResponse(
-        "functions/scenario_list.html",
-        {"request": request, "scenarios": scenarios},
+        "generation/scenario_info.html",
+        {"request": request, "scenario": scenario},
     )
 
 
-@router.get("/scenario/{scenario_id}", response_class=JSONResponse)
-async def get_scenario(scenario_id: str):
-    """Get a scenario by ID."""
+@router.get("/scenario-details", response_class=HTMLResponse)
+async def get_scenario_details(request: Request, scenario_id: str):
+    """Get details of a scenario for the generation UI."""
     registry = get_registry()
     scenario = registry.get_scenario(scenario_id)
-
+    
     if not scenario:
-        return JSONResponse({"error": "Scenario not found"}, status_code=404)
-
-    return JSONResponse(scenario.model_dump())
+        return HTMLResponse("Scenario not found", status_code=404)
+        
+    return templates.TemplateResponse(
+        "functions/scenario_tools_compact.html",
+        {"request": request, "scenario": scenario},
+    )
 
 
 @router.post("/scenario", response_class=HTMLResponse)

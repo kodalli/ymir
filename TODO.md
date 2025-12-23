@@ -36,10 +36,21 @@ ymir/
 4. Review and annotate trajectories
 5. Export approved data for training
 
+## Recent Updates
+
+- [x] **Generation Wizard UI** - Complete 4-step wizard for creating agent training data
+  - Step 1: Select Scenario (card-based selection)
+  - Step 2: Configure Tools (toggle individual tools on/off)
+  - Step 3: Configure Actor (preset personas + custom)
+  - Step 4: Generate (model config + execute)
+- [x] **Persona Presets** - 5 built-in personas for medical scheduling
+- [x] **Tool Filtering** - Generator now accepts `enabled_tools` to filter available tools
+
 ## Next Steps
 
-- [ ] Test with actual Ollama models
+- [ ] Test wizard with actual Ollama models
 - [ ] Add batch generation UI
 - [ ] Improve quality scoring heuristics
-- [ ] Add more built-in scenario templates
+- [ ] Add more built-in scenario templates (beyond medical scheduling)
+- [ ] Add more persona presets for other scenario categories
 - [ ] Support for editing trajectories in annotation UI

@@ -9,7 +9,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 
 from ymir.converters import APIGenMTConverter, HermesFCConverter
 from ymir.storage import get_store
-from ymir.routes import templates
+from ymir.routes.shared import templates
 
 router = APIRouter(prefix="/conversion", tags=["conversion"])
 
@@ -88,9 +88,9 @@ async def import_dataset(
         os.unlink(tmp_path)
 
 
-@router.get("/stats", response_class=JSONResponse)
-async def get_stats():
-    """Get storage statistics."""
+@router.get("/stats", response_class=HTMLResponse)
+async def get_stats(request: Request):
+    """Get storage statistics as HTML."""
     store = get_store()
     total = await store.count_all()
 
@@ -103,4 +103,7 @@ async def get_stats():
         "needs_edit": await store.count_by_status(TrajectoryStatus.NEEDS_EDIT),
     }
 
-    return JSONResponse(stats)
+    return templates.TemplateResponse(
+        "conversion/stats.html",
+        {"request": request, "stats": stats},
+    )

@@ -1,77 +1,33 @@
-<!-- Reusable Button Component -->
-<!--
-Usage:
-    Set the following variables before including the template:
-
-    button_text - The text to display on the button (default: "Button")
-    button_type - The button type: submit or button (default: "button")
-    button_color - The button color: ymir, blue, green, or gray (default: "ymir")
-    button_icon - Whether to show an icon: true or false
-    button_icon_position - Icon position: left or right (default: "left")
-    button_loading_indicator - Whether to show a loading spinner: true or false
-    button_indicator_id - ID for the loading indicator
-    button_htmx_attrs - HTMX attributes like hx-post, hx-target, etc.
-    button_additional_classes - Additional CSS classes
-    button_id - ID for the button element
-
-    Then include the template with:
-    &#123;% include "components/button.html" %&#125;
--->
+<!-- Reusable Button Component (Modernized) -->
 
 {% set button_colors = {
-'ymir': 'bg-ymir-500 hover:bg-ymir-600',
-'red': 'bg-ymir-500 hover:bg-ymir-600',
+'ymir': 'btn-primary',
+'red': 'bg-red-500 hover:bg-red-600',
 'blue': 'bg-blue-600 hover:bg-blue-700',
-'green': 'bg-green-600 hover:bg-green-700',
-'gray': 'bg-gray-600 hover:bg-gray-700'
+'green': 'bg-emerald-600 hover:bg-emerald-700',
+'gray': 'btn-secondary'
 } %}
-
-{% set padding = 'py-2 px-6' %}
-{% if button_icon is defined and button_icon and button_loading_indicator is not defined %}
-{% set padding = 'py-2 px-4' %}
-{% endif %}
 
 {% set has_left_icon = (button_loading_indicator is defined and button_loading_indicator) or (button_icon is defined and
 button_icon and button_icon_position|default('left') == "left") %}
 {% set has_right_icon = button_icon is defined and button_icon and button_icon_position|default('left') == "right" %}
 
 <button type="{{ button_type|default('button') }}" {% if button_id is defined %}id="{{ button_id }}" {% endif %}
-    class="{{ button_colors[button_color|default('ymir')] }} text-white font-medium {{ padding }} rounded-md transition-colors duration-200 flex items-center shadow-sm {{ button_additional_classes|default('') }}"
+    class="{{ button_colors[button_color|default('ymir')] }} flex items-center justify-center gap-2 group {{ button_additional_classes|default('') }}"
     {{ button_htmx_attrs|default('') }}>
 
-    <!-- Left icon container with fixed width -->
-    <div class="w-5 flex-shrink-0 flex justify-start mr-2 {% if not has_left_icon %}invisible{% endif %}">
-        {% if button_loading_indicator is defined and button_loading_indicator %}
-        <div {% if button_indicator_id is defined %}id="{{ button_indicator_id }}" {% endif %}
-            class="htmx-indicator inline-flex">
-            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
-                viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                </path>
-            </svg>
-        </div>
-        {% elif button_icon is defined and button_icon and button_icon_position|default('left') == "left" %}
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd"
-                d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"
-                clip-rule="evenodd" />
-        </svg>
-        {% endif %}
+    {% if button_loading_indicator is defined and button_loading_indicator %}
+    <div {% if button_indicator_id is defined %}id="{{ button_indicator_id }}" {% endif %}
+        class="htmx-indicator">
+        <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
     </div>
+    {% elif button_icon is defined and button_icon and button_icon_position|default('left') == "left" %}
+    <i data-lucide="{{ button_icon }}" class="w-4 h-4"></i>
+    {% endif %}
 
-    <!-- Text centered in the available space -->
-    <span class="flex-grow text-center">{{ button_text|default('Button') }}</span>
+    <span>{{ button_text|default('Button') }}</span>
 
-    <!-- Right icon container with fixed width -->
-    <div class="w-5 flex-shrink-0 flex justify-end ml-2 {% if not has_right_icon %}invisible{% endif %}">
-        {% if button_icon is defined and button_icon and button_icon_position|default('left') == "right" %}
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd"
-                d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"
-                clip-rule="evenodd" />
-        </svg>
-        {% endif %}
-    </div>
+    {% if button_icon is defined and button_icon and button_icon_position|default('left') == "right" %}
+    <i data-lucide="{{ button_icon }}" class="w-4 h-4"></i>
+    {% endif %}
 </button>

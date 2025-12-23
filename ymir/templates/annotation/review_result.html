@@ -1,8 +1,20 @@
-<!-- Review confirmation -->
-<div class="bg-gray-700 rounded-lg p-4 mb-4">
-    <p class="text-sm text-gray-300">
-        Marked trajectory as <span class="font-medium {% if reviewed.status.value == 'approved' %}text-green-400{% elif reviewed.status.value == 'rejected' %}text-red-400{% else %}text-yellow-400{% endif %}">{{ reviewed.status.value }}</span>
-    </p>
+<!-- Review confirmation toast-like alert -->
+<div class="flex items-center gap-3 p-4 mb-6 bg-slate-800/80 border border-slate-700 rounded-xl animate-in fade-in slide-in-from-right-4">
+    <div class="w-8 h-8 rounded-full flex items-center justify-center {% if reviewed.status.value == 'approved' %}bg-emerald-500/20 text-emerald-500{% elif reviewed.status.value == 'rejected' %}bg-red-500/20 text-red-500{% else %}bg-yellow-500/20 text-yellow-500{% endif %}">
+        {% if reviewed.status.value == 'approved' %}
+        <i data-lucide="check" class="w-4 h-4"></i>
+        {% elif reviewed.status.value == 'rejected' %}
+        <i data-lucide="x" class="w-4 h-4"></i>
+        {% else %}
+        <i data-lucide="edit-2" class="w-4 h-4"></i>
+        {% endif %}
+    </div>
+    <div class="text-sm">
+        <span class="text-slate-400">Trajectory marked as </span>
+        <span class="font-bold uppercase tracking-tight {% if reviewed.status.value == 'approved' %}text-emerald-500{% elif reviewed.status.value == 'rejected' %}text-red-500{% else %}text-yellow-500{% endif %}">
+            {{ reviewed.status.value }}
+        </span>
+    </div>
 </div>
 
 <!-- Next trajectory or empty message -->
@@ -11,11 +23,23 @@
 {% include "annotation/trajectory_card.html" %}
 {% endwith %}
 {% else %}
-<div class="bg-gray-800 rounded-lg p-12 border border-gray-700 text-center">
-    <p class="text-gray-500">No more trajectories pending review.</p>
-    <button class="mt-4 bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md"
-        hx-get="/annotation" hx-target="#main-content" hx-swap="innerHTML">
-        Refresh Queue
-    </button>
+<div class="card p-20 text-center flex flex-col items-center justify-center animate-in zoom-in-95 duration-500">
+    <div class="w-20 h-20 bg-slate-800 rounded-3xl flex items-center justify-center mb-8 text-slate-600">
+        <i data-lucide="check-circle-2" class="w-10 h-10 text-emerald-500/50"></i>
+    </div>
+    <h2 class="text-2xl font-bold text-slate-200 mb-2">Review Complete!</h2>
+    <p class="text-slate-400 max-w-sm">You've reached the end of the current queue. All trajectories have been reviewed.</p>
+    <div class="flex gap-4 mt-8">
+        <button class="btn-secondary flex items-center gap-2"
+            hx-get="/annotation" hx-target="#main-content" hx-swap="innerHTML">
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+            Refresh Queue
+        </button>
+        <button class="btn-primary flex items-center gap-2"
+            hx-get="/generation" hx-target="#main-content" hx-swap="innerHTML">
+            <i data-lucide="zap" class="w-4 h-4"></i>
+            Generate More
+        </button>
+    </div>
 </div>
 {% endif %}

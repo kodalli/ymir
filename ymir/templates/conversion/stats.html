@@ -1,0 +1,36 @@
+<div class="space-y-6">
+    <div class="flex items-center gap-2 mb-2">
+        <i data-lucide="bar-chart-3" class="w-5 h-5 text-ymir-500"></i>
+        <h3 class="font-bold text-slate-200">Storage Overview</h3>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <div class="bg-slate-800/40 border border-slate-700/50 p-4 rounded-xl">
+            <div class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Records</div>
+            <div class="text-2xl font-black text-white">{{ stats.total }}</div>
+        </div>
+        <div class="bg-slate-800/40 border border-slate-700/50 p-4 rounded-xl">
+            <div class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Pending Review</div>
+            <div class="text-2xl font-black text-amber-500">{{ stats.pending }}</div>
+        </div>
+        <div class="bg-slate-800/40 border border-slate-700/50 p-4 rounded-xl">
+            <div class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Approved</div>
+            <div class="text-2xl font-black text-emerald-500">{{ stats.approved }}</div>
+        </div>
+        <div class="bg-slate-800/40 border border-slate-700/50 p-4 rounded-xl">
+            <div class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Needs Edit</div>
+            <div class="text-2xl font-black text-blue-500">{{ stats.needs_edit }}</div>
+        </div>
+    </div>
+
+    <div class="pt-4 border-t border-slate-700/50">
+        <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-500">Database Status</span>
+            <span class="flex items-center gap-1.5 text-emerald-500 font-bold">
+                <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                Connected
+            </span>
+        </div>
+    </div>
+</div>
+

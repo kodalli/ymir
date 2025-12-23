@@ -1,53 +1,23 @@
-<!-- Reusable Upload Button Component -->
-<!--
-Usage:
-    Set the following variables before including the template:
-
-    button_text - The text to display on the button (default: "Upload File")
-    button_indicator_id - ID for the loading indicator
-    button_color - The button color: ymir, blue, green, or gray (default: "ymir")
-    button_additional_classes - Additional CSS classes
-    button_id - ID for the button element
-
-    Then include the template with:
-    &#123;% include "components/upload_button.html" %&#125;
--->
+<!-- Reusable Upload Button Component (Modernized) -->
 
 {% set button_colors = {
-'ymir': 'bg-ymir-500 hover:bg-ymir-600',
-'red': 'bg-ymir-500 hover:bg-ymir-600',
+'ymir': 'btn-primary',
+'red': 'bg-red-500 hover:bg-red-600',
 'blue': 'bg-blue-600 hover:bg-blue-700',
-'green': 'bg-green-600 hover:bg-green-700',
-'gray': 'bg-gray-600 hover:bg-gray-700'
+'green': 'bg-emerald-600 hover:bg-emerald-700',
+'gray': 'btn-secondary'
 } %}
 
 <button type="submit" {% if button_id is defined %}id="{{ button_id }}" {% endif %}
-    class="{{ button_colors[button_color|default('ymir')] }} text-white font-medium py-2 px-5 rounded-md transition-colors duration-200 flex items-center shadow-sm {{ button_additional_classes|default('') }}">
+    class="{{ button_colors[button_color|default('ymir')] }} flex items-center justify-center gap-2 group {{ button_additional_classes|default('') }}"
+    {{ button_htmx_attrs|default('') }}>
 
-    <!-- Left icon containers with fixed width -->
-    <div class="w-12 flex-shrink-0 flex items-center">
-        <div id="{{ button_indicator_id }}" class="htmx-indicator inline-flex mr-1 flex-shrink-0">
-            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
-                viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                </path>
-            </svg>
+    <div class="relative flex items-center justify-center">
+        <div id="{{ button_indicator_id }}" class="htmx-indicator absolute">
+            <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
         </div>
-
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd"
-                d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-                clip-rule="evenodd" />
-        </svg>
+        <i data-lucide="upload-cloud" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
     </div>
 
-    <!-- Text centered in the available space -->
-    <span class="flex-grow text-center">{{ button_text|default('Upload File') }}</span>
-
-    <!-- Empty right side for balance -->
-    <div class="w-12 flex-shrink-0 invisible">
-        <!-- This div creates visual balance with the left side icons but remains invisible -->
-    </div>
+    <span class="font-bold">{{ button_text|default('Upload File') }}</span>
 </button>

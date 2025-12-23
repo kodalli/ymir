@@ -7,7 +7,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from ymir.annotation import ReviewQueue
 from ymir.core import TrajectoryStatus
 from ymir.storage import get_store
-from ymir.routes import templates
+from ymir.routes.shared import templates
 
 router = APIRouter(prefix="/annotation", tags=["annotation"])
 

@@ -1,0 +1,132 @@
+<!-- Step 2: Configure Tools -->
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-start justify-between">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-ymir-500/10 text-ymir-400 border border-ymir-500/20">
+                    Step {{ step }} of 4
+                </span>
+                <h2 class="text-2xl font-semibold text-slate-100">Configure Agent Tools</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Box -->
+    <div class="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+        <div class="flex gap-3">
+            <i data-lucide="info" class="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5"></i>
+            <div class="space-y-1 text-sm">
+                <p class="text-slate-300">Select which tools the agent can use during this interaction.</p>
+                <p class="text-slate-400">Disable tools to create simpler training data or test specific capabilities.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tool Count Summary & Quick Actions -->
+    <div class="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+        <div class="flex items-center gap-2">
+            <i data-lucide="wrench" class="w-4 h-4 text-slate-400"></i>
+            <span id="tool-count-summary" class="text-sm font-medium text-slate-300">
+                {{ scenario.functions|length }} of {{ scenario.functions|length }} tools enabled
+            </span>
+        </div>
+        <div class="flex gap-2">
+            <button type="button"
+                    class="px-3 py-1.5 text-xs font-medium text-slate-300 bg-slate-700 hover:bg-slate-600 rounded-md transition-colors"
+                    _="on click
+                       for checkbox in <input[data-tool-name]/>
+                         set checkbox.checked to true
+                       end
+                       send change to <input[data-tool-name]/>">
+                Enable All
+            </button>
+            <button type="button"
+                    class="px-3 py-1.5 text-xs font-medium text-slate-300 bg-slate-700 hover:bg-slate-600 rounded-md transition-colors"
+                    _="on click
+                       for checkbox in <input[data-tool-name]/>
+                         set checkbox.checked to false
+                       end
+                       send change to <input[data-tool-name]/>">
+                Disable All
+            </button>
+        </div>
+    </div>
+
+    <!-- Tools List -->
+    <div class="space-y-3">
+        {% for function in scenario.functions %}
+        <div class="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
+            <div class="p-4">
+                <!-- Tool Header -->
+                <div class="flex items-start gap-4">
+                    <!-- Toggle Switch -->
+                    <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
+                        <input type="checkbox"
+                               class="sr-only peer"
+                               checked
+                               data-tool-name="{{ function.name }}"
+                               _="on change
+                                  set tools to []
+                                  for checkbox in <input[data-tool-name]/>
+                                    if checkbox.checked then set tools to tools + [checkbox's @data-tool-name]
+                                  end
+                                  set #wizard-enabled-tools.value to JSON.stringify(tools)
+
+                                  -- Update count
+                                  set enabledCount to tools.length
+                                  set totalCount to {{ scenario.functions|length }}
+                                  set #tool-count-summary.textContent to enabledCount + ' of ' + totalCount + ' tools enabled'">
+                        <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-ymir-500 transition-all"></div>
+                        <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full peer-checked:translate-x-5 transition-all"></div>
+                    </label>
+
+                    <!-- Tool Info -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-2">
+                            <h3 class="text-base font-mono font-medium text-slate-100">{{ function.name }}</h3>
+                            {% if function.category %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-700 text-slate-300">
+                                {{ function.category }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        <p class="text-sm text-slate-400 mb-3">{{ function.description }}</p>
+
+                        <!-- Parameters Section -->
+                        {% if function.parameters and function.parameters.properties %}
+                        <details class="group" open>
+                            <summary class="cursor-pointer text-xs font-medium text-slate-500 hover:text-slate-400 transition-colors flex items-center gap-1.5 mb-2">
+                                <i data-lucide="chevron-right" class="w-3.5 h-3.5 transition-transform group-open:rotate-90"></i>
+                                Parameters ({{ function.parameters.properties|length }})
+                            </summary>
+                            <div class="mt-2 space-y-2 pl-5">
+                                {% for param_name, param_info in function.parameters.properties.items() %}
+                                <div class="flex items-start gap-2 text-xs">
+                                    <div class="flex items-center gap-2 min-w-0 flex-1">
+                                        <code class="font-mono text-slate-300">{{ param_name }}</code>
+                                        <span class="text-slate-500">{{ param_info.type if param_info.type else 'any' }}</span>
+                                        {% if function.parameters.required and param_name in function.parameters.required %}
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                            required
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    {% if param_info.description %}
+                                    <p class="text-slate-500 flex-1">{{ param_info.description }}</p>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </details>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Hidden input to store enabled tools -->
+    <input type="hidden" id="wizard-enabled-tools" name="enabled_tools" value='{{ scenario.functions|map(attribute="name")|list|tojson }}'>
+</div>

@@ -1,0 +1,49 @@
+<div class="card overflow-hidden animate-in fade-in duration-500">
+    <div class="p-4 bg-slate-800/50 border-b border-slate-700 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <i data-lucide="wrench" class="w-4 h-4 text-ymir-500"></i>
+            <h3 class="text-xs font-black text-slate-300 uppercase tracking-widest">Available Tools</h3>
+        </div>
+        <span class="px-2 py-0.5 bg-slate-900 border border-slate-700 rounded text-[9px] font-bold text-slate-500 uppercase tracking-tight">
+            {{ scenario.functions|length }} total
+        </span>
+    </div>
+    <div class="p-2 space-y-1 bg-slate-950/20 max-h-[300px] overflow-y-auto custom-scrollbar">
+        {% for func in scenario.functions %}
+        <div class="p-3 hover:bg-slate-800/40 rounded-lg transition-all group">
+            <div class="flex items-center justify-between mb-1">
+                <span class="font-mono text-xs font-bold text-ymir-400 group-hover:text-ymir-300">{{ func.name }}</span>
+                <i data-lucide="info" class="w-3 h-3 text-slate-600 group-hover:text-slate-400 transition-colors cursor-help" title="{{ func.description }}"></i>
+            </div>
+            <p class="text-[10px] text-slate-500 line-clamp-1 leading-relaxed">{{ func.description }}</p>
+            
+            {% if func.parameters and func.parameters.properties %}
+            <div class="mt-2 flex flex-wrap gap-1">
+                {% for param_name in func.parameters.properties.keys() %}
+                <span class="px-1.5 py-0.5 bg-slate-800 border border-slate-700/50 rounded text-[8px] font-mono text-slate-400">
+                    {{ param_name }}
+                </span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    <div class="p-3 bg-slate-800/30 border-t border-slate-700">
+        <div class="flex items-start gap-2">
+            <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5"></i>
+            <p class="text-[9px] text-slate-500 leading-tight">
+                The agent can use these tools to fulfill the simulated persona's goals.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    if (window.lucide) {
+        window.lucide.createIcons({
+            root: document.getElementById('scenario-tools')
+        });
+    }
+</script>
+

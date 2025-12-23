@@ -1,14 +1,12 @@
-from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
+from .shared import templates
 from .functions import router as functions_router
 from .generation import router as generation_router
 from .conversion import router as conversion_router
 from .annotation import router as annotation_router
 from .export import router as export_router
-
-templates = Jinja2Templates(directory="ymir/templates")
 
 routers = [
     functions_router,

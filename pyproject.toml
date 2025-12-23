@@ -1,7 +1,7 @@
 [project]
 name = "ymir"
 version = "0.0.0a0"
-description = "Ymir is a synthetic data generation tool for LLMs."
+description = "Ymir - Agentic Dataset Generator for LLM training"
 authors = [
     { name = "kodalli", email = "surya.kodali@gmail.com" },
     { name = "LAMICS, Inc." },
@@ -10,18 +10,14 @@ requires-python = ">=3.11,<3.14"
 readme = "README.md"
 license = { text = "Apache 2" }
 dependencies = [
-    "langchain>=0.3.18,<0.4.0",
-    "langchain-ollama>=0.2.3,<0.3.0",
-    "langchain-openai>=0.3.5,<0.4.0",
-    "langchain-google-genai>=2.0.9,<3.0.0",
-    "langchain-deepseek>=0.1.2,<0.2.0",
-    "fastapi>=0.110.0,<0.111.0",
-    "jinja2>=3.1.3,<3.2.0",
-    "uvicorn>=0.29.0,<0.30.0",
-    "python-multipart>=0.0.9,<0.1.0",
-    "loguru>=0.7.3,<0.8.0",
-    "datasets>=3.2.0,<4.0.0",
-    "pypdf[full]>=5.3.1",
+    "fastapi>=0.110.0",
+    "jinja2>=3.1.3",
+    "uvicorn>=0.29.0",
+    "python-multipart>=0.0.9",
+    "loguru>=0.7.3",
+    "pydantic>=2.0.0",
+    "ollama>=0.4.0",
+    "pyyaml>=6.0.0",
 ]
 
 [dependency-groups]

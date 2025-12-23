@@ -1,0 +1,60 @@
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-2xl font-bold mb-6">Import Dataset</h1>
+
+    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <h2 class="text-xl font-semibold mb-4">Upload Dataset File</h2>
+
+        <form hx-post="/conversion/import" hx-target="#import-result" hx-swap="innerHTML"
+            hx-encoding="multipart/form-data" hx-indicator="#import-spinner">
+
+            <!-- File Upload -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-300 mb-2">JSONL File</label>
+                <input type="file" name="file" accept=".jsonl,.json"
+                    class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white">
+            </div>
+
+            <!-- Format Selection -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Source Format</label>
+                <select name="format" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white">
+                    {% for format in formats %}
+                    <option value="{{ format }}">{{ format }}</option>
+                    {% endfor %}
+                </select>
+                <p class="text-xs text-gray-500 mt-1">
+                    Supported: APIGen-MT (Salesforce), Hermes FC (NousResearch), Multi-turn tools
+                </p>
+            </div>
+
+            <!-- Options -->
+            <div class="mb-4">
+                <label class="flex items-center">
+                    <input type="checkbox" name="auto_score" value="true" checked
+                        class="rounded bg-gray-700 border-gray-600 text-ymir-500">
+                    <span class="ml-2 text-sm text-gray-300">Auto-score quality on import</span>
+                </label>
+            </div>
+
+            <!-- Import Button -->
+            <button type="submit"
+                class="w-full bg-ymir-500 hover:bg-ymir-600 text-white font-medium py-2 px-4 rounded-md flex items-center justify-center">
+                <span id="import-spinner" class="htmx-indicator mr-2">
+                    <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                </span>
+                Import Dataset
+            </button>
+        </form>
+
+        <div id="import-result" class="mt-6"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="mt-6 bg-gray-800 rounded-lg p-6 border border-gray-700"
+        hx-get="/conversion/stats" hx-trigger="load" hx-swap="innerHTML">
+        <p class="text-gray-500">Loading stats...</p>
+    </div>
+</div>

@@ -1,0 +1,15 @@
+{% if message %}
+<div class="bg-green-900 border border-green-700 text-green-300 px-4 py-2 rounded-md text-sm mb-4">
+    {{ message }}
+</div>
+{% endif %}
+
+{% for func in functions %}
+<div class="bg-gray-700 p-4 rounded-md">
+    <h3 class="font-mono text-ymir-400">{{ func.name }}</h3>
+    <p class="text-sm text-gray-400 mt-1">{{ func.description }}</p>
+    <div class="mt-2 text-xs text-gray-500">
+        {{ func.category }}
+    </div>
+</div>
+{% endfor %}

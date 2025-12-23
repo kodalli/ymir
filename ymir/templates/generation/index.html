@@ -1,0 +1,84 @@
+<div class="max-w-6xl mx-auto">
+    <h1 class="text-2xl font-bold mb-6">Generate Trajectories</h1>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Configuration Panel -->
+        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <h2 class="text-xl font-semibold mb-4">Configuration</h2>
+
+            <form hx-post="/generation/generate" hx-target="#trajectory-preview" hx-swap="innerHTML"
+                hx-indicator="#generate-spinner">
+
+                <!-- Scenario Selection -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Scenario</label>
+                    <select name="scenario_id" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white">
+                        {% for scenario in scenarios %}
+                        <option value="{{ scenario.id }}">{{ scenario.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Model Selection -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Model</label>
+                    <select name="model" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white">
+                        {% for model in models %}
+                        <option value="{{ model }}">{{ model }}</option>
+                        {% endfor %}
+                        {% if not models %}
+                        <option value="llama3.2">llama3.2 (not running)</option>
+                        {% endif %}
+                    </select>
+                </div>
+
+                <!-- Temperature -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Temperature</label>
+                    <input type="range" name="temperature" min="0" max="1" step="0.1" value="0.7"
+                        class="w-full" oninput="this.nextElementSibling.value = this.value">
+                    <output class="text-sm text-gray-400">0.7</output>
+                </div>
+
+                <!-- User Query -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">User Query</label>
+                    <textarea name="user_query" rows="3"
+                        class="w-full bg-gray-700 border border-gray-600 rounded-md p-3 text-white"
+                        placeholder="Enter the initial user query...">I need to schedule an appointment with Dr. Smith for next week</textarea>
+                </div>
+
+                <!-- Save Option -->
+                <div class="mb-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" name="save" value="true" checked
+                            class="rounded bg-gray-700 border-gray-600 text-ymir-500">
+                        <span class="ml-2 text-sm text-gray-300">Save trajectory to storage</span>
+                    </label>
+                </div>
+
+                <!-- Generate Button -->
+                <button type="submit"
+                    class="w-full bg-ymir-500 hover:bg-ymir-600 text-white font-medium py-2 px-4 rounded-md flex items-center justify-center">
+                    <span id="generate-spinner" class="htmx-indicator mr-2">
+                        <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                    </span>
+                    Generate Trajectory
+                </button>
+            </form>
+        </div>
+
+        <!-- Preview Panel -->
+        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <h2 class="text-xl font-semibold mb-4">Preview</h2>
+            <div id="trajectory-preview" class="min-h-[400px]">
+                <p class="text-gray-500 text-center py-12">
+                    Configure settings and click Generate to create a trajectory.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

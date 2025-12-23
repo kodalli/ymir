@@ -1,0 +1,58 @@
+<div class="max-w-6xl mx-auto">
+    <h1 class="text-2xl font-bold mb-6">Function Definitions</h1>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Scenarios -->
+        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <h2 class="text-xl font-semibold mb-4">Scenarios</h2>
+            <div id="scenario-list" class="space-y-3">
+                {% for scenario in scenarios %}
+                <div class="bg-gray-700 p-4 rounded-md">
+                    <h3 class="font-medium">{{ scenario.name }}</h3>
+                    <p class="text-sm text-gray-400">{{ scenario.description }}</p>
+                    <div class="mt-2 text-xs text-gray-500">
+                        {{ scenario.functions|length }} functions | {{ scenario.category }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Functions -->
+        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <h2 class="text-xl font-semibold mb-4">Functions</h2>
+            <div id="function-list" class="space-y-3">
+                {% for func in functions %}
+                <div class="bg-gray-700 p-4 rounded-md">
+                    <h3 class="font-mono text-ymir-400">{{ func.name }}</h3>
+                    <p class="text-sm text-gray-400 mt-1">{{ func.description }}</p>
+                    <div class="mt-2 text-xs text-gray-500">
+                        {{ func.category }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Add Function Form -->
+            <div class="mt-6 pt-6 border-t border-gray-700">
+                <h3 class="font-medium mb-3">Add Function</h3>
+                <form hx-post="/functions/add" hx-target="#function-list" hx-swap="innerHTML">
+                    <div class="space-y-3">
+                        <input type="text" name="name" placeholder="Function name"
+                            class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm">
+                        <input type="text" name="description" placeholder="Description"
+                            class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm">
+                        <textarea name="parameters_json" rows="3" placeholder='{"type": "object", "properties": {...}}'
+                            class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm font-mono">{"type": "object", "properties": {}, "required": []}</textarea>
+                        <input type="text" name="category" placeholder="Category" value="custom"
+                            class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm">
+                        <button type="submit"
+                            class="w-full bg-ymir-500 hover:bg-ymir-600 text-white font-medium py-2 px-4 rounded-md text-sm">
+                            Add Function
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

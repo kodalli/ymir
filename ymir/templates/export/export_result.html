@@ -1,0 +1,18 @@
+{% if success %}
+<div class="bg-green-900 border border-green-700 text-green-300 p-4 rounded-md">
+    <h3 class="font-medium">Export Created</h3>
+    <p class="text-sm mt-2">
+        Exported <span class="font-bold">{{ count }}</span> trajectories to
+        <span class="font-mono">{{ filename }}</span>
+    </p>
+    <a href="/export/download/{{ filename }}"
+        class="inline-block mt-3 bg-green-700 hover:bg-green-600 text-white text-sm py-1 px-3 rounded-md">
+        Download
+    </a>
+</div>
+{% else %}
+<div class="bg-red-900 border border-red-700 text-red-300 p-4 rounded-md">
+    <h3 class="font-medium">Export Failed</h3>
+    <p class="text-sm mt-2">{{ error }}</p>
+</div>
+{% endif %}

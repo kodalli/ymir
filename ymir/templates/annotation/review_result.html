@@ -1,0 +1,21 @@
+<!-- Review confirmation -->
+<div class="bg-gray-700 rounded-lg p-4 mb-4">
+    <p class="text-sm text-gray-300">
+        Marked trajectory as <span class="font-medium {% if reviewed.status.value == 'approved' %}text-green-400{% elif reviewed.status.value == 'rejected' %}text-red-400{% else %}text-yellow-400{% endif %}">{{ reviewed.status.value }}</span>
+    </p>
+</div>
+
+<!-- Next trajectory or empty message -->
+{% if next %}
+{% with trajectory=next %}
+{% include "annotation/trajectory_card.html" %}
+{% endwith %}
+{% else %}
+<div class="bg-gray-800 rounded-lg p-12 border border-gray-700 text-center">
+    <p class="text-gray-500">No more trajectories pending review.</p>
+    <button class="mt-4 bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md"
+        hx-get="/annotation" hx-target="#main-content" hx-swap="innerHTML">
+        Refresh Queue
+    </button>
+</div>
+{% endif %}

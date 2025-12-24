@@ -39,8 +39,8 @@
                     class="peer sr-only"
                     _="on change
                        if my.checked
-                         show #single-fields
-                         hide #simulated-fields
+                         remove .hidden from #single-fields
+                         add .hidden to #simulated-fields
                        end"
                 >
                 <div class="flex-1 border-2 border-slate-700 rounded-lg p-6 transition-all
@@ -67,8 +67,8 @@
                     class="peer sr-only"
                     _="on change
                        if my.checked
-                         hide #single-fields
-                         show #simulated-fields
+                         add .hidden to #single-fields
+                         remove .hidden from #simulated-fields
                        end"
                 >
                 <div class="flex-1 border-2 border-slate-700 rounded-lg p-6 transition-all
@@ -127,117 +127,81 @@
     </div>
 
     <!-- Simulated Actor Fields -->
-    <div id="simulated-fields" class="space-y-6 hidden">
+    <div id="simulated-fields" class="space-y-5 hidden">
+        <!-- Load Example Button -->
+        <div class="flex justify-end">
+            <button
+                type="button"
+                class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-300 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
+                _="on click
+                   set #persona-situation.value to 'Patient Name: Mark Nolan\nPhone Number: (614) 443-4790\nDate of Birth: 08/18/1980\nReason for Visit: Leg pain\nEmail: mark.nolan@gmail.com\nPreferred Date: Next Monday or Tuesday (flexible)\nPreferred Time: Flexible\nAdditional Notes: Experiencing persistent leg pain in right leg, started about a week ago after lifting weights'
+                   set #persona-background.value to 'You are a new patient. You are friendly and cooperative but want to get this scheduled quickly.'
+                   set #persona-goal.value to 'Schedule an appointment to see a doctor about your leg pain as soon as possible.'"
+            >
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                Load Example
+            </button>
+        </div>
+
+        <!-- Situation Details -->
         <div>
-            <label class="block text-sm font-medium text-slate-300 mb-3">
-                Choose a Persona
+            <label for="persona-situation" class="block text-sm font-medium text-slate-300 mb-2">
+                Situation Details
+                <span class="text-slate-500 font-normal ml-1">- Facts the actor knows (hidden from agent)</span>
             </label>
+            <textarea
+                id="persona-situation"
+                name="user_situation_input"
+                rows="8"
+                class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg
+                       text-white placeholder-slate-500 focus:outline-none focus:ring-2
+                       focus:ring-ymir-500 focus:border-transparent font-mono text-sm"
+                placeholder="Patient Name: John Smith
+Phone Number: (555) 123-4567
+Date of Birth: 03/15/1985
+Reason for Visit: Annual checkup
+Email: john.smith@email.com
+Preferred Date: Next Monday or Tuesday
+Preferred Time: Morning, before 11am
+Additional Notes: First time patient, referred by Dr. Johnson"
+            ></textarea>
+            <p class="mt-1.5 text-xs text-slate-500">
+                Enter the structured details the actor will use when responding to the agent's questions.
+            </p>
+        </div>
 
-            <!-- Persona Preset Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                {% for persona in personas %}
-                <div
-                    class="persona-card cursor-pointer border-2 border-slate-700 rounded-lg p-4
-                           transition-all hover:border-slate-600 hover:bg-slate-800/50"
-                    data-persona-id="{{ persona.id }}"
-                    data-background="{{ persona.background|replace('"', '&quot;') }}"
-                    data-goal="{{ persona.goal|replace('"', '&quot;') }}"
-                    _="on click
-                         remove .border-ymir-500 from .persona-card
-                         remove .bg-ymir-500/5 from .persona-card
-                         add .border-ymir-500 to me
-                         add .bg-ymir-500/5 to me
-                         set #persona-background.value to my @data-background
-                         set #persona-goal.value to my @data-goal
-                         show #persona-form"
-                >
-                    <div class="flex items-start gap-3 mb-3">
-                        <div class="flex-shrink-0 p-2 rounded-lg bg-slate-800">
-                            <i data-lucide="{{ persona.icon }}" class="w-5 h-5 text-ymir-500"></i>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <h4 class="font-semibold text-white mb-1">{{ persona.name }}</h4>
-                            <p class="text-sm text-slate-400 line-clamp-2">
-                                {{ persona.background[:100] }}{% if persona.background|length > 100 %}...{% endif %}
-                            </p>
-                        </div>
-                    </div>
+        <!-- Actor Background -->
+        <div>
+            <label for="persona-background" class="block text-sm font-medium text-slate-300 mb-2">
+                Actor Background
+                <span class="text-slate-500 font-normal ml-1">- Optional: personality and communication style</span>
+            </label>
+            <textarea
+                id="persona-background"
+                name="user_background_input"
+                rows="2"
+                class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg
+                       text-white placeholder-slate-500 focus:outline-none focus:ring-2
+                       focus:ring-ymir-500 focus:border-transparent resize-none"
+                placeholder="E.g., You are a new patient. You're polite but busy, so you prefer quick interactions."
+            ></textarea>
+        </div>
 
-                    {% if persona.tags and persona.tags|length > 0 %}
-                    <div class="flex flex-wrap gap-1.5">
-                        {% for tag in persona.tags %}
-                        <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium
-                                     bg-slate-800 text-slate-400 rounded">
-                            {{ tag }}
-                        </span>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                </div>
-                {% endfor %}
-
-                <!-- Custom Persona Card -->
-                <div
-                    class="persona-card cursor-pointer border-2 border-slate-700 rounded-lg p-4
-                           transition-all hover:border-slate-600 hover:bg-slate-800/50"
-                    data-persona-id="custom"
-                    data-background=""
-                    data-goal=""
-                    _="on click
-                         remove .border-ymir-500 from .persona-card
-                         remove .bg-ymir-500/5 from .persona-card
-                         add .border-ymir-500 to me
-                         add .bg-ymir-500/5 to me
-                         set #persona-background.value to ''
-                         set #persona-goal.value to ''
-                         show #persona-form"
-                >
-                    <div class="flex items-start gap-3 mb-3">
-                        <div class="flex-shrink-0 p-2 rounded-lg bg-slate-800">
-                            <i data-lucide="pencil" class="w-5 h-5 text-ymir-500"></i>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-white mb-1">Custom</h4>
-                            <p class="text-sm text-slate-400">Create your own persona from scratch</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Persona Form (shown when a persona is selected) -->
-            <div id="persona-form" class="space-y-4 hidden">
-                <div>
-                    <label for="persona-background" class="block text-sm font-medium text-slate-300 mb-2">
-                        Background
-                        <span class="text-slate-500 font-normal">Describe who this person is</span>
-                    </label>
-                    <textarea
-                        id="persona-background"
-                        name="user_background_input"
-                        rows="4"
-                        class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg
-                               text-white placeholder-slate-500 focus:outline-none focus:ring-2
-                               focus:ring-ymir-500 focus:border-transparent resize-none"
-                        placeholder="E.g., A 65-year-old patient with diabetes who needs to schedule a follow-up appointment..."
-                    ></textarea>
-                </div>
-
-                <div>
-                    <label for="persona-goal" class="block text-sm font-medium text-slate-300 mb-2">
-                        Goal
-                        <span class="text-slate-500 font-normal">What does this person want to accomplish?</span>
-                    </label>
-                    <textarea
-                        id="persona-goal"
-                        name="user_goal_input"
-                        rows="3"
-                        class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg
-                               text-white placeholder-slate-500 focus:outline-none focus:ring-2
-                               focus:ring-ymir-500 focus:border-transparent resize-none"
-                        placeholder="E.g., Schedule an appointment with Dr. Smith next week and get a prescription refilled..."
-                    ></textarea>
-                </div>
-            </div>
+        <!-- Goal -->
+        <div>
+            <label for="persona-goal" class="block text-sm font-medium text-slate-300 mb-2">
+                Goal
+                <span class="text-slate-500 font-normal ml-1">- What the actor wants to accomplish</span>
+            </label>
+            <textarea
+                id="persona-goal"
+                name="user_goal_input"
+                rows="2"
+                class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg
+                       text-white placeholder-slate-500 focus:outline-none focus:ring-2
+                       focus:ring-ymir-500 focus:border-transparent resize-none"
+                placeholder="E.g., Schedule an appointment for a checkup as soon as possible"
+            ></textarea>
         </div>
     </div>
 </div>

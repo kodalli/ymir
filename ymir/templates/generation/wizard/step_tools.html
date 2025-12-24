@@ -12,6 +12,7 @@
         </div>
     </div>
 
+    {% if scenario and scenario.functions %}
     <!-- Info Box -->
     <div class="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
         <div class="flex gap-3">
@@ -126,7 +127,11 @@
         </div>
         {% endfor %}
     </div>
-
-    <!-- Hidden input to store enabled tools -->
-    <input type="hidden" id="wizard-enabled-tools" name="enabled_tools" value='{{ scenario.functions|map(attribute="name")|list|tojson }}'>
+    {% else %}
+    <!-- No scenario selected -->
+    <div class="text-center py-12">
+        <i data-lucide="alert-circle" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
+        <p class="text-slate-400">Please select a scenario first to configure its tools.</p>
+    </div>
+    {% endif %}
 </div>

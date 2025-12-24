@@ -13,40 +13,48 @@ class UserSimulator:
 
     def __init__(
         self,
-        model: str = "llama3.2",
+        model: str = "qwen3:4b",
         temperature: float = 0.7,
     ):
         self.model = model
         self.temperature = temperature
         self.llm = OllamaLLM(model=model, temperature=temperature)
 
-    def _build_system_prompt(self, background: str, goal: str) -> str:
+    def _build_system_prompt(self, situation: str, background: str | None, goal: str) -> str:
         """Build the system prompt for the user simulator."""
-        return f"""You are a patient participating in a medical simulation. 
-
-YOUR BACKGROUND:
+        background_section = ""
+        if background:
+            background_section = f"""
+YOUR CHARACTER:
 {background}
+"""
 
+        return f"""You are a person participating in a simulation with a service agent.
+
+YOUR SITUATION (facts you know):
+{situation}
+{background_section}
 YOUR GOAL:
 {goal}
 
 INSTRUCTIONS:
 - Stay in character at all times.
-- Respond to the medical assistant naturally.
-- Provide information from your background when asked.
-- If the assistant asks for something not in your background, you can make up a realistic detail consistent with your persona.
-- Keep your responses concise and conversational, like a real person would.
+- Respond to the agent naturally and conversationally.
+- When asked for information, use ONLY the facts from YOUR SITUATION above.
+- Do NOT volunteer all information at once - answer what is asked.
+- Keep your responses concise, like a real person would.
 - Do NOT mention that you are an AI or a simulation.
-- Your response should be just your message to the assistant."""
+- Your response should be just your message to the agent."""
 
     async def generate_response(
         self,
-        background: str,
+        situation: str,
+        background: str | None,
         goal: str,
         history: list[Message],
     ) -> str:
         """Generate the next user message based on conversation history."""
-        system_prompt = self._build_system_prompt(background, goal)
+        system_prompt = self._build_system_prompt(situation, background, goal)
         
         # Convert history to LLM format
         llm_messages = []

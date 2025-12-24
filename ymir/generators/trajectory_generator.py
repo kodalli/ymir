@@ -26,7 +26,7 @@ class TrajectoryGenerator:
 
     def __init__(
         self,
-        model: str = "llama3.2",
+        model: str = "qwen3:4b",
         max_turns: int = 10,
         temperature: float = 0.7,
     ):
@@ -114,21 +114,25 @@ Available tools:
         self,
         scenario: ScenarioTemplate,
         user_query: str,
+        user_situation: str | None = None,
         user_background: str | None = None,
         user_goal: str | None = None,
         enabled_tools: list[str] | None = None,
     ) -> Trajectory:
         """
         Generate a multi-turn trajectory.
-        If user_background and user_goal are provided, it simulates a conversation.
+        If user_situation and user_goal are provided, it simulates a conversation.
         Otherwise, it generates a single-query response trajectory.
 
         Args:
+            user_situation: Structured details the simulated user knows (e.g., name, phone, reason for visit)
+            user_background: Description of who the user is and their communication style
+            user_goal: What the user wants to accomplish
             enabled_tools: Optional list of tool names to enable. If None, all tools are enabled.
         """
-        if user_background and user_goal:
+        if user_situation and user_goal:
             return await self.generate_simulated(
-                scenario, user_background, user_goal, user_query, enabled_tools
+                scenario, user_situation, user_background, user_goal, user_query, enabled_tools
             )
 
         return await self._generate_single_turn(scenario, user_query, enabled_tools)
@@ -221,13 +225,19 @@ Available tools:
     async def generate_simulated(
         self,
         scenario: ScenarioTemplate,
-        user_background: str,
+        user_situation: str,
+        user_background: str | None,
         user_goal: str,
         initial_query: str | None = None,
         enabled_tools: list[str] | None = None,
     ) -> Trajectory:
         """
         Simulate a full interaction between a user (patient) and an agent.
+
+        Args:
+            user_situation: Structured details the user knows (name, phone, etc.)
+            user_background: Who the user is and how they communicate
+            user_goal: What the user wants to accomplish
         """
         self._ensure_llm()
         messages: list[Message] = []
@@ -238,12 +248,12 @@ Available tools:
         if self.observation_simulator and scenario.mock_responses:
             self.observation_simulator.set_mock_data(scenario.mock_responses)
 
-        # 1. Start with initial query or generate one from background
+        # 1. Start with initial query or generate one from situation
         if initial_query:
             current_user_msg = initial_query
         else:
             current_user_msg = await self.user_simulator.generate_response(
-                user_background, user_goal, []
+                user_situation, user_background, user_goal, []
             )
 
         conv_turn = 0
@@ -276,7 +286,7 @@ Available tools:
             # --- USER TURN ---
             # Generate user's next response to the agent's final message
             current_user_msg = await self.user_simulator.generate_response(
-                user_background, user_goal, messages
+                user_situation, user_background, user_goal, messages
             )
             
             # If the agent has provided a final confirmation or the task seems done, we might break

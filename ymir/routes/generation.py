@@ -71,10 +71,11 @@ async def generate_trajectory(
     request: Request,
     scenario_id: str = Form(...),
     user_query: str = Form(""),
+    user_situation: str = Form(None),
     user_background: str = Form(None),
     user_goal: str = Form(None),
     enabled_tools: str = Form(None),  # JSON array of tool names
-    model: str = Form("llama3.2"),
+    model: str = Form("qwen3:4b"),
     temperature: float = Form(0.7),
     save: bool = Form(True),
 ):
@@ -106,6 +107,7 @@ async def generate_trajectory(
         trajectory = await generator.generate(
             scenario,
             user_query,
+            user_situation=user_situation if user_situation else None,
             user_background=user_background if user_background else None,
             user_goal=user_goal if user_goal else None,
             enabled_tools=enabled_tools_list,
@@ -131,7 +133,7 @@ async def generate_batch(
     request: Request,
     scenario_id: str = Form(...),
     queries_json: str = Form(...),  # JSON array of queries
-    model: str = Form("llama3.2"),
+    model: str = Form("qwen3:4b"),
     temperature: float = Form(0.7),
 ):
     """Generate multiple trajectories."""
@@ -245,4 +247,13 @@ async def get_persona_presets(request: Request, scenario_id: str):
     return templates.TemplateResponse(
         "generation/wizard/step_actor.html",
         {"request": request, "scenario": scenario, "personas": personas, "step": 3},
+    )
+
+
+@router.get("/stepper/{step_num}", response_class=HTMLResponse)
+async def get_stepper(request: Request, step_num: int):
+    """Get just the stepper component for a given step."""
+    return templates.TemplateResponse(
+        "generation/wizard/stepper.html",
+        {"request": request, "step": step_num},
     )

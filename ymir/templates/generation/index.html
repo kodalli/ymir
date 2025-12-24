@@ -27,6 +27,7 @@
         <input type="hidden" id="wizard-enabled-tools" name="enabled_tools" value="[]">
         <input type="hidden" id="wizard-mode" name="mode_toggle" value="single">
         <input type="hidden" id="wizard-user-query" name="user_query" value="">
+        <input type="hidden" id="wizard-user-situation" name="user_situation" value="">
         <input type="hidden" id="wizard-user-background" name="user_background" value="">
         <input type="hidden" id="wizard-user-goal" name="user_goal" value="">
         <input type="hidden" id="wizard-current-step" value="1">
@@ -153,6 +154,12 @@ function syncFormValues() {
         document.getElementById('wizard-user-query').value = queryInput.value;
     }
 
+    // Sync situation
+    const sitInput = document.querySelector('textarea[name="user_situation_input"]');
+    if (sitInput) {
+        document.getElementById('wizard-user-situation').value = sitInput.value;
+    }
+
     // Sync background
     const bgInput = document.querySelector('textarea[name="user_background_input"]');
     if (bgInput) {
@@ -208,10 +215,14 @@ function validateStep(step) {
                     return false;
                 }
             } else {
-                const bg = document.getElementById('wizard-user-background').value;
+                const sit = document.getElementById('wizard-user-situation').value;
                 const goal = document.getElementById('wizard-user-goal').value;
-                if (!bg.trim() || !goal.trim()) {
-                    showToast('Please fill in both background and goal', 'error');
+                if (!sit.trim()) {
+                    showToast('Please fill in the situation details', 'error');
+                    return false;
+                }
+                if (!goal.trim()) {
+                    showToast('Please fill in the actor goal', 'error');
                     return false;
                 }
             }
@@ -266,13 +277,17 @@ function restoreFormValues(step) {
             const queryInput = document.querySelector('textarea[name="user_query_input"]');
             if (queryInput) queryInput.value = query;
 
-            // Restore background/goal
+            // Restore situation/background/goal
+            const sit = document.getElementById('wizard-user-situation').value;
             const bg = document.getElementById('wizard-user-background').value;
             const goal = document.getElementById('wizard-user-goal').value;
+            const sitInput = document.querySelector('textarea[name="user_situation_input"]');
             const bgInput = document.querySelector('textarea[name="user_background_input"]');
             const goalInput = document.querySelector('textarea[name="user_goal_input"]');
+            if (sitInput) sitInput.value = sit;
             if (bgInput) bgInput.value = bg;
             if (goalInput) goalInput.value = goal;
+
         }
 
         if (step === 4) {
@@ -326,26 +341,13 @@ function updateNavButtons() {
 }
 
 function updateStepper() {
-    // Update stepper via HTMX
-    htmx.ajax('GET', `/generation/step/${currentStep}?partial=stepper`, {
+    // Fetch the stepper template with the current step
+    htmx.ajax('GET', `/generation/stepper/${currentStep}`, {
         target: '#wizard-stepper',
         swap: 'innerHTML'
+    }).then(() => {
+        lucide.createIcons();
     });
-
-    // Manually update stepper classes
-    for (let i = 1; i <= totalSteps; i++) {
-        const stepEl = document.querySelector(`[data-step="${i}"]`);
-        if (stepEl) {
-            stepEl.classList.remove('step-pending', 'step-current', 'step-completed');
-            if (i < currentStep) {
-                stepEl.classList.add('step-completed');
-            } else if (i === currentStep) {
-                stepEl.classList.add('step-current');
-            } else {
-                stepEl.classList.add('step-pending');
-            }
-        }
-    }
 }
 
 function updateGenerateSummary() {

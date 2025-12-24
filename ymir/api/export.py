@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from ymir.data.converters import TrainingDataExporter
 from ymir.core import TrajectoryStatus
 from ymir.data import get_store
-from ymir.api.shared import templates
+from ymir.api.shared import render_page
 
 router = APIRouter(prefix="/export", tags=["export"])
 
@@ -38,13 +38,14 @@ async def export_page(request: Request):
             "modified": f.stat().st_mtime,
         })
 
-    return templates.TemplateResponse(
+    return render_page(
+        request,
         "export/index.html",
         {
-            "request": request,
             "stats": stats,
             "exports": sorted(exports, key=lambda x: x["modified"], reverse=True),
         },
+        page_title="Export",
     )
 
 

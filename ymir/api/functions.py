@@ -5,7 +5,7 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from ymir.functions import FunctionDefinition, ScenarioTemplate, get_registry
-from ymir.api.shared import templates
+from ymir.api.shared import render_page
 
 router = APIRouter(prefix="/functions", tags=["functions"])
 
@@ -18,14 +18,15 @@ async def functions_page(request: Request):
     scenarios = registry.list_scenarios()
     categories = registry.get_categories()
 
-    return templates.TemplateResponse(
+    return render_page(
+        request,
         "functions/index.html",
         {
-            "request": request,
             "functions": functions,
             "scenarios": scenarios,
             "categories": categories,
         },
+        page_title="Scenarios",
     )
 
 

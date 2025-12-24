@@ -9,7 +9,7 @@ from ymir.pipeline import TrajectoryGenerator
 from ymir.pipeline.llm import get_available_models
 from ymir.pipeline.personas import get_personas_for_category
 from ymir.data import get_store
-from ymir.api.shared import templates
+from ymir.api.shared import render_page
 
 router = APIRouter(prefix="/generation", tags=["generation"])
 
@@ -21,14 +21,15 @@ async def generation_page(request: Request):
     scenarios = registry.list_scenarios()
     models = get_available_models()
 
-    return templates.TemplateResponse(
+    return render_page(
+        request,
         "generation/index.html",
         {
-            "request": request,
             "scenarios": scenarios,
             "models": models,
             "default_scenario": scenarios[0] if scenarios else None,
         },
+        page_title="Generate",
     )
 
 

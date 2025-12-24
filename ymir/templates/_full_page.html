@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ymir - Agentic Dataset Generator</title>
+    <title>Ymir - {{ page_title }}</title>
 
     <!-- HTMX for interactivity -->
     <script src="https://unpkg.com/htmx.org@1.9.6"></script>
@@ -35,7 +35,7 @@
     <!-- Sidebar Navigation -->
     <aside class="sidebar w-64 flex-shrink-0 flex flex-col h-full border-r border-theme">
         <div class="p-4">
-            <div class="flex items-center gap-3 mb-6 px-2">
+            <a href="/" class="flex items-center gap-3 mb-6 px-2">
                 <div class="w-8 h-8 bg-ymir-500 rounded-lg flex items-center justify-center shadow-lg shadow-ymir-500/20">
                     <i data-lucide="layers" class="text-white w-5 h-5"></i>
                 </div>
@@ -43,39 +43,39 @@
                     <h1 class="font-bold text-lg tracking-tight leading-none">YMIR</h1>
                     <p class="text-[10px] text-theme-secondary uppercase tracking-widest font-semibold mt-0.5">Agentic Dataset</p>
                 </div>
-            </div>
+            </a>
 
             <nav class="space-y-1">
                 <a href="/generation/"
-                    class="sidebar-item group"
+                    class="sidebar-item group {% if '/generation' in request.url.path %}active{% endif %}"
                     hx-get="/generation/" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true"
                     _="on click remove .active from .sidebar-item then add .active to me">
                     <i data-lucide="zap" class="w-5 h-5 mr-3"></i>
                     <span class="text-sm">Generate</span>
                 </a>
                 <a href="/functions/"
-                    class="sidebar-item group"
+                    class="sidebar-item group {% if '/functions' in request.url.path %}active{% endif %}"
                     hx-get="/functions/" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true"
                     _="on click remove .active from .sidebar-item then add .active to me">
                     <i data-lucide="code-2" class="w-5 h-5 mr-3"></i>
                     <span class="text-sm">Scenarios</span>
                 </a>
                 <a href="/conversion/"
-                    class="sidebar-item group"
+                    class="sidebar-item group {% if '/conversion' in request.url.path %}active{% endif %}"
                     hx-get="/conversion/" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true"
                     _="on click remove .active from .sidebar-item then add .active to me">
                     <i data-lucide="import" class="w-5 h-5 mr-3"></i>
                     <span class="text-sm">Import</span>
                 </a>
                 <a href="/annotation/"
-                    class="sidebar-item group"
+                    class="sidebar-item group {% if '/annotation' in request.url.path %}active{% endif %}"
                     hx-get="/annotation/" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true"
                     _="on click remove .active from .sidebar-item then add .active to me">
                     <i data-lucide="clipboard-check" class="w-5 h-5 mr-3"></i>
                     <span class="text-sm">Annotate</span>
                 </a>
                 <a href="/export/"
-                    class="sidebar-item group"
+                    class="sidebar-item group {% if '/export' in request.url.path %}active{% endif %}"
                     hx-get="/export/" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true"
                     _="on click remove .active from .sidebar-item then add .active to me">
                     <i data-lucide="download" class="w-5 h-5 mr-3"></i>
@@ -99,7 +99,7 @@
         <!-- Header/Topbar -->
         <header class="h-14 border-b border-theme flex items-center justify-between px-6 bg-surface-sidebar/50 backdrop-blur-sm z-10 flex-shrink-0">
             <div class="flex items-center gap-4">
-                <h2 id="page-title" class="font-semibold text-base text-theme-primary">Dashboard</h2>
+                <h2 id="page-title" class="font-semibold text-base text-theme-primary">{{ page_title }}</h2>
             </div>
             <div class="flex items-center gap-2">
                 <button class="w-8 h-8 flex items-center justify-center text-theme-secondary hover:text-white hover:bg-surface-hover rounded-lg transition-all">
@@ -118,54 +118,7 @@
         </header>
 
         <div id="main-content" class="flex-1 overflow-y-auto p-6 scroll-smooth custom-scrollbar">
-            <!-- Initial content -->
-            <div class="w-full mx-auto text-center py-10">
-                <div class="w-14 h-14 bg-ymir-500/10 rounded-xl flex items-center justify-center mx-auto mb-4 border border-ymir-500/20">
-                    <i data-lucide="rocket" class="text-ymir-500 w-7 h-7"></i>
-                </div>
-                <h1 class="text-2xl font-bold mb-2 tracking-tight">Welcome to Ymir</h1>
-                <p class="text-theme-secondary text-sm mb-6 max-w-lg mx-auto leading-relaxed">
-                    The advanced platform for generating high-quality agentic datasets for LLM training and evaluation.
-                </p>
-                <div class="flex justify-center gap-4">
-                    <button class="btn-primary flex items-center gap-2"
-                        hx-get="/generation/" hx-target="#main-content" hx-swap="innerHTML"
-                        _="on click remove .active from .sidebar-item then add .active to .sidebar-item:first-child">
-                        <i data-lucide="play" class="w-4 h-4"></i>
-                        Start Generating
-                    </button>
-                    <button class="btn-secondary flex items-center gap-2"
-                        hx-get="/conversion/" hx-target="#main-content" hx-swap="innerHTML"
-                        _="on click remove .active from .sidebar-item then add .active to .sidebar-item:nth-child(3)">
-                        <i data-lucide="upload" class="w-4 h-4"></i>
-                        Import Dataset
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-10 max-w-4xl mx-auto">
-                    <div class="card p-4 text-left group hover:border-ymir-500/50 transition-all cursor-default">
-                        <div class="w-8 h-8 bg-info-500/10 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                            <i data-lucide="cpu" class="text-info-500 w-4 h-4"></i>
-                        </div>
-                        <h3 class="font-bold text-sm mb-1">Simulate</h3>
-                        <p class="text-theme-secondary text-xs">Create complex tool-calling scenarios using state-of-the-art LLMs.</p>
-                    </div>
-                    <div class="card p-4 text-left group hover:border-ymir-500/50 transition-all cursor-default">
-                        <div class="w-8 h-8 bg-success-500/10 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                            <i data-lucide="check-circle" class="text-success-500 w-4 h-4"></i>
-                        </div>
-                        <h3 class="font-bold text-sm mb-1">Validate</h3>
-                        <p class="text-theme-secondary text-xs">Review and annotate generated trajectories to ensure quality.</p>
-                    </div>
-                    <div class="card p-4 text-left group hover:border-ymir-500/50 transition-all cursor-default">
-                        <div class="w-8 h-8 bg-brand-500/10 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                            <i data-lucide="package" class="text-brand-500 w-4 h-4"></i>
-                        </div>
-                        <h3 class="font-bold text-sm mb-1">Export</h3>
-                        <p class="text-theme-secondary text-xs">Fine-tune your models with curated, high-fidelity datasets.</p>
-                    </div>
-                </div>
-            </div>
+            {% include page_template %}
         </div>
     </main>
 
@@ -183,11 +136,11 @@
     <script>
         // Initialize Lucide icons
         lucide.createIcons();
-        
+
         // Re-initialize icons after HTMX swaps
         document.body.addEventListener('htmx:afterSwap', function(evt) {
             lucide.createIcons();
-            
+
             // Update page title if needed
             const newTitle = evt.detail.elt.querySelector('h1')?.innerText;
             if (newTitle) {

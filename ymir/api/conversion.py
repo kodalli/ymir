@@ -9,7 +9,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 
 from ymir.data.converters import APIGenMTConverter, HermesFCConverter
 from ymir.data import get_store
-from ymir.api.shared import templates
+from ymir.api.shared import render_page
 
 router = APIRouter(prefix="/conversion", tags=["conversion"])
 
@@ -22,12 +22,13 @@ CONVERTERS = {
 @router.get("/", response_class=HTMLResponse)
 async def conversion_page(request: Request):
     """Render the dataset conversion page."""
-    return templates.TemplateResponse(
+    return render_page(
+        request,
         "conversion/index.html",
         {
-            "request": request,
             "formats": list(CONVERTERS.keys()),
         },
+        page_title="Import",
     )
 
 

@@ -7,7 +7,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from ymir.pipeline.annotation import ReviewQueue
 from ymir.core import TrajectoryStatus
 from ymir.data import get_store
-from ymir.api.shared import templates
+from ymir.api.shared import render_page
 
 router = APIRouter(prefix="/annotation", tags=["annotation"])
 
@@ -28,14 +28,15 @@ async def annotation_page(request: Request):
     if next_item:
         issues = queue.get_quality_issues(next_item)
 
-    return templates.TemplateResponse(
+    return render_page(
+        request,
         "annotation/index.html",
         {
-            "request": request,
             "stats": stats,
             "trajectory": next_item,
             "issues": issues,
         },
+        page_title="Annotate",
     )
 
 

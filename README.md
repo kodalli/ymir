@@ -28,7 +28,7 @@ Ymir is a tool for generating high-quality agentic training data. It simulates m
 
 3. Run Ymir:
    ```bash
-   python main.py
+   uv run python -m ymir.app 
    ```
 
 4. Open `http://localhost:8008` and use the 4-step wizard to generate trajectories.

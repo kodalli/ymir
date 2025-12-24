@@ -7,6 +7,7 @@ from .generation import router as generation_router
 from .conversion import router as conversion_router
 from .annotation import router as annotation_router
 from .export import router as export_router
+from .datasets import router as datasets_router
 
 routers = [
     functions_router,
@@ -14,6 +15,7 @@ routers = [
     conversion_router,
     annotation_router,
     export_router,
+    datasets_router,
 ]
 
 

@@ -142,3 +142,52 @@ class Trajectory(BaseModel):
             if m.tool_calls:
                 count += len(m.tool_calls)
         return count
+
+
+class Dataset(BaseModel):
+    """A named collection of sessions that can span multiple scenarios."""
+
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    name: str
+    description: str | None = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    tags: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+    # Computed (not stored)
+    session_count: int = 0
+
+
+class DatasetCreate(BaseModel):
+    """Schema for creating a new dataset."""
+    name: str
+    description: str | None = None
+    tags: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class DatasetUpdate(BaseModel):
+    """Schema for updating a dataset."""
+    name: str | None = None
+    description: str | None = None
+    tags: list[str] | None = None
+    metadata: dict[str, Any] | None = None
+
+
+class SessionQuery(BaseModel):
+    """Query parameters for filtering sessions."""
+    status: TrajectoryStatus | None = None
+    scenario_id: str | None = None
+    source: str | None = None
+    min_quality_score: float | None = None
+    search_text: str | None = None
+    limit: int = 100
+    offset: int = 0
+
+
+class DatasetExportOptions(BaseModel):
+    """Options for exporting a dataset."""
+    format: str = "chatml"  # "chatml", "standard", "simple", "training", "huggingface"
+    status_filter: TrajectoryStatus | None = None
+    include_metadata: bool = True

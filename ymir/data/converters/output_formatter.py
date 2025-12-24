@@ -1,6 +1,7 @@
 """Export trajectories to training-ready formats."""
 
 import json
+import random
 from pathlib import Path
 from typing import Iterator
 
@@ -146,3 +147,72 @@ class TrainingDataExporter:
                 count += 1
 
         return count
+
+    def export_huggingface(
+        self,
+        trajectories: list[Trajectory],
+        output_dir: str,
+        train_split: float = 0.9,
+        seed: int = 42,
+        format: str = "chatml",
+    ) -> dict[str, int]:
+        """
+        Export in HuggingFace datasets format with train/validation splits.
+
+        Creates:
+            - {output_dir}/train.jsonl
+            - {output_dir}/validation.jsonl
+            - {output_dir}/dataset_info.json
+
+        Args:
+            trajectories: List of trajectories to export
+            output_dir: Directory to write the dataset files
+            train_split: Fraction of data for training set (0.0-1.0)
+            seed: Random seed for reproducible splits
+            format: Export format for each record (chatml, standard, simple)
+
+        Returns:
+            Dict with counts: {"train": n, "validation": m}
+        """
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        # Shuffle and split
+        random.seed(seed)
+        shuffled = list(trajectories)
+        random.shuffle(shuffled)
+
+        split_idx = int(len(shuffled) * train_split)
+        train_data = shuffled[:split_idx]
+        val_data = shuffled[split_idx:]
+
+        # Export train set
+        train_count = self.export_jsonl(
+            iter(train_data),
+            str(output_path / "train.jsonl"),
+            format=format,
+        )
+
+        # Export validation set
+        val_count = self.export_jsonl(
+            iter(val_data),
+            str(output_path / "validation.jsonl"),
+            format=format,
+        )
+
+        # Write dataset info
+        dataset_info = {
+            "description": "Agentic tool-calling dataset exported from Ymir",
+            "splits": {
+                "train": {"num_examples": train_count},
+                "validation": {"num_examples": val_count},
+            },
+            "format": format,
+            "seed": seed,
+            "train_split": train_split,
+        }
+
+        with open(output_path / "dataset_info.json", "w") as f:
+            json.dump(dataset_info, f, indent=2)
+
+        return {"train": train_count, "validation": val_count}

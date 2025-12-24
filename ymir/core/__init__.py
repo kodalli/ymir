@@ -5,6 +5,11 @@ from .schemas import (
     Message,
     Trajectory,
     TrajectoryStatus,
+    Dataset,
+    DatasetCreate,
+    DatasetUpdate,
+    SessionQuery,
+    DatasetExportOptions,
 )
 from .constants import TOOL_CALL_START, TOOL_CALL_END
 
@@ -15,6 +20,11 @@ __all__ = [
     "Message",
     "Trajectory",
     "TrajectoryStatus",
+    "Dataset",
+    "DatasetCreate",
+    "DatasetUpdate",
+    "SessionQuery",
+    "DatasetExportOptions",
     "TOOL_CALL_START",
     "TOOL_CALL_END",
 ]

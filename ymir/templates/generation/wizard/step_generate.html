@@ -1,65 +1,65 @@
 <!-- Step 4: Generate -->
-<div class="space-y-6">
+<div class="space-y-4">
     <!-- Step Header -->
-    <div class="flex items-center gap-3 mb-6">
-        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-ymir-500 text-white text-sm font-bold">4</span>
+    <div class="flex items-center gap-2 mb-4">
+        <span class="flex items-center justify-center w-6 h-6 rounded-md bg-ymir-500 text-white text-xs font-bold">4</span>
         <div>
-            <h2 class="text-xl font-bold text-white">Generate Trajectory</h2>
-            <p class="text-sm text-theme-secondary">Review your configuration and generate training data</p>
+            <h2 class="text-base font-bold text-white">Generate Trajectory</h2>
+            <p class="text-xs text-theme-secondary">Review your configuration and generate training data</p>
         </div>
     </div>
 
     <!-- Configuration Summary -->
-    <div class="card p-6 bg-surface-sidebar/50 border-theme">
-        <h3 class="text-sm font-bold text-theme-secondary uppercase tracking-wider mb-4 flex items-center gap-2">
-            <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+    <div class="card p-4 bg-surface-sidebar/50 border-theme">
+        <h3 class="text-xs font-bold text-theme-secondary uppercase tracking-wider mb-3 flex items-center gap-2">
+            <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i>
             Configuration Summary
         </h3>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <!-- Scenario -->
-            <div class="p-4 rounded-xl bg-surface-main/50 border border-theme/50">
-                <div class="flex items-center gap-2 mb-2">
-                    <i data-lucide="layers" class="w-4 h-4 text-ymir-500"></i>
-                    <span class="text-xs font-bold text-theme-muted uppercase">Scenario</span>
+            <div class="p-3 rounded-lg bg-surface-main/50 border border-theme/50">
+                <div class="flex items-center gap-1.5 mb-1">
+                    <i data-lucide="layers" class="w-3.5 h-3.5 text-ymir-500"></i>
+                    <span class="text-[10px] font-bold text-theme-muted uppercase">Scenario</span>
                 </div>
-                <p id="summary-scenario" class="text-sm text-white font-medium">Not selected</p>
+                <p id="summary-scenario" class="text-xs text-white font-medium">Not selected</p>
             </div>
 
             <!-- Tools -->
-            <div class="p-4 rounded-xl bg-surface-main/50 border border-theme/50">
-                <div class="flex items-center gap-2 mb-2">
-                    <i data-lucide="wrench" class="w-4 h-4 text-info-400"></i>
-                    <span class="text-xs font-bold text-theme-muted uppercase">Tools</span>
+            <div class="p-3 rounded-lg bg-surface-main/50 border border-theme/50">
+                <div class="flex items-center gap-1.5 mb-1">
+                    <i data-lucide="wrench" class="w-3.5 h-3.5 text-info-400"></i>
+                    <span class="text-[10px] font-bold text-theme-muted uppercase">Tools</span>
                 </div>
-                <p id="summary-tools" class="text-sm text-white font-medium">All enabled</p>
+                <p id="summary-tools" class="text-xs text-white font-medium">All enabled</p>
             </div>
 
             <!-- Mode -->
-            <div class="p-4 rounded-xl bg-surface-main/50 border border-theme/50">
-                <div class="flex items-center gap-2 mb-2">
-                    <i data-lucide="user" class="w-4 h-4 text-success-400"></i>
-                    <span class="text-xs font-bold text-theme-muted uppercase">Mode</span>
+            <div class="p-3 rounded-lg bg-surface-main/50 border border-theme/50">
+                <div class="flex items-center gap-1.5 mb-1">
+                    <i data-lucide="user" class="w-3.5 h-3.5 text-success-400"></i>
+                    <span class="text-[10px] font-bold text-theme-muted uppercase">Mode</span>
                 </div>
-                <p id="summary-mode" class="text-sm text-white font-medium">Single Query</p>
+                <p id="summary-mode" class="text-xs text-white font-medium">Single Query</p>
             </div>
         </div>
     </div>
 
     <!-- Model Configuration -->
-    <div class="card p-6">
-        <h3 class="text-sm font-bold text-theme-secondary uppercase tracking-wider mb-4 flex items-center gap-2">
-            <i data-lucide="cpu" class="w-4 h-4"></i>
+    <div class="card p-4">
+        <h3 class="text-xs font-bold text-theme-secondary uppercase tracking-wider mb-3 flex items-center gap-2">
+            <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
             Model Configuration
         </h3>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Model Selection -->
-            <div class="space-y-2">
-                <label class="text-xs font-bold text-theme-muted uppercase tracking-wider">LLM Engine</label>
+            <div class="space-y-1.5">
+                <label class="text-[10px] font-bold text-theme-muted uppercase tracking-wider">LLM Engine</label>
                 <div class="relative">
                     <select id="wizard-model" name="model"
-                        class="w-full bg-surface-sidebar border border-theme rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-ymir-500/20 focus:border-ymir-500 transition-all outline-none appearance-none">
+                        class="w-full bg-surface-sidebar border border-theme rounded-lg px-3 py-2 text-sm text-white focus:ring-2 focus:ring-ymir-500/20 focus:border-ymir-500 transition-all outline-none appearance-none">
                         {% for model in models %}
                         <option value="{{ model }}">{{ model }}</option>
                         {% endfor %}
@@ -67,20 +67,20 @@
                         <option value="qwen3:4b">qwen3:4b (not running)</option>
                         {% endif %}
                     </select>
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-theme-muted">
-                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-theme-muted">
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
                     </div>
                 </div>
             </div>
 
             <!-- Temperature -->
-            <div class="space-y-2">
-                <label class="text-xs font-bold text-theme-muted uppercase tracking-wider flex items-center justify-between">
+            <div class="space-y-1.5">
+                <label class="text-[10px] font-bold text-theme-muted uppercase tracking-wider flex items-center justify-between">
                     <span>Temperature</span>
-                    <output id="temp-output" class="text-ymir-500 font-mono">0.7</output>
+                    <output id="temp-output" class="text-ymir-500 font-mono text-xs">0.7</output>
                 </label>
                 <input type="range" id="wizard-temperature" name="temperature" min="0" max="1" step="0.1" value="0.7"
-                    class="w-full h-2 bg-surface-hover rounded-lg appearance-none cursor-pointer accent-ymir-500"
+                    class="w-full h-1.5 bg-surface-hover rounded-lg appearance-none cursor-pointer accent-ymir-500"
                     oninput="document.getElementById('temp-output').value = this.value">
                 <div class="flex justify-between text-[10px] text-theme-muted">
                     <span>Precise</span>
@@ -91,25 +91,25 @@
     </div>
 
     <!-- Options -->
-    <div class="flex items-center justify-between p-4 bg-surface-sidebar/30 rounded-xl border border-theme/50">
-        <div class="flex items-center gap-3">
+    <div class="flex items-center justify-between p-3 bg-surface-sidebar/30 rounded-lg border border-theme/50">
+        <div class="flex items-center gap-2">
             <label class="relative flex items-center cursor-pointer group">
                 <input type="checkbox" id="wizard-save" name="save" value="true" checked class="sr-only peer">
-                <div class="w-10 h-5 bg-surface-hover rounded-full peer peer-checked:bg-ymir-500 transition-all"></div>
-                <div class="absolute left-1 top-1 w-3 h-3 bg-white rounded-full peer-checked:translate-x-5 transition-all"></div>
+                <div class="w-8 h-4 bg-surface-hover rounded-full peer peer-checked:bg-ymir-500 transition-all"></div>
+                <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full peer-checked:translate-x-4 transition-all"></div>
             </label>
-            <span class="text-sm text-theme-secondary font-medium">Save trajectory to library</span>
+            <span class="text-xs text-theme-secondary font-medium">Save trajectory to library</span>
         </div>
 
-        <div class="flex items-center gap-2 text-xs text-theme-muted">
-            <i data-lucide="info" class="w-3.5 h-3.5"></i>
+        <div class="flex items-center gap-1.5 text-[10px] text-theme-muted">
+            <i data-lucide="info" class="w-3 h-3"></i>
             <span>Saved trajectories can be reviewed and exported</span>
         </div>
     </div>
 
     <!-- Generate Button -->
     <button type="submit" id="generate-btn"
-        class="btn-primary w-full flex items-center justify-center gap-3 py-5 text-lg shadow-xl shadow-ymir-500/20 group"
+        class="btn-primary w-full flex items-center justify-center gap-2 py-3 text-sm shadow-lg shadow-ymir-500/20 group"
         hx-post="/generation/generate"
         hx-target="#trajectory-preview"
         hx-swap="innerHTML"
@@ -118,26 +118,26 @@
            set my.disabled to true
            add .opacity-50 to me
            add .cursor-not-allowed to me">
-        <i data-lucide="play" class="w-6 h-6 group-hover:scale-125 transition-transform fill-current"></i>
+        <i data-lucide="play" class="w-4 h-4 group-hover:scale-110 transition-transform fill-current"></i>
         <span>Generate Trajectory</span>
-        <span class="text-sm opacity-70">(Agent will use tools automatically)</span>
+        <span class="text-xs opacity-70">(Agent will use tools automatically)</span>
     </button>
 
     <!-- Spinner -->
-    <div id="generate-spinner" class="htmx-indicator flex items-center justify-center gap-3 py-4 text-theme-secondary">
-        <i data-lucide="loader-2" class="w-5 h-5 animate-spin text-ymir-500"></i>
-        <span>Generating trajectory... This may take a moment.</span>
+    <div id="generate-spinner" class="htmx-indicator flex items-center justify-center gap-2 py-3 text-theme-secondary text-sm">
+        <i data-lucide="loader-2" class="w-4 h-4 animate-spin text-ymir-500"></i>
+        <span>Generating trajectory...</span>
     </div>
 </div>
 
 <!-- Preview Panel -->
-<div id="trajectory-preview" class="mt-8">
-    <div class="card p-16 text-center flex flex-col items-center justify-center bg-surface-main/20 border-dashed">
-        <div class="w-16 h-16 bg-surface-sidebar rounded-2xl flex items-center justify-center mb-6 text-theme-muted">
-            <i data-lucide="monitor" class="w-8 h-8"></i>
+<div id="trajectory-preview" class="mt-6">
+    <div class="card p-8 text-center flex flex-col items-center justify-center bg-surface-main/20 border-dashed">
+        <div class="w-10 h-10 bg-surface-sidebar rounded-lg flex items-center justify-center mb-3 text-theme-muted">
+            <i data-lucide="monitor" class="w-5 h-5"></i>
         </div>
-        <h3 class="text-lg font-medium text-theme-secondary">Trajectory Preview</h3>
-        <p class="text-theme-muted max-w-xs mx-auto text-sm mt-2">Click "Generate Trajectory" to see the agent's tool-calling sequence here.</p>
+        <h3 class="text-sm font-medium text-theme-secondary">Trajectory Preview</h3>
+        <p class="text-theme-muted max-w-xs mx-auto text-xs mt-1">Click "Generate Trajectory" to see the agent's tool-calling sequence here.</p>
     </div>
 </div>
 

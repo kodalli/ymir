@@ -105,11 +105,11 @@ function initializeToolsList() {
 function goToNextStep() {
     if (currentStep >= totalSteps) return;
 
+    // Sync form values before validation
+    syncFormValues();
+
     // Validate current step
     if (!validateStep(currentStep)) return;
-
-    // Sync form values before navigation
-    syncFormValues();
 
     currentStep++;
     loadStep(currentStep);

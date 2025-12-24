@@ -97,7 +97,7 @@
             <textarea
                 id="query-input"
                 name="user_query_input"
-                rows="4"
+                rows="6"
                 class="w-full px-4 py-3 bg-surface-sidebar border border-theme rounded-lg
                        text-white placeholder-theme-muted focus:outline-none focus:ring-2
                        focus:ring-ymir-500 focus:border-transparent resize-none"
@@ -143,21 +143,21 @@
             </button>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="space-y-6">
             <!-- Situation Details -->
-            <div class="h-full">
-            <label for="persona-situation" class="block text-sm font-medium text-theme-secondary mb-2">
-                Situation Details
-                <span class="text-theme-muted font-normal ml-1">- Facts the actor knows (hidden from agent)</span>
-            </label>
-            <textarea
-                id="persona-situation"
-                name="user_situation_input"
-                rows="8"
-                class="w-full px-4 py-3 bg-surface-sidebar border border-theme rounded-lg
-                       text-white placeholder-theme-muted focus:outline-none focus:ring-2
-                       focus:ring-ymir-500 focus:border-transparent font-mono text-sm"
-                placeholder="Patient Name: John Smith
+            <div>
+                <label for="persona-situation" class="block text-sm font-medium text-theme-secondary mb-2">
+                    Situation Details
+                    <span class="text-theme-muted font-normal ml-1">- Facts the actor knows (hidden from agent)</span>
+                </label>
+                <textarea
+                    id="persona-situation"
+                    name="user_situation_input"
+                    rows="6"
+                    class="w-full px-4 py-3 bg-surface-sidebar border border-theme rounded-lg
+                           text-white placeholder-theme-muted focus:outline-none focus:ring-2
+                           focus:ring-ymir-500 focus:border-transparent font-mono text-sm"
+                    placeholder="Patient Name: John Smith
 Phone Number: (555) 123-4567
 Date of Birth: 03/15/1985
 Reason for Visit: Annual checkup
@@ -165,46 +165,44 @@ Email: john.smith@email.com
 Preferred Date: Next Monday or Tuesday
 Preferred Time: Morning, before 11am
 Additional Notes: First time patient, referred by Dr. Johnson"
-            ></textarea>
-            <p class="mt-1.5 text-xs text-theme-muted">
-                Enter the structured details the actor will use when responding to the agent's questions.
-            </p>
-        </div>
+                ></textarea>
+                <p class="mt-1.5 text-xs text-theme-muted">
+                    Enter the structured details the actor will use when responding to the agent's questions.
+                </p>
+            </div>
 
-            <div class="space-y-6">
-                <!-- Actor Background -->
-                <div>
-            <label for="persona-background" class="block text-sm font-medium text-theme-secondary mb-2">
-                Actor Background
-                <span class="text-theme-muted font-normal ml-1">- Optional: personality and communication style</span>
-            </label>
-            <textarea
-                id="persona-background"
-                name="user_background_input"
-                rows="2"
-                class="w-full px-4 py-3 bg-surface-sidebar border border-theme rounded-lg
-                       text-white placeholder-theme-muted focus:outline-none focus:ring-2
-                       focus:ring-ymir-500 focus:border-transparent resize-none"
-                placeholder="E.g., You are a new patient. You're polite but busy, so you prefer quick interactions."
-            ></textarea>
-        </div>
+            <!-- Actor Background -->
+            <div>
+                <label for="persona-background" class="block text-sm font-medium text-theme-secondary mb-2">
+                    Actor Background
+                    <span class="text-theme-muted font-normal ml-1">- Optional: personality and communication style</span>
+                </label>
+                <textarea
+                    id="persona-background"
+                    name="user_background_input"
+                    rows="2"
+                    class="w-full px-4 py-3 bg-surface-sidebar border border-theme rounded-lg
+                           text-white placeholder-theme-muted focus:outline-none focus:ring-2
+                           focus:ring-ymir-500 focus:border-transparent resize-none"
+                    placeholder="E.g., You are a new patient. You're polite but busy, so you prefer quick interactions."
+                ></textarea>
+            </div>
 
-                <!-- Goal -->
-                <div>
-            <label for="persona-goal" class="block text-sm font-medium text-theme-secondary mb-2">
-                Goal
-                <span class="text-theme-muted font-normal ml-1">- What the actor wants to accomplish</span>
-            </label>
-            <textarea
-                id="persona-goal"
-                name="user_goal_input"
-                rows="2"
-                class="w-full px-4 py-3 bg-surface-sidebar border border-theme rounded-lg
-                       text-white placeholder-theme-muted focus:outline-none focus:ring-2
-                       focus:ring-ymir-500 focus:border-transparent resize-none"
-                placeholder="E.g., Schedule an appointment for a checkup as soon as possible"
-            ></textarea>
-                </div>
+            <!-- Goal -->
+            <div>
+                <label for="persona-goal" class="block text-sm font-medium text-theme-secondary mb-2">
+                    Goal
+                    <span class="text-theme-muted font-normal ml-1">- What the actor wants to accomplish</span>
+                </label>
+                <textarea
+                    id="persona-goal"
+                    name="user_goal_input"
+                    rows="2"
+                    class="w-full px-4 py-3 bg-surface-sidebar border border-theme rounded-lg
+                           text-white placeholder-theme-muted focus:outline-none focus:ring-2
+                           focus:ring-ymir-500 focus:border-transparent resize-none"
+                    placeholder="E.g., Schedule an appointment for a checkup as soon as possible"
+                ></textarea>
             </div>
         </div>
     </div>

@@ -70,14 +70,14 @@
                                _="on change
                                   set tools to []
                                   for checkbox in <input[data-tool-name]/>
-                                    if checkbox.checked then set tools to tools + [checkbox's @data-tool-name]
+                                    if checkbox.checked append checkbox's @data-tool-name to tools
                                   end
                                   set #wizard-enabled-tools.value to JSON.stringify(tools)
 
                                   -- Update count
-                                  set enabledCount to tools.length
+                                  set enabledCount to tools's length
                                   set totalCount to {{ scenario.functions|length }}
-                                  set #tool-count-summary.textContent to enabledCount + ' of ' + totalCount + ' tools enabled'">
+                                  set #tool-count-summary.textContent to `${enabledCount} of ${totalCount} tools enabled`">
                         <div class="w-11 h-6 bg-surface-hover rounded-full peer peer-checked:bg-ymir-500 transition-all"></div>
                         <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full peer-checked:translate-x-5 transition-all"></div>
                     </label>

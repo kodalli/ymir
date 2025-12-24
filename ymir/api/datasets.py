@@ -3,19 +3,17 @@
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
 from ymir.core import (
-    Dataset,
     DatasetCreate,
     DatasetUpdate,
     TrajectoryStatus,
 )
 from ymir.data import get_database, get_dataset_store, get_session_store
 from ymir.data.converters import TrainingDataExporter
-from ymir.api.shared import render_page
 
 router = APIRouter(prefix="/datasets", tags=["datasets"])
 
@@ -41,10 +39,7 @@ class ExportRequest(BaseModel):
 @router.get("/", response_class=JSONResponse)
 async def list_datasets():
     """List all datasets."""
-    db = get_database()
-    await db.initialize()
     store = get_dataset_store()
-
     datasets = await store.list_all()
     return JSONResponse({
         "datasets": [d.model_dump(mode="json") for d in datasets]
@@ -54,8 +49,6 @@ async def list_datasets():
 @router.post("/", response_class=JSONResponse)
 async def create_dataset(data: DatasetCreate):
     """Create a new dataset."""
-    db = get_database()
-    await db.initialize()
     store = get_dataset_store()
 
     # Check if name already exists
@@ -70,8 +63,6 @@ async def create_dataset(data: DatasetCreate):
 @router.get("/{dataset_id}", response_class=JSONResponse)
 async def get_dataset(dataset_id: str):
     """Get a dataset by ID."""
-    db = get_database()
-    await db.initialize()
     store = get_dataset_store()
 
     dataset = await store.get(dataset_id)
@@ -84,8 +75,6 @@ async def get_dataset(dataset_id: str):
 @router.put("/{dataset_id}", response_class=JSONResponse)
 async def update_dataset(dataset_id: str, updates: DatasetUpdate):
     """Update a dataset."""
-    db = get_database()
-    await db.initialize()
     store = get_dataset_store()
 
     dataset = await store.update(dataset_id, updates)
@@ -98,8 +87,6 @@ async def update_dataset(dataset_id: str, updates: DatasetUpdate):
 @router.delete("/{dataset_id}", response_class=JSONResponse)
 async def delete_dataset(dataset_id: str):
     """Delete a dataset."""
-    db = get_database()
-    await db.initialize()
     store = get_dataset_store()
 
     deleted = await store.delete(dataset_id)
@@ -118,8 +105,6 @@ async def get_dataset_sessions(
     offset: int = 0,
 ):
     """Get sessions in a dataset."""
-    db = get_database()
-    await db.initialize()
     store = get_dataset_store()
 
     # Check dataset exists
@@ -149,8 +134,6 @@ async def get_dataset_sessions(
 @router.post("/{dataset_id}/sessions", response_class=JSONResponse)
 async def add_sessions_to_dataset(dataset_id: str, data: AddSessionsRequest):
     """Add sessions to a dataset."""
-    db = get_database()
-    await db.initialize()
     store = get_dataset_store()
 
     # Check dataset exists
@@ -165,8 +148,6 @@ async def add_sessions_to_dataset(dataset_id: str, data: AddSessionsRequest):
 @router.delete("/{dataset_id}/sessions", response_class=JSONResponse)
 async def remove_sessions_from_dataset(dataset_id: str, data: RemoveSessionsRequest):
     """Remove sessions from a dataset."""
-    db = get_database()
-    await db.initialize()
     store = get_dataset_store()
 
     # Check dataset exists
@@ -182,8 +163,6 @@ async def remove_sessions_from_dataset(dataset_id: str, data: RemoveSessionsRequ
 @router.post("/{dataset_id}/export", response_class=JSONResponse)
 async def export_dataset(dataset_id: str, options: ExportRequest):
     """Export a dataset to JSONL."""
-    db = get_database()
-    await db.initialize()
     store = get_dataset_store()
 
     # Check dataset exists
@@ -249,7 +228,6 @@ async def search_sessions(
 ):
     """Search sessions using full-text search."""
     db = get_database()
-    await db.initialize()
     session_store = get_session_store(db)
 
     sessions = await session_store.search(q, limit)

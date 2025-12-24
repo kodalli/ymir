@@ -428,3 +428,50 @@ body {
         transform: translateX(0);
     }
 }
+
+/* ========================================
+   Table Row Expand/Collapse Animation
+   ======================================== */
+
+.detail-row {
+    background-color: rgba(15, 23, 42, 0.5);
+}
+
+.detail-row td {
+    padding: 0 !important;
+}
+
+.detail-wrapper {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.3s ease-out;
+}
+
+.detail-wrapper.expanded {
+    grid-template-rows: 1fr;
+}
+
+.detail-content {
+    overflow: hidden;
+    min-height: 0;
+}
+
+.detail-content > div {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease-out 0.1s, transform 0.2s ease-out 0.1s;
+}
+
+.detail-wrapper.expanded .detail-content > div {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Row expansion indicator */
+.trajectory-row .expand-indicator {
+    transition: transform 0.2s ease-out;
+}
+
+.trajectory-row.expanded .expand-indicator {
+    transform: rotate(180deg);
+}

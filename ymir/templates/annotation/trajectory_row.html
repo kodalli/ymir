@@ -3,12 +3,8 @@
     id="row-{{ item.trajectory.id }}"
     data-trajectory-id="{{ item.trajectory.id }}"
     _="on click if event.target.type !== 'checkbox'
-       toggle .hidden on #detail-{{ item.trajectory.id }}
-       if #detail-{{ item.trajectory.id }} matches .hidden
-           remove .expanded from me
-       else
-           add .expanded to me
-       end">
+       toggle .expanded on #detail-wrapper-{{ item.trajectory.id }}
+       toggle .expanded on me">
 
     <!-- Checkbox -->
     <td class="p-4" _="on click halt">
@@ -116,14 +112,18 @@
 </tr>
 
 <!-- Expandable Detail Row -->
-<tr id="detail-{{ item.trajectory.id }}" class="hidden bg-slate-900/50">
-    <td colspan="8" class="p-0">
-        <div hx-get="/annotation/trajectory/{{ item.trajectory.id }}/expand"
-            hx-trigger="intersect once"
-            hx-swap="innerHTML"
-            class="p-6">
-            <div class="flex items-center justify-center py-4">
-                <div class="animate-spin w-5 h-5 border-2 border-ymir-500 border-t-transparent rounded-full"></div>
+<tr id="detail-{{ item.trajectory.id }}" class="detail-row">
+    <td colspan="8">
+        <div id="detail-wrapper-{{ item.trajectory.id }}" class="detail-wrapper">
+            <div class="detail-content">
+                <div hx-get="/annotation/trajectory/{{ item.trajectory.id }}/expand"
+                    hx-trigger="intersect once"
+                    hx-swap="innerHTML"
+                    class="p-6">
+                    <div class="flex items-center justify-center py-4">
+                        <div class="animate-spin w-5 h-5 border-2 border-ymir-500 border-t-transparent rounded-full"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </td>

@@ -179,10 +179,19 @@ class SessionStore:
         self,
         status: TrajectoryStatus | None = None,
         scenario_id: str | None = None,
+        min_quality: float | None = None,
+        max_quality: float | None = None,
+        sort_by: str = "created_at",
+        sort_order: str = "desc",
         limit: int = 100,
         offset: int = 0,
-    ) -> list[Trajectory]:
-        """Query trajectories with filters."""
+    ) -> tuple[list[Trajectory], int]:
+        """
+        Query trajectories with filters, sorting, and pagination.
+
+        Returns:
+            Tuple of (trajectories, total_count) for pagination.
+        """
         try:
             conditions = []
             params = []
@@ -195,20 +204,92 @@ class SessionStore:
                 conditions.append("scenario_id = ?")
                 params.append(scenario_id)
 
+            if min_quality is not None:
+                conditions.append("quality_score >= ?")
+                params.append(min_quality)
+
+            if max_quality is not None:
+                conditions.append("quality_score <= ?")
+                params.append(max_quality)
+
             where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+
+            # Validate sort column to prevent SQL injection
+            valid_sort_columns = {
+                "created_at", "quality_score", "status", "scenario_id", "id"
+            }
+            if sort_by not in valid_sort_columns:
+                sort_by = "created_at"
+
+            # Validate sort order
+            sort_order = "ASC" if sort_order.lower() == "asc" else "DESC"
+
+            # Get total count first
+            count_query = f"SELECT COUNT(*) as count FROM sessions {where_clause}"
+            count_row = await self.db.fetchone(count_query, tuple(params))
+            total_count = count_row["count"] if count_row else 0
+
+            # Get paginated results
             query = f"""
                 SELECT * FROM sessions
                 {where_clause}
-                ORDER BY created_at DESC
+                ORDER BY {sort_by} {sort_order}
                 LIMIT ? OFFSET ?
             """
             params.extend([limit, offset])
 
             rows = await self.db.fetchall(query, tuple(params))
-            return [self._deserialize_trajectory(row) for row in rows]
+            trajectories = [self._deserialize_trajectory(row) for row in rows]
+            return trajectories, total_count
         except Exception as e:
             logger.error(f"Error querying trajectories: {e}")
+            return [], 0
+
+    async def get_unique_scenarios(self) -> list[dict]:
+        """Get list of unique scenarios with counts."""
+        try:
+            rows = await self.db.fetchall(
+                """
+                SELECT
+                    scenario_id,
+                    scenario_description,
+                    COUNT(*) as count
+                FROM sessions
+                WHERE scenario_id IS NOT NULL
+                GROUP BY scenario_id
+                ORDER BY count DESC
+                """
+            )
+            return [
+                {
+                    "id": row["scenario_id"],
+                    "description": row["scenario_description"],
+                    "count": row["count"],
+                }
+                for row in rows
+            ]
+        except Exception as e:
+            logger.error(f"Error getting unique scenarios: {e}")
             return []
+
+    async def get_stats(self) -> dict:
+        """Get overall statistics for the data management UI."""
+        try:
+            rows = await self.db.fetchall(
+                """
+                SELECT status, COUNT(*) as count
+                FROM sessions
+                GROUP BY status
+                """
+            )
+            stats = {status.value: 0 for status in TrajectoryStatus}
+            for row in rows:
+                stats[row["status"]] = row["count"]
+            stats["total"] = sum(stats.values())
+            return stats
+        except Exception as e:
+            logger.error(f"Error getting stats: {e}")
+            return {"total": 0, "pending": 0, "approved": 0, "rejected": 0, "needs_edit": 0}
 
     async def search(self, text: str, limit: int = 100) -> list[Trajectory]:
         """Search trajectories using FTS5 full-text search."""

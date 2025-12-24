@@ -1,82 +1,201 @@
 <div class="w-full">
+    <!-- Header -->
     <div class="flex items-center justify-between mb-4">
         <div>
-            <h1 class="text-xl font-bold tracking-tight">Annotation Queue</h1>
-            <p class="text-slate-400 text-sm">Review and refine generated trajectories for quality control</p>
+            <h1 class="text-xl font-bold tracking-tight">Data Management</h1>
+            <p class="text-slate-400 text-sm">Curate and review agentic training trajectories</p>
         </div>
         <div class="flex gap-3">
-            <button class="btn-secondary flex items-center gap-2" hx-get="/annotation" hx-target="#main-content" hx-swap="innerHTML">
+            <button class="btn-secondary flex items-center gap-2"
+                hx-get="/annotation/" hx-target="#main-content" hx-swap="innerHTML">
                 <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                Refresh Queue
+                Refresh
             </button>
         </div>
     </div>
 
     <!-- Stats Bar -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-        <div class="card p-5 border-l-4 border-l-yellow-500 bg-yellow-500/5">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-yellow-500/10 rounded-lg flex items-center justify-center text-yellow-500">
-                    <i data-lucide="clock" class="w-5 h-5"></i>
+    <div id="stats-bar">
+        {% include "annotation/stats_bar.html" %}
+    </div>
+
+    <!-- Filters Panel -->
+    <div class="card p-4 mb-4">
+        <form id="filter-form"
+            hx-get="/annotation/trajectories"
+            hx-target="#trajectory-table"
+            hx-trigger="change from:select, change from:input[type='checkbox'], change from:input[type='number']"
+            hx-swap="innerHTML">
+
+            <div class="flex flex-wrap items-center gap-4">
+                <!-- Status Tabs -->
+                <div class="flex items-center bg-slate-800 rounded-lg p-1">
+                    {% for s in ['all', 'pending', 'approved', 'rejected', 'needs_edit'] %}
+                    <button type="button"
+                        class="status-tab px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wide transition-all
+                               {% if s == 'all' %}bg-ymir-500 text-white{% else %}text-slate-400 hover:text-white{% endif %}"
+                        data-status="{{ s }}"
+                        _="on click
+                           remove .bg-ymir-500 .text-white from .status-tab
+                           add .text-slate-400 to .status-tab
+                           remove .text-slate-400 from me
+                           add .bg-ymir-500 .text-white to me
+                           set #status-input.value to '{{ s }}'
+                           then trigger change on #filter-form">
+                        {{ s | replace('_', ' ') }}
+                    </button>
+                    {% endfor %}
+                    <input type="hidden" name="status" id="status-input" value="all">
                 </div>
-                <div>
-                    <div class="text-xl font-bold text-white">{{ stats.pending }}</div>
-                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Pending</div>
+
+                <!-- Scenario Dropdown -->
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase">Scenario:</label>
+                    <select name="scenario" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white">
+                        <option value="">All Scenarios</option>
+                        {% for s in scenarios %}
+                        <option value="{{ s.id }}">{{ s.description[:30] }}{% if s.description|length > 30 %}...{% endif %} ({{ s.count }})</option>
+                        {% endfor %}
+                    </select>
                 </div>
+
+                <!-- Quality Range -->
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase">Quality:</label>
+                    <input type="number" name="min_quality" min="0" max="1" step="0.1"
+                        placeholder="Min" class="w-16 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-white">
+                    <span class="text-slate-600">-</span>
+                    <input type="number" name="max_quality" min="0" max="1" step="0.1"
+                        placeholder="Max" class="w-16 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-white">
+                </div>
+
+                <!-- Issue Type Filters -->
+                <div class="flex items-center gap-3">
+                    <label class="text-xs font-bold text-slate-500 uppercase">Issues:</label>
+                    <label class="flex items-center gap-1.5 cursor-pointer" title="Hallucination">
+                        <input type="checkbox" name="issue_hallucination" value="1"
+                            class="w-3 h-3 rounded border-red-500 text-red-500 bg-slate-800">
+                        <i data-lucide="alert-circle" class="w-3.5 h-3.5 text-red-400"></i>
+                    </label>
+                    <label class="flex items-center gap-1.5 cursor-pointer" title="Goal Drift">
+                        <input type="checkbox" name="issue_goal_drift" value="1"
+                            class="w-3 h-3 rounded border-orange-500 text-orange-500 bg-slate-800">
+                        <i data-lucide="compass" class="w-3.5 h-3.5 text-orange-400"></i>
+                    </label>
+                    <label class="flex items-center gap-1.5 cursor-pointer" title="Tool Skipping">
+                        <input type="checkbox" name="issue_tool_skip" value="1"
+                            class="w-3 h-3 rounded border-yellow-500 text-yellow-500 bg-slate-800">
+                        <i data-lucide="skip-forward" class="w-3.5 h-3.5 text-yellow-400"></i>
+                    </label>
+                    <label class="flex items-center gap-1.5 cursor-pointer" title="Suspicious Pattern">
+                        <input type="checkbox" name="issue_suspicious" value="1"
+                            class="w-3 h-3 rounded border-purple-500 text-purple-500 bg-slate-800">
+                        <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-purple-400"></i>
+                    </label>
+                </div>
+
+                <!-- Clear Filters -->
+                <button type="button" class="text-xs text-slate-500 hover:text-ymir-500 underline"
+                    _="on click
+                       set #status-input.value to 'all'
+                       remove .bg-ymir-500 .text-white from .status-tab
+                       add .text-slate-400 to .status-tab
+                       add .bg-ymir-500 .text-white to .status-tab[data-status='all']
+                       remove .text-slate-400 from .status-tab[data-status='all']
+                       set document.querySelector('select[name=scenario]').value to ''
+                       set document.querySelector('input[name=min_quality]').value to ''
+                       set document.querySelector('input[name=max_quality]').value to ''
+                       call document.querySelectorAll('input[type=checkbox]').forEach((el) => el.checked = false)
+                       then trigger change on #filter-form">
+                    Clear Filters
+                </button>
             </div>
-        </div>
-        <div class="card p-5 border-l-4 border-l-green-500 bg-green-500/5">
+        </form>
+    </div>
+
+    <!-- Bulk Actions Bar (hidden by default) -->
+    <div id="bulk-actions" class="hidden card px-4 py-3 mb-4 bg-ymir-500/5 border-ymir-500/20">
+        <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center text-green-500">
-                    <i data-lucide="check-circle" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <div class="text-xl font-bold text-white">{{ stats.approved }}</div>
-                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Approved</div>
-                </div>
+                <button type="button" class="text-xs text-ymir-400 hover:text-ymir-300 underline"
+                    _="on click toggle @checked on #select-all then trigger change on #select-all">
+                    Toggle All
+                </button>
+                <span class="text-sm text-slate-400">
+                    <span id="selected-count" class="font-bold text-ymir-400">0</span> selected
+                </span>
             </div>
-        </div>
-        <div class="card p-5 border-l-4 border-l-red-500 bg-red-500/5">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-red-500/10 rounded-lg flex items-center justify-center text-red-500">
-                    <i data-lucide="x-circle" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <div class="text-xl font-bold text-white">{{ stats.rejected }}</div>
-                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Rejected</div>
-                </div>
-            </div>
-        </div>
-        <div class="card p-5 border-l-4 border-l-blue-500 bg-blue-500/5">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-500">
-                    <i data-lucide="edit-3" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <div class="text-xl font-bold text-white">{{ stats.needs_edit }}</div>
-                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Needs Edit</div>
-                </div>
+
+            <div class="flex items-center gap-2">
+                <button class="btn-secondary text-sm flex items-center gap-2 py-2"
+                    hx-post="/annotation/bulk-action"
+                    hx-vals='js:{"action": "approve", "trajectory_ids": getSelectedIds()}'
+                    hx-target="#stats-bar"
+                    hx-swap="innerHTML"
+                    _="on htmx:afterRequest call clearSelection() then trigger change on #filter-form">
+                    <i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i>
+                    Approve Selected
+                </button>
+                <button class="btn-secondary text-sm flex items-center gap-2 py-2"
+                    hx-post="/annotation/bulk-action"
+                    hx-vals='js:{"action": "reject", "trajectory_ids": getSelectedIds()}'
+                    hx-target="#stats-bar"
+                    hx-swap="innerHTML"
+                    _="on htmx:afterRequest call clearSelection() then trigger change on #filter-form">
+                    <i data-lucide="x-circle" class="w-4 h-4 text-red-500"></i>
+                    Reject Selected
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Review Container -->
-    <div id="review-container">
-        {% if trajectory %}
-        {% include "annotation/trajectory_card.html" %}
-        {% else %}
-        <div class="card p-20 text-center flex flex-col items-center justify-center">
-            <div class="w-20 h-20 bg-slate-800 rounded-3xl flex items-center justify-center mb-8 text-slate-600">
-                <i data-lucide="coffee" class="w-10 h-10"></i>
-            </div>
-            <h2 class="text-2xl font-bold text-slate-200 mb-2">Queue Empty!</h2>
-            <p class="text-slate-400 max-w-sm">There are no trajectories pending review at the moment. Great job!</p>
-            <button class="btn-primary mt-8 flex items-center gap-2"
-                hx-get="/generation" hx-target="#main-content" hx-swap="innerHTML">
-                <i data-lucide="sparkles" class="w-4 h-4"></i>
-                Generate More
-            </button>
+    <!-- Data Table Container -->
+    <div id="trajectory-table"
+        hx-get="/annotation/trajectories"
+        hx-trigger="load"
+        hx-swap="innerHTML">
+        <!-- Initial load spinner -->
+        <div class="card p-12 text-center">
+            <div class="animate-spin w-8 h-8 border-2 border-ymir-500 border-t-transparent rounded-full mx-auto"></div>
+            <p class="text-slate-400 text-sm mt-4">Loading trajectories...</p>
         </div>
-        {% endif %}
     </div>
 </div>
+
+<script>
+function getSelectedIds() {
+    const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+    return JSON.stringify(Array.from(checkboxes).map(cb => cb.value));
+}
+
+function updateBulkActions() {
+    const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+    const count = checkboxes.length;
+    const countEl = document.getElementById('selected-count');
+    const bulkBar = document.getElementById('bulk-actions');
+
+    if (countEl) countEl.textContent = count;
+
+    if (bulkBar) {
+        if (count > 0) {
+            bulkBar.classList.remove('hidden');
+        } else {
+            bulkBar.classList.add('hidden');
+        }
+    }
+}
+
+function clearSelection() {
+    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = false);
+    const selectAll = document.getElementById('select-all');
+    if (selectAll) selectAll.checked = false;
+    updateBulkActions();
+}
+
+// Listen for checkbox changes
+document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('row-checkbox') || e.target.id === 'select-all') {
+        updateBulkActions();
+    }
+});
+</script>

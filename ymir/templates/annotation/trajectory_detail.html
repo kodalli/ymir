@@ -1,0 +1,158 @@
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left: Conversation -->
+    <div class="lg:col-span-2">
+        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Conversation</div>
+        <div class="space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
+            {% for message in trajectory.messages %}
+            <div class="flex flex-col {% if message.role.value == 'user' %}items-start{% elif message.role.value == 'assistant' %}items-end{% else %}items-center{% endif %}">
+                <div class="flex items-center gap-2 mb-1 px-1">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                        {{ message.role.value }}
+                    </span>
+                    {% if message.role.value == 'user' %}
+                    <i data-lucide="user" class="w-3 h-3 text-slate-600"></i>
+                    {% elif message.role.value == 'assistant' %}
+                    <i data-lucide="bot" class="w-3 h-3 text-ymir-500"></i>
+                    {% else %}
+                    <i data-lucide="terminal" class="w-3 h-3 text-slate-600"></i>
+                    {% endif %}
+                </div>
+
+                <div class="max-w-[90%] p-3 rounded-xl text-sm leading-relaxed {% if message.role.value == 'user' %}bg-slate-800 border border-slate-700 text-slate-200 rounded-tl-none{% elif message.role.value == 'assistant' %}bg-ymir-500/20 border border-ymir-500/30 text-slate-200 rounded-tr-none{% else %}bg-slate-900 border border-slate-800 text-slate-400 font-mono text-xs rounded-lg{% endif %}">
+                    <div class="whitespace-pre-wrap break-words">{{ message.content[:800] }}{% if message.content|length > 800 %}...{% endif %}</div>
+
+                    {% if message.tool_calls %}
+                    <div class="mt-2 pt-2 border-t border-white/10 space-y-1">
+                        {% for tool_call in message.tool_calls %}
+                        <div class="flex items-center gap-2 bg-black/20 p-2 rounded text-xs font-mono">
+                            <i data-lucide="terminal" class="w-3 h-3 text-ymir-400"></i>
+                            <span class="text-ymir-300">{{ tool_call.name }}()</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Right: Issues & Actions -->
+    <div class="space-y-4">
+        <!-- Issues Section -->
+        {% if issues %}
+        <div>
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Detected Issues</div>
+            <div class="space-y-2">
+                {% for issue in issues %}
+                <div class="p-3 rounded-lg border
+                    {% if issue.severity.value == 'high' %}bg-red-500/5 border-red-500/20
+                    {% elif issue.severity.value == 'medium' %}bg-yellow-500/5 border-yellow-500/20
+                    {% else %}bg-slate-500/5 border-slate-500/20{% endif %}">
+                    <div class="flex items-start gap-2">
+                        {% if issue.type.value == 'hallucination' %}
+                        <i data-lucide="alert-circle" class="w-4 h-4 text-red-500 mt-0.5"></i>
+                        {% elif issue.type.value == 'goal_drift' %}
+                        <i data-lucide="compass" class="w-4 h-4 text-orange-500 mt-0.5"></i>
+                        {% elif issue.type.value == 'tool_skipping' %}
+                        <i data-lucide="skip-forward" class="w-4 h-4 text-yellow-500 mt-0.5"></i>
+                        {% elif issue.type.value == 'suspicious_pattern' %}
+                        <i data-lucide="shield-alert" class="w-4 h-4 text-purple-500 mt-0.5"></i>
+                        {% else %}
+                        <i data-lucide="alert-triangle" class="w-4 h-4 text-slate-400 mt-0.5"></i>
+                        {% endif %}
+                        <div class="flex-1">
+                            <div class="text-sm font-medium
+                                {% if issue.severity.value == 'high' %}text-red-300
+                                {% elif issue.severity.value == 'medium' %}text-yellow-300
+                                {% else %}text-slate-300{% endif %}">
+                                {{ issue.message }}
+                            </div>
+                            {% if issue.evidence %}
+                            <div class="text-xs text-slate-500 mt-1 font-mono">
+                                {{ issue.evidence[:100] }}{% if issue.evidence|length > 100 %}...{% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="p-4 rounded-lg bg-green-500/5 border border-green-500/20 text-center">
+            <i data-lucide="check-circle" class="w-8 h-8 text-green-500 mx-auto mb-2"></i>
+            <div class="text-sm text-green-400">No issues detected</div>
+        </div>
+        {% endif %}
+
+        <!-- Metadata -->
+        <div>
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Details</div>
+            <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-slate-500">ID</span>
+                    <span class="font-mono text-slate-300">{{ trajectory.id[:12] }}...</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Source</span>
+                    <span class="text-slate-300">{{ trajectory.source }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Created</span>
+                    <span class="text-slate-300">{{ trajectory.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+                {% if trajectory.reviewed_at %}
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Reviewed</span>
+                    <span class="text-slate-300">{{ trajectory.reviewed_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+                {% endif %}
+                {% if trajectory.annotator_notes %}
+                <div class="pt-2 border-t border-slate-700">
+                    <span class="text-slate-500 block mb-1">Notes</span>
+                    <span class="text-slate-300 text-xs">{{ trajectory.annotator_notes }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div>
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Quick Actions</div>
+            <form hx-post="/annotation/trajectory/{{ trajectory.id }}/review"
+                hx-target="#row-{{ trajectory.id }}"
+                hx-swap="outerHTML"
+                _="on htmx:afterRequest add .hidden to #detail-{{ trajectory.id }}"
+                class="space-y-3">
+                <textarea name="notes" rows="2" placeholder="Add notes (optional)..."
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-sm focus:border-ymir-500 outline-none transition-all resize-none">{{ trajectory.annotator_notes or '' }}</textarea>
+
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="submit" name="status" value="approved"
+                        class="flex items-center justify-center gap-1 bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-3 rounded-lg transition-all text-sm">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        Approve
+                    </button>
+                    <button type="submit" name="status" value="rejected"
+                        class="flex items-center justify-center gap-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-3 rounded-lg transition-all text-sm">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                        Reject
+                    </button>
+                    <button type="submit" name="status" value="needs_edit"
+                        class="flex items-center justify-center gap-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-3 rounded-lg transition-all text-sm">
+                        <i data-lucide="edit-2" class="w-4 h-4"></i>
+                        Edit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Re-initialize Lucide icons -->
+<script>
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>

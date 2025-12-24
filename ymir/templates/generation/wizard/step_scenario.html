@@ -22,7 +22,7 @@
     <input type="hidden" id="wizard-scenario-id" name="scenario_id" value="{{ scenario.id if scenario else '' }}">
 
     <!-- Scenario Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {% for scen in scenarios %}
             {% set is_selected = scenario and scenario.id == scen.id %}
             <div

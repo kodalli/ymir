@@ -55,9 +55,9 @@
     </div>
 
     <!-- Tools List -->
-    <div class="space-y-3">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {% for function in scenario.functions %}
-        <div class="bg-surface-sidebar rounded-lg border border-theme overflow-hidden">
+        <div class="bg-surface-sidebar rounded-lg border border-theme overflow-hidden flex flex-col h-full">
             <div class="p-4">
                 <!-- Tool Header -->
                 <div class="flex items-start gap-4">

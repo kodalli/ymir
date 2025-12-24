@@ -31,17 +31,17 @@
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 
-<body class="bg-surface-main text-theme-primary min-h-screen flex">
+<body class="bg-surface-main text-theme-primary h-screen flex overflow-hidden">
     <!-- Sidebar Navigation -->
-    <aside class="sidebar w-64 flex-shrink-0 flex flex-col h-screen sticky top-0">
-        <div class="p-6">
-            <div class="flex items-center gap-3 mb-8">
-                <div class="w-8 h-8 bg-ymir-500 rounded-lg flex items-center justify-center">
+    <aside class="sidebar w-64 flex-shrink-0 flex flex-col h-full border-r border-theme">
+        <div class="p-4">
+            <div class="flex items-center gap-3 mb-6 px-2">
+                <div class="w-8 h-8 bg-ymir-500 rounded-lg flex items-center justify-center shadow-lg shadow-ymir-500/20">
                     <i data-lucide="layers" class="text-white w-5 h-5"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-xl tracking-tight">YMIR</h1>
-                    <p class="text-[10px] text-theme-secondary uppercase tracking-widest font-semibold">Agentic Dataset</p>
+                    <h1 class="font-bold text-lg tracking-tight leading-none">YMIR</h1>
+                    <p class="text-[10px] text-theme-secondary uppercase tracking-widest font-semibold mt-0.5">Agentic Dataset</p>
                 </div>
             </div>
 
@@ -51,76 +51,76 @@
                     hx-get="/generation" hx-target="#main-content" hx-swap="innerHTML"
                     _="on click remove .active from .sidebar-item then add .active to me">
                     <i data-lucide="zap" class="w-5 h-5 mr-3"></i>
-                    <span>Generate</span>
+                    <span class="text-sm">Generate</span>
                 </a>
                 <a href="#"
                     class="sidebar-item group"
                     hx-get="/functions" hx-target="#main-content" hx-swap="innerHTML"
                     _="on click remove .active from .sidebar-item then add .active to me">
                     <i data-lucide="code-2" class="w-5 h-5 mr-3"></i>
-                    <span>Functions</span>
+                    <span class="text-sm">Functions</span>
                 </a>
                 <a href="#"
                     class="sidebar-item group"
                     hx-get="/conversion" hx-target="#main-content" hx-swap="innerHTML"
                     _="on click remove .active from .sidebar-item then add .active to me">
                     <i data-lucide="import" class="w-5 h-5 mr-3"></i>
-                    <span>Import</span>
+                    <span class="text-sm">Import</span>
                 </a>
                 <a href="#"
                     class="sidebar-item group"
                     hx-get="/annotation" hx-target="#main-content" hx-swap="innerHTML"
                     _="on click remove .active from .sidebar-item then add .active to me">
                     <i data-lucide="clipboard-check" class="w-5 h-5 mr-3"></i>
-                    <span>Annotate</span>
+                    <span class="text-sm">Annotate</span>
                 </a>
                 <a href="#"
                     class="sidebar-item group"
                     hx-get="/export" hx-target="#main-content" hx-swap="innerHTML"
                     _="on click remove .active from .sidebar-item then add .active to me">
                     <i data-lucide="download" class="w-5 h-5 mr-3"></i>
-                    <span>Export</span>
+                    <span class="text-sm">Export</span>
                 </a>
             </nav>
         </div>
 
-        <div class="mt-auto p-6 border-t border-theme">
-            <div class="flex items-center gap-3 text-theme-secondary hover:text-white transition-colors cursor-pointer">
-                <div class="w-8 h-8 bg-surface-hover rounded-full flex items-center justify-center">
+        <div class="mt-auto p-4 border-t border-theme bg-surface-main/30">
+            <div class="flex items-center gap-3 text-theme-secondary hover:text-white transition-colors cursor-pointer px-2">
+                <div class="w-8 h-8 bg-surface-hover rounded-full flex items-center justify-center border border-theme">
                     <i data-lucide="user" class="w-4 h-4"></i>
                 </div>
-                <div class="text-sm font-medium">Developer</div>
+                <div class="text-xs font-medium">Developer</div>
             </div>
         </div>
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-grow flex flex-col min-h-screen overflow-y-auto">
+    <main class="flex-1 flex flex-col h-full min-w-0 bg-surface-main relative">
         <!-- Header/Topbar -->
-        <header class="h-16 border-b border-theme flex items-center justify-between px-8 bg-surface-sidebar/50 backdrop-blur-sm sticky top-0 z-10">
+        <header class="h-14 border-b border-theme flex items-center justify-between px-6 bg-surface-sidebar/50 backdrop-blur-sm z-10 flex-shrink-0">
             <div class="flex items-center gap-4">
-                <h2 id="page-title" class="font-semibold text-lg text-theme-primary">Dashboard</h2>
+                <h2 id="page-title" class="font-semibold text-base text-theme-primary">Dashboard</h2>
             </div>
-            <div class="flex items-center gap-4">
-                <button class="w-10 h-10 flex items-center justify-center text-theme-secondary hover:text-white hover:bg-surface-hover rounded-lg transition-all">
-                    <i data-lucide="bell" class="w-5 h-5"></i>
+            <div class="flex items-center gap-2">
+                <button class="w-8 h-8 flex items-center justify-center text-theme-secondary hover:text-white hover:bg-surface-hover rounded-lg transition-all">
+                    <i data-lucide="bell" class="w-4 h-4"></i>
                 </button>
                 <button id="theme-toggle"
-                    class="w-10 h-10 flex items-center justify-center text-theme-secondary hover:text-white hover:bg-surface-hover rounded-lg transition-all"
+                    class="w-8 h-8 flex items-center justify-center text-theme-secondary hover:text-white hover:bg-surface-hover rounded-lg transition-all"
                     onclick="YmirTheme.toggle()"
                     title="Toggle theme">
-                    <i data-lucide="palette" class="w-5 h-5"></i>
+                    <i data-lucide="palette" class="w-4 h-4"></i>
                 </button>
-                <button class="w-10 h-10 flex items-center justify-center text-theme-secondary hover:text-white hover:bg-surface-hover rounded-lg transition-all">
-                    <i data-lucide="settings" class="w-5 h-5"></i>
+                <button class="w-8 h-8 flex items-center justify-center text-theme-secondary hover:text-white hover:bg-surface-hover rounded-lg transition-all">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
                 </button>
             </div>
         </header>
 
-        <div id="main-content" class="p-8">
+        <div id="main-content" class="flex-1 overflow-y-auto p-6 scroll-smooth custom-scrollbar">
             <!-- Initial content -->
-            <div class="max-w-4xl mx-auto text-center py-20">
-                <div class="w-20 h-20 bg-ymir-500/10 rounded-2xl flex items-center justify-center mx-auto mb-8">
+            <div class="w-full mx-auto text-center py-20">
+                <div class="w-20 h-20 bg-ymir-500/10 rounded-2xl flex items-center justify-center mx-auto mb-8 border border-ymir-500/20">
                     <i data-lucide="rocket" class="text-ymir-500 w-10 h-10"></i>
                 </div>
                 <h1 class="text-4xl font-bold mb-4 tracking-tight">Welcome to Ymir</h1>
@@ -142,7 +142,7 @@
                     </button>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-24">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-24 max-w-5xl mx-auto">
                     <div class="card p-6 text-left group hover:border-ymir-500/50 transition-all cursor-default">
                         <div class="w-10 h-10 bg-info-500/10 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                             <i data-lucide="cpu" class="text-info-500 w-5 h-5"></i>
@@ -178,6 +178,7 @@
 
     <!-- Theme Manager (must load before app.js) -->
     <script src="/static/js/theme-manager.js"></script>
+    <script src="/static/js/dev-reload.js"></script>
     <script src="/static/js/app.js"></script>
     <script>
         // Initialize Lucide icons

@@ -127,9 +127,9 @@
     </div>
 
     <!-- Simulated Actor Fields -->
-    <div id="simulated-fields" class="space-y-5 hidden">
+    <div id="simulated-fields" class="hidden">
         <!-- Load Example Button -->
-        <div class="flex justify-end">
+        <div class="flex justify-end mb-4">
             <button
                 type="button"
                 class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-theme-secondary bg-surface-hover hover:bg-theme-border rounded-lg transition-colors"
@@ -143,8 +143,9 @@
             </button>
         </div>
 
-        <!-- Situation Details -->
-        <div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Situation Details -->
+            <div class="h-full">
             <label for="persona-situation" class="block text-sm font-medium text-theme-secondary mb-2">
                 Situation Details
                 <span class="text-theme-muted font-normal ml-1">- Facts the actor knows (hidden from agent)</span>
@@ -170,8 +171,9 @@ Additional Notes: First time patient, referred by Dr. Johnson"
             </p>
         </div>
 
-        <!-- Actor Background -->
-        <div>
+            <div class="space-y-6">
+                <!-- Actor Background -->
+                <div>
             <label for="persona-background" class="block text-sm font-medium text-theme-secondary mb-2">
                 Actor Background
                 <span class="text-theme-muted font-normal ml-1">- Optional: personality and communication style</span>
@@ -187,8 +189,8 @@ Additional Notes: First time patient, referred by Dr. Johnson"
             ></textarea>
         </div>
 
-        <!-- Goal -->
-        <div>
+                <!-- Goal -->
+                <div>
             <label for="persona-goal" class="block text-sm font-medium text-theme-secondary mb-2">
                 Goal
                 <span class="text-theme-muted font-normal ml-1">- What the actor wants to accomplish</span>
@@ -202,6 +204,8 @@ Additional Notes: First time patient, referred by Dr. Johnson"
                        focus:ring-ymir-500 focus:border-transparent resize-none"
                 placeholder="E.g., Schedule an appointment for a checkup as soon as possible"
             ></textarea>
+                </div>
+            </div>
         </div>
     </div>
 </div>

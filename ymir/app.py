@@ -4,6 +4,7 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.websockets import WebSocket
 
 from ymir.routes import templates, routers, lifespan
 
@@ -33,6 +34,17 @@ async def root(request: Request):
 # Register all routers
 for router in routers:
     app.include_router(router)
+
+
+@app.websocket("/dev/reload")
+async def dev_reload(websocket: WebSocket):
+    """WebSocket endpoint for dev auto-reload. Browser refreshes when server restarts."""
+    await websocket.accept()
+    try:
+        while True:
+            await websocket.receive_text()
+    except:
+        pass
 
 
 if __name__ == "__main__":

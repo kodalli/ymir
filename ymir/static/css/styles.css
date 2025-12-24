@@ -121,6 +121,9 @@ body {
 }
 
 .toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
     padding: 1rem 1.5rem;
     background-color: var(--color-bg-sidebar);
     border: 1px solid var(--color-border);

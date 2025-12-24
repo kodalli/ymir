@@ -13,7 +13,7 @@ from .schemas import FunctionDefinition, ScenarioTemplate
 class FunctionRegistry:
     """Registry for managing function definitions and scenario templates."""
 
-    def __init__(self, data_dir: str = "ymir/data/functions"):
+    def __init__(self, data_dir: str = "ymir/data/runtime/functions"):
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self._functions: dict[str, FunctionDefinition] = {}

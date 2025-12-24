@@ -5,7 +5,7 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from ymir.functions import FunctionDefinition, ScenarioTemplate, get_registry
-from ymir.routes.shared import templates
+from ymir.api.shared import templates
 
 router = APIRouter(prefix="/functions", tags=["functions"])
 

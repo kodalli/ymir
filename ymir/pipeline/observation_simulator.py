@@ -6,7 +6,7 @@ from typing import Any
 from loguru import logger
 
 from ymir.core import ToolCall, ToolResult
-from ymir.llm import OllamaLLM
+from .llm import OllamaLLM
 
 
 class ObservationSimulator:

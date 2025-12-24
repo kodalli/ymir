@@ -15,8 +15,7 @@ from ymir.core import (
 )
 from ymir.core.constants import DEFAULT_AGENT_SYSTEM_PROMPT
 from ymir.functions import ScenarioTemplate
-from ymir.llm import OllamaLLM
-
+from .llm import OllamaLLM
 from .observation_simulator import ObservationSimulator
 from .user_simulator import UserSimulator
 

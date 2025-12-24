@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.websockets import WebSocket
 
-from ymir.routes import templates, routers, lifespan
+from ymir.api import templates, routers, lifespan
 
 # Initialize FastAPI app
 app = FastAPI(

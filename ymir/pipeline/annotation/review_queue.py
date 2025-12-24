@@ -8,7 +8,7 @@ from ymir.core import Message, Trajectory, TrajectoryStatus
 from .quality_scorer import QualityScorer
 
 if TYPE_CHECKING:
-    from ymir.storage import TrajectoryStore
+    from ymir.data import TrajectoryStore
 
 
 class ReviewQueue:

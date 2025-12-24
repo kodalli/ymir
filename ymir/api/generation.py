@@ -5,11 +5,11 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from ymir.functions import get_registry
-from ymir.generators import TrajectoryGenerator
-from ymir.llm import get_available_models
-from ymir.personas import get_personas_for_category
-from ymir.storage import get_store
-from ymir.routes.shared import templates
+from ymir.pipeline import TrajectoryGenerator
+from ymir.pipeline.llm import get_available_models
+from ymir.pipeline.personas import get_personas_for_category
+from ymir.data import get_store
+from ymir.api.shared import templates
 
 router = APIRouter(prefix="/generation", tags=["generation"])
 

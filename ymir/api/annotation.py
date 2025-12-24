@@ -4,10 +4,10 @@ import json
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 
-from ymir.annotation import ReviewQueue
+from ymir.pipeline.annotation import ReviewQueue
 from ymir.core import TrajectoryStatus
-from ymir.storage import get_store
-from ymir.routes.shared import templates
+from ymir.data import get_store
+from ymir.api.shared import templates
 
 router = APIRouter(prefix="/annotation", tags=["annotation"])
 

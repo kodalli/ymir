@@ -7,9 +7,9 @@ from pathlib import Path
 from fastapi import APIRouter, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 
-from ymir.converters import APIGenMTConverter, HermesFCConverter
-from ymir.storage import get_store
-from ymir.routes.shared import templates
+from ymir.data.converters import APIGenMTConverter, HermesFCConverter
+from ymir.data import get_store
+from ymir.api.shared import templates
 
 router = APIRouter(prefix="/conversion", tags=["conversion"])
 
@@ -56,7 +56,7 @@ async def import_dataset(
 
     try:
         # Import with quality scoring
-        from ymir.annotation import QualityScorer
+        from ymir.pipeline.annotation import QualityScorer
         scorer = QualityScorer() if auto_score else None
 
         count = 0

@@ -5,7 +5,7 @@ from typing import Any
 from loguru import logger
 
 from ymir.core import Message, MessageRole
-from ymir.llm import OllamaLLM
+from .llm import OllamaLLM
 
 
 class UserSimulator:

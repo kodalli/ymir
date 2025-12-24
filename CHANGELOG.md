@@ -1,6 +1,206 @@
 # CHANGELOG
 
 
+## v0.0.0-alpha.12 (2025-12-24)
+
+### Bug Fixes
+
+- **api**: Initialize database on app startup
+  ([`30f3b1f`](https://github.com/kodalli/ymir/commit/30f3b1f8648e2a097aa99b824adc3531b7afebec))
+
+Move db.initialize() to lifespan handler instead of calling it in each API endpoint. Database is now
+  automatically initialized when the app starts and closed on shutdown.
+
+- **dev**: Add websockets dep and fix route trailing slashes
+  ([`dac06d4`](https://github.com/kodalli/ymir/commit/dac06d4456961dcd60227dd2d84fdee708491b70))
+
+Add websockets library for WebSocket support in uvicorn. Fix HTMX links to include trailing slashes,
+  eliminating 307 redirects.
+
+- **generation**: Remove duplicate inputs in wizard step 3
+  ([`b815e71`](https://github.com/kodalli/ymir/commit/b815e7110bed9c93c6b2658f51a31fee4651d5f5))
+
+Fixes duplicate content rendering in the Configure Actor step by: - Removing duplicate hidden inputs
+  (already in parent form) - Fixing radio button names to match JS expectations (mode_toggle) -
+  Adding proper name attrs to textareas for syncFormValues()
+
+- **ui**: Add fixed positioning to toast to prevent layout interference
+  ([`e07f538`](https://github.com/kodalli/ymir/commit/e07f538cce9c9f6642967ae42b3c3b51a3e9980d))
+
+Toast element was part of body's flex flow, taking up horizontal space and preventing main content
+  from extending to full width.
+
+### Chores
+
+- Update .gitignore and add TODO.md for project tracking
+  ([`4417a2e`](https://github.com/kodalli/ymir/commit/4417a2e25b8d27ba91180f4f462659115a3452ad))
+
+Add .claude to .gitignore to exclude specific files. Create TODO.md to outline completed phases,
+  project structure, usage instructions, and next steps for the agentic dataset generation project.
+
+- **deps**: Simplify dependencies for new architecture
+  ([`0b4e364`](https://github.com/kodalli/ymir/commit/0b4e364b21b4d51582448f957007c687ffd044b4))
+
+Remove LangChain dependencies and add native ollama package. Update project description to reflect
+  agentic dataset generation focus.
+
+- **deps**: Update package versions and add upload times
+  ([`77e12af`](https://github.com/kodalli/ymir/commit/77e12af0cf57e4e3489a5410afc65ca5b6be9a3c))
+
+Increment revision to 2 in uv.lock. Update package metadata for annotated-types and anyio to include
+  upload times. Remove deprecated LangChain dependencies and add new dependencies for ollama and
+  pydantic.
+
+### Code Style
+
+- **ui**: Reduce page title sizes and spacing for compact layout
+  ([`09d7e20`](https://github.com/kodalli/ymir/commit/09d7e207fe8d706764a17df9c41a1989a028a509))
+
+Makes better use of screen real estate by reducing title sizes from text-3xl/4xl to text-xl/2xl and
+  margins from mb-8 to mb-4.
+
+### Documentation
+
+- Rewrite README for agentic training focus
+  ([`93c9327`](https://github.com/kodalli/ymir/commit/93c9327337e6bda5acf0de9f7ff1d9f1b61e5577))
+
+Refocus project description on agentic training data generation. Remove outdated features (RLHF,
+  triplets, batch processing, PDF). Add Ymir mythology and Attack on Titan reference.
+
+### Features
+
+- Add new core modules for agentic dataset generation
+  ([`cddfe00`](https://github.com/kodalli/ymir/commit/cddfe00900d298867ff211d29bb1d0ec87e5a1b8))
+
+Add annotation, converters, core, functions, generators, and storage modules to support multi-turn
+  tool-calling trajectory generation.
+
+- **data**: Add SQLite storage with Dataset management
+  ([`45cb23a`](https://github.com/kodalli/ymir/commit/45cb23af07add128262b84981469d174ebdd03a2))
+
+Replace JSONL file storage with SQLite for better scalability to 100k+ sessions. Introduces Dataset
+  entity for flexible grouping of sessions across multiple scenarios.
+
+New components: - database.py: async SQLite with FTS5 full-text search - session_store.py:
+  SQLite-backed trajectory storage - dataset_store.py: Dataset CRUD and session relationships -
+  datasets.py API: REST endpoints for dataset management
+
+Also adds HuggingFace export format with train/validation splits.
+
+- **dev**: Add WebSocket auto-reload and UI polish
+  ([`b1163d5`](https://github.com/kodalli/ymir/commit/b1163d5d4f6330083bc52f87f4ecba47215a30c1))
+
+Add browser auto-refresh on server restart via WebSocket endpoint. Also includes layout
+  improvements: full-width content areas, grid layouts for tools/scenarios, and refined sidebar
+  styling.
+
+- **generation**: Add 4-step wizard UI for trajectory generation
+  ([`13b0eb6`](https://github.com/kodalli/ymir/commit/13b0eb69fd6f2627dec63e280e6ba4b8ebb57e31))
+
+Redesign the generation interface as a guided wizard to make it clearer how to create multi-turn
+  agent training datasets.
+
+- Add step-by-step wizard: Scenario → Tools → Actor → Generate - Allow toggling individual tools
+  on/off for each scenario - Add 5 preset personas for medical scheduling (Elderly Patient, etc.) -
+  Add tool filtering support to TrajectoryGenerator - Include terminology explanations (Agent vs
+  Actor vs Scenario) - Add wizard CSS styles (stepper, toggles, persona cards)
+
+- **generation**: Add simulated actor with situation details field
+  ([`06ada66`](https://github.com/kodalli/ymir/commit/06ada66aeb2b7b2582629bfc0d2db4f00c1bd291))
+
+- Add dedicated stepper endpoint for proper step navigation - Replace persona cards with direct
+  input fields for simulated actor - Add situation details field for structured actor facts (name,
+  phone, etc.) - Add 'Load Example' button to prefill actor fields with sample data - Fix show/hide
+  toggle using Tailwind hidden class - Update generators to use situation field for user simulation
+  - Change default model to qwen3:4b
+
+- **routes**: Add new API routes for trajectory generation
+  ([`eb0211a`](https://github.com/kodalli/ymir/commit/eb0211aa5bc11e68ec7b36d9ed3326395f6785c7))
+
+Add annotation, conversion, export, functions, and generation routes to expose the new agentic
+  dataset generation features.
+
+- **templates**: Add new UI templates for trajectory generation
+  ([`f7ff40c`](https://github.com/kodalli/ymir/commit/f7ff40cf510c73099f683929619bdc58287a80f0))
+
+Add annotation, components, conversion, export, functions, and generation templates for the new
+  feature set.
+
+- **ui**: Add full-page rendering for direct URL access
+  ([`22e1e0b`](https://github.com/kodalli/ymir/commit/22e1e0b55d9add7f8866f11234919da57ce2870e))
+
+Previously, accessing routes directly (e.g., /functions/) only returned the page fragment without
+  the sidebar layout. This adds a render_page helper that detects HTMX requests vs direct browser
+  access and returns either the fragment or a complete page with the sidebar navigation.
+
+Also updates navigation links to use proper hrefs and hx-push-url for browser history support.
+
+- **ui**: Add theming system with Survey Corps theme
+  ([`441f045`](https://github.com/kodalli/ymir/commit/441f04551f4397a6aef35eb97d7346c361fffdd2))
+
+Implement CSS variable-based theming with two themes: - Survey Corps (default): Navy/indigo with
+  dark slate backgrounds - Classic Red: Original red theme as fallback
+
+Add theme infrastructure: - _base.css: Semantic color tokens - survey-corps.css/default.css: Theme
+  definitions - theme-manager.js: Theme switching with localStorage persistence - Theme toggle
+  button in header
+
+Migrate all templates to use semantic color classes (text-theme-*, bg-surface-*, border-theme) for
+  consistent theming support.
+
+### Refactoring
+
+- Remove deprecated prompt, rlhf, and triplet modules
+  ([`42514ad`](https://github.com/kodalli/ymir/commit/42514ade7cdc82bef902326a39bff7d0b0b041cf))
+
+Remove legacy modules that are being replaced by the new agentic trajectory generation architecture.
+
+- Reorganize project structure into 5 packages
+  ([`201d521`](https://github.com/kodalli/ymir/commit/201d5217a32803309ff15da530d43562d7045145))
+
+Consolidate 9 top-level folders into 5 logical packages: - pipeline/ (generators + llm + annotation)
+  - data/ (storage + converters + runtime) - api/ (renamed from routes) - core/ (unchanged) -
+  functions/ (unchanged)
+
+Also removes TODO.md as no longer needed.
+
+- Update app initialization and main UI for new architecture
+  ([`b24b046`](https://github.com/kodalli/ymir/commit/b24b0462643812debadc9ea89c401cb78c0a7d46))
+
+Update app.py with new description and simplified setup. Rewire routes/__init__.py to use new route
+  modules. Replace index.html with new dashboard for trajectory generation.
+
+- **llm**: Remove deprecated LLM providers
+  ([`b1dea99`](https://github.com/kodalli/ymir/commit/b1dea9908297551da4ba6fb0ab13993d0313f428))
+
+Remove OpenAI, Google, DeepSeek LangChain integrations and helper modules in preparation for new
+  Ollama-only architecture focused on local models.
+
+- **llm**: Rewrite Ollama LLM with native client
+  ([`97a8a5c`](https://github.com/kodalli/ymir/commit/97a8a5cf45fed7ac6c376808930038141bf21bf8))
+
+Replace LangChain-based implementation with native ollama package. Add OllamaLLM class with
+  sync/async generation methods.
+
+- **routes**: Remove deprecated route handlers
+  ([`8b2f251`](https://github.com/kodalli/ymir/commit/8b2f251fd9ab95e70719fd4b34879393b1de7a8e))
+
+Remove batch, document, datasets, triplet, rlhf, and shared route handlers as part of the
+  application architecture overhaul.
+
+- **templates**: Remove deprecated HTML templates
+  ([`100b3a9`](https://github.com/kodalli/ymir/commit/100b3a9e3b65ee7502443ae2a5a595a2ae40fcbb))
+
+Remove batch, document, datasets, triplet, and rlhf templates corresponding to the removed route
+  handlers.
+
+- **ui**: Redesign functions page with scenario-centric layout
+  ([`4eb0cf5`](https://github.com/kodalli/ymir/commit/4eb0cf51453d8209649954fd7968e10585b73554))
+
+Scenarios are now expandable accordion cards that reveal their functions in API-docs style when
+  clicked. Makes the parent-child relationship between scenarios and functions clear.
+
+
 ## v0.0.0-alpha.11 (2025-03-18)
 
 

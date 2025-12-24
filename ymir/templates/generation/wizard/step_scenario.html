@@ -8,12 +8,12 @@
     </div>
 
     <!-- Info Box -->
-    <div class="bg-slate-900/50 border border-slate-700 rounded-lg p-4 space-y-2">
+    <div class="bg-surface-main/50 border border-theme rounded-lg p-4 space-y-2">
         <div class="flex items-start gap-2">
-            <i data-lucide="info" class="w-5 h-5 text-slate-400 mt-0.5 flex-shrink-0"></i>
-            <div class="text-sm text-slate-300 space-y-1">
-                <p><strong class="text-white">AGENT:</strong> The AI assistant being trained. It uses tools to help users complete tasks.</p>
-                <p><strong class="text-white">SCENARIO:</strong> The domain context that defines what tools are available.</p>
+            <i data-lucide="info" class="w-5 h-5 text-theme-secondary mt-0.5 flex-shrink-0"></i>
+            <div class="text-sm text-theme-secondary space-y-1">
+                <p><strong class="text-theme-primary">AGENT:</strong> The AI assistant being trained. It uses tools to help users complete tasks.</p>
+                <p><strong class="text-theme-primary">SCENARIO:</strong> The domain context that defines what tools are available.</p>
             </div>
         </div>
     </div>
@@ -26,13 +26,13 @@
         {% for scen in scenarios %}
             {% set is_selected = scenario and scenario.id == scen.id %}
             <div
-                class="scenario-card p-4 rounded-lg border-2 cursor-pointer transition-all hover:border-ymir-400/50 {% if is_selected %}selected border-ymir-500 bg-ymir-500/5{% else %}border-slate-700 bg-slate-800{% endif %}"
+                class="scenario-card p-4 rounded-lg border-2 cursor-pointer transition-all hover:border-ymir-400/50 {% if is_selected %}selected border-ymir-500 bg-ymir-500/5{% else %}border-theme bg-surface-sidebar{% endif %}"
                 data-scenario-id="{{ scen.id }}"
                 _="on click remove .selected from .scenario-card then add .selected to me then set #wizard-scenario-id.value to my @data-scenario-id">
 
                 <div class="flex items-start gap-3">
                     <!-- Category Icon -->
-                    <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center {% if is_selected %}text-ymir-500{% else %}text-slate-400{% endif %}">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-surface-main flex items-center justify-center {% if is_selected %}text-ymir-500{% else %}text-theme-secondary{% endif %}">
                         {% if scen.category == 'scheduling' %}
                             <i data-lucide="calendar" class="w-5 h-5"></i>
                         {% elif scen.category == 'general' %}
@@ -45,12 +45,12 @@
                     <!-- Card Content -->
                     <div class="flex-1 min-w-0">
                         <h3 class="font-semibold text-white mb-1">{{ scen.name }}</h3>
-                        <p class="text-sm text-slate-400 line-clamp-2 mb-2">
+                        <p class="text-sm text-theme-secondary line-clamp-2 mb-2">
                             {{ scen.description }}
                         </p>
 
                         <!-- Tool Count Badge -->
-                        <div class="flex items-center gap-1.5 text-xs text-slate-500">
+                        <div class="flex items-center gap-1.5 text-xs text-theme-muted">
                             <i data-lucide="wrench" class="w-3.5 h-3.5"></i>
                             <span>{{ scen.functions|length }} tool{{ 's' if scen.functions|length != 1 }}</span>
                         </div>
@@ -63,7 +63,7 @@
                                 <i data-lucide="check" class="w-4 h-4 text-white"></i>
                             </div>
                         {% else %}
-                            <div class="w-6 h-6 rounded-full border-2 border-slate-600"></div>
+                            <div class="w-6 h-6 rounded-full border-2 border-theme"></div>
                         {% endif %}
                     </div>
                 </div>
@@ -73,8 +73,8 @@
 
     {% if not scenarios %}
         <div class="text-center py-12">
-            <i data-lucide="folder-x" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
-            <p class="text-slate-400">No scenarios available. Please create a scenario first.</p>
+            <i data-lucide="folder-x" class="w-12 h-12 text-theme-muted mx-auto mb-3"></i>
+            <p class="text-theme-secondary">No scenarios available. Please create a scenario first.</p>
         </div>
     {% endif %}
 </div>

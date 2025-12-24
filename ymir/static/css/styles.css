@@ -1,58 +1,60 @@
-/* Modern Ymir Design System */
+/* Ymir Design System */
+/* All colors reference CSS variables from theme files */
 
+/* Legacy variable mappings for backward compatibility */
 :root {
-    --bg-main: #0f172a; /* Slate 900 */
-    --bg-sidebar: #1e293b; /* Slate 800 */
-    --bg-card: #1e293b;
-    --border-color: #334155; /* Slate 700 */
-    --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
-    --primary: #ef4444;
+    --bg-main: var(--color-bg-main);
+    --bg-sidebar: var(--color-bg-sidebar);
+    --bg-card: var(--color-bg-card);
+    --border-color: var(--color-border);
+    --text-primary: var(--color-text-primary);
+    --text-secondary: var(--color-text-secondary);
+    --primary: var(--color-primary-500);
 }
 
 body {
-    background-color: var(--bg-main);
-    color: var(--text-primary);
+    background-color: var(--color-bg-main);
+    color: var(--color-text-primary);
     font-family: 'Inter', sans-serif;
 }
 
 /* Sidebar Styling */
 .sidebar {
-    background-color: var(--bg-sidebar);
-    border-right: 1px solid var(--border-color);
+    background-color: var(--color-bg-sidebar);
+    border-right: 1px solid var(--color-border);
 }
 
 .sidebar-item {
     display: flex;
-    items-center: center;
+    align-items: center;
     padding: 0.75rem 1rem;
     border-radius: 0.5rem;
     transition: all 0.2s;
-    color: var(--text-secondary);
+    color: var(--color-text-secondary);
 }
 
 .sidebar-item:hover {
-    background-color: #334155;
-    color: var(--text-primary);
+    background-color: var(--color-bg-hover);
+    color: var(--color-text-primary);
 }
 
 .sidebar-item.active {
-    background-color: rgba(239, 68, 68, 0.1);
-    color: var(--primary);
+    background-color: color-mix(in srgb, var(--color-primary-500) 10%, transparent);
+    color: var(--color-primary-500);
     font-weight: 600;
 }
 
 /* Card Styling */
 .card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
     border-radius: 0.75rem;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 /* Button Styling */
 .btn-primary {
-    background-color: var(--primary);
+    background-color: var(--color-primary-500);
     color: white;
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
@@ -61,12 +63,12 @@ body {
 }
 
 .btn-primary:hover {
-    background-color: #dc2626;
+    background-color: var(--color-primary-600);
     transform: translateY(-1px);
 }
 
 .btn-secondary {
-    background-color: #334155;
+    background-color: var(--color-border);
     color: white;
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
@@ -75,7 +77,7 @@ body {
 }
 
 .btn-secondary:hover {
-    background-color: #475569;
+    background-color: var(--color-border-hover);
 }
 
 /* Animations */
@@ -94,19 +96,19 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--bg-main);
+    background: var(--color-bg-main);
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #334155;
+    background: var(--color-border);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #475569;
+    background: var(--color-border-hover);
 }
 
-/* Toastify or Custom Toast */
+/* Toast Notifications */
 .toast-container {
     position: fixed;
     bottom: 2rem;
@@ -119,20 +121,20 @@ body {
 
 .toast {
     padding: 1rem 1.5rem;
-    background-color: var(--bg-sidebar);
-    border: 1px solid var(--border-color);
+    background-color: var(--color-bg-sidebar);
+    border: 1px solid var(--color-border);
     border-radius: 1rem;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-    color: var(--text-primary);
+    color: var(--color-text-primary);
     font-size: 0.875rem;
     font-weight: 500;
     transform: translateX(120%);
     opacity: 0;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     display: flex;
-    items-center: center;
+    align-items: center;
     gap: 0.75rem;
-    border-left: 4px solid var(--primary);
+    border-left: 4px solid var(--color-primary-500);
 }
 
 .toast.visible {
@@ -140,11 +142,11 @@ body {
     opacity: 1;
 }
 
-.toast.success { border-left-color: #10b981; }
-.toast.error { border-left-color: #ef4444; }
-.toast.info { border-left-color: #3b82f6; }
+.toast.success { border-left-color: var(--color-success-500); }
+.toast.error { border-left-color: var(--color-error-500); }
+.toast.info { border-left-color: var(--color-info-500); }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar for specific containers */
 .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
 }
@@ -154,12 +156,12 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #334155;
+    background: var(--color-border);
     border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #475569;
+    background: var(--color-border-hover);
 }
 
 /* ========================================
@@ -195,21 +197,21 @@ body {
 
 /* Step states */
 .step-pending .wizard-step-circle {
-    background-color: #1e293b;
-    border-color: #334155;
-    color: #64748b;
+    background-color: var(--color-bg-sidebar);
+    border-color: var(--color-border);
+    color: var(--color-text-muted);
 }
 
 .step-current .wizard-step-circle {
-    background-color: #ef4444;
-    border-color: #ef4444;
+    background-color: var(--color-primary-500);
+    border-color: var(--color-primary-500);
     color: white;
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-primary-500) 40%, transparent);
 }
 
 .step-completed .wizard-step-circle {
-    background-color: #10b981;
-    border-color: #10b981;
+    background-color: var(--color-success-500);
+    border-color: var(--color-success-500);
     color: white;
 }
 
@@ -221,29 +223,29 @@ body {
 }
 
 .step-pending .wizard-step-label {
-    color: #64748b;
+    color: var(--color-text-muted);
 }
 
 .step-current .wizard-step-label {
-    color: #ef4444;
+    color: var(--color-primary-500);
 }
 
 .step-completed .wizard-step-label {
-    color: #10b981;
+    color: var(--color-success-500);
 }
 
 /* Connector lines */
 .wizard-connector {
     width: 4rem;
     height: 2px;
-    background-color: #334155;
+    background-color: var(--color-border);
     margin: 0 0.5rem;
     margin-bottom: 1.5rem;
     transition: background-color 0.3s ease;
 }
 
 .wizard-connector.completed {
-    background-color: #10b981;
+    background-color: var(--color-success-500);
 }
 
 /* ========================================
@@ -252,18 +254,18 @@ body {
 
 .selectable-card {
     cursor: pointer;
-    border: 2px solid #334155;
+    border: 2px solid var(--color-border);
     transition: all 0.2s ease;
 }
 
 .selectable-card:hover {
-    border-color: #475569;
-    background-color: rgba(51, 65, 85, 0.3);
+    border-color: var(--color-border-hover);
+    background-color: color-mix(in srgb, var(--color-border) 30%, transparent);
 }
 
 .selectable-card.selected {
-    border-color: #ef4444;
-    background-color: rgba(239, 68, 68, 0.05);
+    border-color: var(--color-primary-500);
+    background-color: color-mix(in srgb, var(--color-primary-500) 5%, transparent);
 }
 
 /* ========================================
@@ -287,13 +289,13 @@ body {
 .tool-toggle-track {
     width: 2.75rem;
     height: 1.5rem;
-    background-color: #334155;
+    background-color: var(--color-border);
     border-radius: 9999px;
     transition: background-color 0.2s ease;
 }
 
 .tool-toggle input:checked + .tool-toggle-track {
-    background-color: #ef4444;
+    background-color: var(--color-primary-500);
 }
 
 .tool-toggle-thumb {
@@ -318,21 +320,21 @@ body {
 
 .persona-card {
     cursor: pointer;
-    border: 2px solid #334155;
+    border: 2px solid var(--color-border);
     border-radius: 0.75rem;
     padding: 1rem;
     transition: all 0.2s ease;
-    background-color: #1e293b;
+    background-color: var(--color-bg-sidebar);
 }
 
 .persona-card:hover {
-    border-color: #475569;
+    border-color: var(--color-border-hover);
     transform: translateY(-2px);
 }
 
 .persona-card.selected {
-    border-color: #ef4444;
-    background-color: rgba(239, 68, 68, 0.05);
+    border-color: var(--color-primary-500);
+    background-color: color-mix(in srgb, var(--color-primary-500) 5%, transparent);
 }
 
 .persona-icon {
@@ -342,13 +344,13 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #334155;
-    color: #94a3b8;
+    background-color: var(--color-border);
+    color: var(--color-text-secondary);
 }
 
 .persona-card.selected .persona-icon {
-    background-color: rgba(239, 68, 68, 0.2);
-    color: #ef4444;
+    background-color: color-mix(in srgb, var(--color-primary-500) 20%, transparent);
+    color: var(--color-primary-500);
 }
 
 .persona-tag {
@@ -357,8 +359,8 @@ body {
     border-radius: 9999px;
     font-size: 0.625rem;
     font-weight: 500;
-    background-color: #334155;
-    color: #94a3b8;
+    background-color: var(--color-border);
+    color: var(--color-text-secondary);
 }
 
 /* ========================================
@@ -372,21 +374,21 @@ body {
 }
 
 .info-box.terminology {
-    background-color: rgba(59, 130, 246, 0.05);
-    border-color: rgba(59, 130, 246, 0.2);
+    background-color: color-mix(in srgb, var(--color-info-500) 5%, transparent);
+    border-color: color-mix(in srgb, var(--color-info-500) 20%, transparent);
 }
 
 .info-box.terminology .info-icon {
-    color: #3b82f6;
+    color: var(--color-info-500);
 }
 
 .info-box.warning {
-    background-color: rgba(245, 158, 11, 0.05);
-    border-color: rgba(245, 158, 11, 0.2);
+    background-color: color-mix(in srgb, var(--color-warning-500) 5%, transparent);
+    border-color: color-mix(in srgb, var(--color-warning-500) 20%, transparent);
 }
 
 .info-box.warning .info-icon {
-    color: #f59e0b;
+    color: var(--color-warning-500);
 }
 
 /* ========================================

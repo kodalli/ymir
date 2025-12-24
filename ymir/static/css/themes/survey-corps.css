@@ -1,0 +1,75 @@
+/* Survey Corps Theme - Attack on Titan */
+/* Official navy blue with gray/tan accents - military inspired */
+
+:root[data-theme="survey-corps"],
+:root:not([data-theme]) {
+    /* Primary: Navy Blue (Official Survey Corps - brightened for dark UI) */
+    --theme-primary-50: #eef2ff;
+    --theme-primary-100: #e0e7ff;
+    --theme-primary-200: #c7d2fe;
+    --theme-primary-300: #a5b4fc;
+    --theme-primary-400: #818cf8;
+    --theme-primary-500: #6366f1;
+    --theme-primary-600: #4f46e5;
+    --theme-primary-700: #4338ca;
+    --theme-primary-800: #3730a3;
+    --theme-primary-900: #312e81;
+    --theme-primary-950: #1e1b4b;
+
+    /* Secondary: Warm Tan/Beige (jacket accents) */
+    --theme-secondary-50: #fdfaf5;
+    --theme-secondary-100: #f9f0e3;
+    --theme-secondary-200: #f0dcc4;
+    --theme-secondary-300: #e4c49e;
+    --theme-secondary-400: #d4a574;
+    --theme-secondary-500: #c4915a;
+    --theme-secondary-600: #a87544;
+    --theme-secondary-700: #8c5f38;
+    --theme-secondary-800: #724d30;
+    --theme-secondary-900: #5d4029;
+
+    /* Success: Teal green */
+    --theme-success-50: #f0fdfa;
+    --theme-success-100: #ccfbf1;
+    --theme-success-400: #2dd4bf;
+    --theme-success-500: #14b8a6;
+    --theme-success-600: #0d9488;
+
+    /* Warning: Golden amber */
+    --theme-warning-50: #fffbeb;
+    --theme-warning-100: #fef3c7;
+    --theme-warning-400: #fbbf24;
+    --theme-warning-500: #f59e0b;
+    --theme-warning-600: #d97706;
+
+    /* Error: Deep crimson */
+    --theme-error-50: #fef2f2;
+    --theme-error-100: #fee2e2;
+    --theme-error-400: #f87171;
+    --theme-error-500: #ef4444;
+    --theme-error-600: #dc2626;
+
+    /* Info: Sky blue */
+    --theme-info-50: #f0f9ff;
+    --theme-info-100: #e0f2fe;
+    --theme-info-400: #38bdf8;
+    --theme-info-500: #0ea5e9;
+    --theme-info-600: #0284c7;
+
+    /* Backgrounds: Dark navy/slate tones */
+    --theme-bg-main: #0a0c14;
+    --theme-bg-sidebar: #10131d;
+    --theme-bg-card: #151927;
+    --theme-bg-input: #10131d;
+    --theme-bg-hover: #1a1f30;
+
+    /* Borders: Muted blue-gray */
+    --theme-border: #2a3347;
+    --theme-border-subtle: #1a1f30;
+    --theme-border-hover: #3d4663;
+
+    /* Text: Clean whites and grays */
+    --theme-text-primary: #f1f5f9;
+    --theme-text-secondary: #94a3b8;
+    --theme-text-muted: #64748b;
+}

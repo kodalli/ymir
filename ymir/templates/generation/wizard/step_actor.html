@@ -9,16 +9,16 @@
         </div>
         <div class="flex-1">
             <h2 class="text-2xl font-bold text-white mb-2">Configure the Actor</h2>
-            <p class="text-slate-400">Define who will interact with the agent during the trajectory</p>
+            <p class="text-theme-secondary">Define who will interact with the agent during the trajectory</p>
         </div>
     </div>
 
     <!-- Info Box -->
-    <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-4 space-y-2">
+    <div class="bg-surface-sidebar/50 border border-theme rounded-lg p-4 space-y-2">
         <div class="flex items-start gap-3">
             <i data-lucide="info" class="w-5 h-5 text-ymir-500 flex-shrink-0 mt-0.5"></i>
-            <div class="text-sm text-slate-300 space-y-1">
-                <p><strong class="text-white">ACTOR:</strong> The simulated user who will interact with the agent.</p>
+            <div class="text-sm text-theme-secondary space-y-1">
+                <p><strong class="text-theme-primary">ACTOR:</strong> The simulated user who will interact with the agent.</p>
                 <p>In a medical scenario, this might be a patient calling to schedule an appointment.</p>
                 <p>Choose how you want to provide input to the agent.</p>
             </div>
@@ -27,7 +27,7 @@
 
     <!-- Mode Selection -->
     <div class="space-y-4">
-        <label class="block text-sm font-medium text-slate-300">Input Mode</label>
+        <label class="block text-sm font-medium text-theme-secondary">Input Mode</label>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Single Query Mode -->
             <label class="relative flex cursor-pointer">
@@ -43,16 +43,16 @@
                          add .hidden to #simulated-fields
                        end"
                 >
-                <div class="flex-1 border-2 border-slate-700 rounded-lg p-6 transition-all
+                <div class="flex-1 border-2 border-theme rounded-lg p-6 transition-all
                             peer-checked:border-ymir-500 peer-checked:bg-ymir-500/5
-                            hover:border-slate-600 hover:bg-slate-800/50">
+                            hover:border-theme-hover hover:bg-surface-hover/50">
                     <div class="flex items-start gap-4">
-                        <div class="flex-shrink-0 p-2 rounded-lg bg-slate-800">
+                        <div class="flex-shrink-0 p-2 rounded-lg bg-surface-sidebar">
                             <i data-lucide="message-square" class="w-6 h-6 text-ymir-500"></i>
                         </div>
                         <div class="flex-1">
                             <h3 class="text-lg font-semibold text-white mb-1">Single Query</h3>
-                            <p class="text-sm text-slate-400">Provide one query. The agent will use tools to complete the task.</p>
+                            <p class="text-sm text-theme-secondary">Provide one query. The agent will use tools to complete the task.</p>
                         </div>
                     </div>
                 </div>
@@ -71,16 +71,16 @@
                          remove .hidden from #simulated-fields
                        end"
                 >
-                <div class="flex-1 border-2 border-slate-700 rounded-lg p-6 transition-all
+                <div class="flex-1 border-2 border-theme rounded-lg p-6 transition-all
                             peer-checked:border-ymir-500 peer-checked:bg-ymir-500/5
-                            hover:border-slate-600 hover:bg-slate-800/50">
+                            hover:border-theme-hover hover:bg-surface-hover/50">
                     <div class="flex items-start gap-4">
-                        <div class="flex-shrink-0 p-2 rounded-lg bg-slate-800">
+                        <div class="flex-shrink-0 p-2 rounded-lg bg-surface-sidebar">
                             <i data-lucide="users" class="w-6 h-6 text-ymir-500"></i>
                         </div>
                         <div class="flex-1">
                             <h3 class="text-lg font-semibold text-white mb-1">Simulated Actor</h3>
-                            <p class="text-sm text-slate-400">AI simulates a person with a background and goal, having a natural conversation.</p>
+                            <p class="text-sm text-theme-secondary">AI simulates a person with a background and goal, having a natural conversation.</p>
                         </div>
                     </div>
                 </div>
@@ -91,15 +91,15 @@
     <!-- Single Query Fields -->
     <div id="single-fields" class="space-y-4">
         <div>
-            <label for="query-input" class="block text-sm font-medium text-slate-300 mb-2">
+            <label for="query-input" class="block text-sm font-medium text-theme-secondary mb-2">
                 User Query
             </label>
             <textarea
                 id="query-input"
                 name="user_query_input"
                 rows="4"
-                class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg
-                       text-white placeholder-slate-500 focus:outline-none focus:ring-2
+                class="w-full px-4 py-3 bg-surface-sidebar border border-theme rounded-lg
+                       text-white placeholder-theme-muted focus:outline-none focus:ring-2
                        focus:ring-ymir-500 focus:border-transparent resize-none"
                 placeholder="Enter the query the user will ask the agent..."
             ></textarea>
@@ -107,15 +107,15 @@
 
         {% if scenario.example_queries and scenario.example_queries|length > 0 %}
         <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">
+            <label class="block text-sm font-medium text-theme-secondary mb-2">
                 Example Queries
             </label>
             <div class="flex flex-wrap gap-2">
                 {% for query in scenario.example_queries %}
                 <button
                     type="button"
-                    class="px-3 py-2 text-sm bg-slate-800 hover:bg-slate-700 text-slate-300
-                           rounded-lg border border-slate-700 hover:border-slate-600 transition-colors"
+                    class="px-3 py-2 text-sm bg-surface-sidebar hover:bg-surface-hover text-theme-secondary
+                           rounded-lg border border-theme hover:border-theme-hover transition-colors"
                     _="on click set #query-input.value to '{{ query|replace("'", "\\'") }}'"
                 >
                     {{ query }}
@@ -132,7 +132,7 @@
         <div class="flex justify-end">
             <button
                 type="button"
-                class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-300 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
+                class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-theme-secondary bg-surface-hover hover:bg-theme-border rounded-lg transition-colors"
                 _="on click
                    set #persona-situation.value to 'Patient Name: Mark Nolan\nPhone Number: (614) 443-4790\nDate of Birth: 08/18/1980\nReason for Visit: Leg pain\nEmail: mark.nolan@gmail.com\nPreferred Date: Next Monday or Tuesday (flexible)\nPreferred Time: Flexible\nAdditional Notes: Experiencing persistent leg pain in right leg, started about a week ago after lifting weights'
                    set #persona-background.value to 'You are a new patient. You are friendly and cooperative but want to get this scheduled quickly.'
@@ -145,16 +145,16 @@
 
         <!-- Situation Details -->
         <div>
-            <label for="persona-situation" class="block text-sm font-medium text-slate-300 mb-2">
+            <label for="persona-situation" class="block text-sm font-medium text-theme-secondary mb-2">
                 Situation Details
-                <span class="text-slate-500 font-normal ml-1">- Facts the actor knows (hidden from agent)</span>
+                <span class="text-theme-muted font-normal ml-1">- Facts the actor knows (hidden from agent)</span>
             </label>
             <textarea
                 id="persona-situation"
                 name="user_situation_input"
                 rows="8"
-                class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg
-                       text-white placeholder-slate-500 focus:outline-none focus:ring-2
+                class="w-full px-4 py-3 bg-surface-sidebar border border-theme rounded-lg
+                       text-white placeholder-theme-muted focus:outline-none focus:ring-2
                        focus:ring-ymir-500 focus:border-transparent font-mono text-sm"
                 placeholder="Patient Name: John Smith
 Phone Number: (555) 123-4567
@@ -165,23 +165,23 @@ Preferred Date: Next Monday or Tuesday
 Preferred Time: Morning, before 11am
 Additional Notes: First time patient, referred by Dr. Johnson"
             ></textarea>
-            <p class="mt-1.5 text-xs text-slate-500">
+            <p class="mt-1.5 text-xs text-theme-muted">
                 Enter the structured details the actor will use when responding to the agent's questions.
             </p>
         </div>
 
         <!-- Actor Background -->
         <div>
-            <label for="persona-background" class="block text-sm font-medium text-slate-300 mb-2">
+            <label for="persona-background" class="block text-sm font-medium text-theme-secondary mb-2">
                 Actor Background
-                <span class="text-slate-500 font-normal ml-1">- Optional: personality and communication style</span>
+                <span class="text-theme-muted font-normal ml-1">- Optional: personality and communication style</span>
             </label>
             <textarea
                 id="persona-background"
                 name="user_background_input"
                 rows="2"
-                class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg
-                       text-white placeholder-slate-500 focus:outline-none focus:ring-2
+                class="w-full px-4 py-3 bg-surface-sidebar border border-theme rounded-lg
+                       text-white placeholder-theme-muted focus:outline-none focus:ring-2
                        focus:ring-ymir-500 focus:border-transparent resize-none"
                 placeholder="E.g., You are a new patient. You're polite but busy, so you prefer quick interactions."
             ></textarea>
@@ -189,16 +189,16 @@ Additional Notes: First time patient, referred by Dr. Johnson"
 
         <!-- Goal -->
         <div>
-            <label for="persona-goal" class="block text-sm font-medium text-slate-300 mb-2">
+            <label for="persona-goal" class="block text-sm font-medium text-theme-secondary mb-2">
                 Goal
-                <span class="text-slate-500 font-normal ml-1">- What the actor wants to accomplish</span>
+                <span class="text-theme-muted font-normal ml-1">- What the actor wants to accomplish</span>
             </label>
             <textarea
                 id="persona-goal"
                 name="user_goal_input"
                 rows="2"
-                class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg
-                       text-white placeholder-slate-500 focus:outline-none focus:ring-2
+                class="w-full px-4 py-3 bg-surface-sidebar border border-theme rounded-lg
+                       text-white placeholder-theme-muted focus:outline-none focus:ring-2
                        focus:ring-ymir-500 focus:border-transparent resize-none"
                 placeholder="E.g., Schedule an appointment for a checkup as soon as possible"
             ></textarea>

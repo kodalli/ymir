@@ -38,12 +38,21 @@ ymir/
 
 ## Recent Updates
 
+- [x] **Theming System** - Survey Corps (Attack on Titan) theme with centralized color system
+  - CSS variables as single source of truth for colors
+  - Theme toggle button in header (palette icon)
+  - Two themes: "survey-corps" (default) and "default" (red)
+  - All templates migrated to use semantic color classes
+  - localStorage persistence for theme preference
 - [x] **Generation Wizard UI** - Complete 4-step wizard for creating agent training data
   - Step 1: Select Scenario (card-based selection)
   - Step 2: Configure Tools (toggle individual tools on/off)
-  - Step 3: Configure Actor (preset personas + custom)
+  - Step 3: Configure Actor (single query or simulated with structured details)
   - Step 4: Generate (model config + execute)
-- [x] **Persona Presets** - 5 built-in personas for medical scheduling
+- [x] **Simulated Actor** - Configure actors with structured situation details
+  - Situation details field for patient/customer data
+  - Background and goal fields
+  - "Load Example" button with sample data
 - [x] **Tool Filtering** - Generator now accepts `enabled_tools` to filter available tools
 
 ## Next Steps

@@ -1,0 +1,74 @@
+/* Default Theme - Original Ymir Red */
+/* Red primary with slate backgrounds */
+
+:root[data-theme="default"] {
+    /* Primary: Red */
+    --theme-primary-50: #fef2f2;
+    --theme-primary-100: #fee2e2;
+    --theme-primary-200: #fecaca;
+    --theme-primary-300: #fca5a5;
+    --theme-primary-400: #f87171;
+    --theme-primary-500: #ef4444;
+    --theme-primary-600: #dc2626;
+    --theme-primary-700: #b91c1c;
+    --theme-primary-800: #991b1b;
+    --theme-primary-900: #7f1d1d;
+    --theme-primary-950: #450a0a;
+
+    /* Secondary: Sky Blue */
+    --theme-secondary-50: #f0f9ff;
+    --theme-secondary-100: #e0f2fe;
+    --theme-secondary-200: #bae6fd;
+    --theme-secondary-300: #7dd3fc;
+    --theme-secondary-400: #38bdf8;
+    --theme-secondary-500: #0ea5e9;
+    --theme-secondary-600: #0284c7;
+    --theme-secondary-700: #0369a1;
+    --theme-secondary-800: #075985;
+    --theme-secondary-900: #0c4a6e;
+
+    /* Success: Emerald */
+    --theme-success-50: #ecfdf5;
+    --theme-success-100: #d1fae5;
+    --theme-success-400: #34d399;
+    --theme-success-500: #10b981;
+    --theme-success-600: #059669;
+
+    /* Warning: Amber */
+    --theme-warning-50: #fffbeb;
+    --theme-warning-100: #fef3c7;
+    --theme-warning-400: #fbbf24;
+    --theme-warning-500: #f59e0b;
+    --theme-warning-600: #d97706;
+
+    /* Error: Red */
+    --theme-error-50: #fef2f2;
+    --theme-error-100: #fee2e2;
+    --theme-error-400: #f87171;
+    --theme-error-500: #ef4444;
+    --theme-error-600: #dc2626;
+
+    /* Info: Blue */
+    --theme-info-50: #eff6ff;
+    --theme-info-100: #dbeafe;
+    --theme-info-400: #60a5fa;
+    --theme-info-500: #3b82f6;
+    --theme-info-600: #2563eb;
+
+    /* Backgrounds: Slate */
+    --theme-bg-main: #0f172a;
+    --theme-bg-sidebar: #1e293b;
+    --theme-bg-card: #1e293b;
+    --theme-bg-input: #1e293b;
+    --theme-bg-hover: #334155;
+
+    /* Borders */
+    --theme-border: #334155;
+    --theme-border-subtle: #1e293b;
+    --theme-border-hover: #475569;
+
+    /* Text */
+    --theme-text-primary: #f8fafc;
+    --theme-text-secondary: #94a3b8;
+    --theme-text-muted: #64748b;
+}

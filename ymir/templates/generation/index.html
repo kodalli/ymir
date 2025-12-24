@@ -1,12 +1,12 @@
 <div class="max-w-5xl mx-auto">
     <!-- Header -->
-    <div class="mb-8 pb-6 border-b border-slate-800">
+    <div class="mb-8 pb-6 border-b border-theme">
         <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight">Agent Generation Wizard</h1>
-                <p class="text-slate-400 mt-1">Create multi-turn agent training data in 4 simple steps</p>
+                <p class="text-theme-secondary mt-1">Create multi-turn agent training data in 4 simple steps</p>
             </div>
-            <span id="generate-spinner" class="htmx-indicator flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-lg text-slate-300 text-sm border border-slate-700">
+            <span id="generate-spinner" class="htmx-indicator flex items-center gap-2 px-4 py-2 bg-surface-sidebar rounded-lg text-theme-secondary text-sm border border-theme">
                 <i data-lucide="loader-2" class="w-4 h-4 animate-spin text-ymir-500"></i>
                 Processing...
             </span>
@@ -48,7 +48,7 @@
                 <span>Back</span>
             </button>
 
-            <div class="flex items-center gap-2 text-sm text-slate-500">
+            <div class="flex items-center gap-2 text-sm text-theme-muted">
                 <span id="step-indicator">Step 1 of 4</span>
             </div>
 
@@ -381,7 +381,7 @@ function showToast(message, type = 'info') {
     // Simple toast notification
     const toast = document.createElement('div');
     toast.className = `fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 animate-in slide-in-from-right ${
-        type === 'error' ? 'bg-red-500/90 text-white' : 'bg-slate-800 text-white border border-slate-700'
+        type === 'error' ? 'bg-error-500/90 text-white' : 'bg-surface-sidebar text-white border border-theme'
     }`;
     toast.textContent = message;
     document.body.appendChild(toast);

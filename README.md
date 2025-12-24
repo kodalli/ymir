@@ -1,175 +1,64 @@
-# Ymir: AI Dataset Generation and Management Tools
+# Ymir
 
-Ymir is a comprehensive toolkit for creating, managing, and processing AI datasets with a focus on language models.
+> *Named after Ymir, the primordial giant from Norse mythology whose body was used to create the world — and a nod to the Founder Ymir from Attack on Titan.*
+
+Ymir is a tool for generating high-quality agentic training data. It simulates multi-turn conversations between AI agents and users, producing tool-calling trajectories that can be used to fine-tune language models for agentic tasks.
 
 ## Features
 
-- **RLHF Dataset Builder**
-  - Side-by-side comparison of responses from different LLMs
-  - Collection and export of human preferences for model training
-  - Support for multiple LLM providers (OpenAI, Google, DeepSeek, Ollama)
+- **Scenario-Based Generation**: Define scenarios with custom tools/functions that agents can use
+- **Simulated Actors**: AI-powered user simulation with configurable personas and goals
+- **Tool-Calling Trajectories**: Generate realistic multi-turn conversations with tool invocations
+- **Trajectory Annotation**: Review and quality-score generated trajectories
+- **Multiple Export Formats**: Export to Hermes, APIGen, and other fine-tuning formats
+- **Local LLM Support**: Works with Ollama for fully local generation
 
-- **Knowledge Triplet Extraction**
-  - Extract subject-predicate-object triplets from text
-  - Create knowledge graphs and structured data from unstructured text
-  - Manual addition and editing of triplets
+## Quick Start
 
-- **Batch Dataset Processing**
-  - Process large datasets using CSV files
-  - Customize prompts with template variables
-  - Track batch processing status in real-time
-
-- **Document Processor**
-  - Extract and process text from PDF documents
-  - Automatically detect table of contents and chapter structure
-  - Split PDFs by chapters and generate structured datasets
-
-- **Modern, Responsive UI**
-  - Built with FastAPI, HTMX, and Hyperscript
-  - Clean design with custom styling
-  - Interactive, single-page application experience
-
-## Development Setup
-
-After cloning the repository:
-
-1. Ensure you have Python 3.11 or higher installed on your system.
-
-2. Install uv (recommended) for dependency management:
+1. Install dependencies:
    ```bash
-   curl -sSf https://astral.sh/uv/install.sh | bash
-   ```
-
-3. Create a virtual environment and install dependencies:
-   ```bash
-   uv venv
-   source .venv/bin/activate  # On Unix/macOS
-   # or
-   .venv\Scripts\activate  # On Windows
+   uv venv && source .venv/bin/activate
    uv pip install -e .
    ```
 
-4. Set up pre-commit hooks:
+2. Start Ollama with your preferred model:
    ```bash
-   pre-commit install
-   pre-commit install --hook-type post-checkout --hook-type post-merge
+   ollama run qwen3:4b
    ```
 
-## Running the Application
+3. Run Ymir:
+   ```bash
+   python main.py
+   ```
 
-To start the Ymir tool:
+4. Open `http://localhost:8008` and use the 4-step wizard to generate trajectories.
 
-```bash
-./main.py --reload
-```
+## How It Works
 
-or
+1. **Select a Scenario**: Choose a domain (e.g., medical scheduling) with predefined tools
+2. **Configure Tools**: Enable/disable specific tools the agent can use
+3. **Define the Actor**: Set up situation details, background, and goals for the simulated user
+4. **Generate**: Watch the agent and user interact, with the agent calling tools to accomplish tasks
 
-```bash
-python main.py --reload
-```
-
-This will start the FastAPI server on port 8008 with hot reloading enabled.
-
-## Environment Variables
-
-Create a `.env` file with your API keys:
+## Example Trajectory
 
 ```
-OPENAI_API_KEY=your_openai_api_key
-GOOGLE_API_KEY=your_google_api_key
-DEEPSEEK_API_KEY=your_deepseek_api_key
+User: "Hi, I'd like to schedule an appointment"
+Agent: [calls search_patient(first_name="Mark", last_name="Nolan")]
+Tool Result: {patient_id: "12345", ...}
+Agent: "I found your record. What type of appointment do you need?"
+User: "I've been having leg pain for about a week"
+Agent: [calls get_available_slots(date="2024-01-15")]
+...
 ```
-
-For Ollama, ensure the Ollama service is running locally.
-
-## Main Features and Usage
-
-### RLHF Dataset Builder
-- Generate responses from different LLMs for the same prompt
-- Compare and rate responses to build a preference dataset
-- Export ratings as JSONL for model fine-tuning
-
-### Knowledge Triplet Extraction
-- Extract structured knowledge from text using LLMs
-- Manually add and edit subject-predicate-object triplets
-- Export knowledge graphs for downstream applications
-
-### Batch Dataset Builder
-- Upload CSV files with data for batch processing
-- Create custom prompt templates with variable substitution
-- Process large datasets efficiently and download results
-
-### Document Processor
-- Upload PDF documents for processing
-- Automatically detect and extract chapters
-- Generate structured datasets from documents
 
 ## Tech Stack
 
-- **Backend**: FastAPI, LangChain
+- **Backend**: FastAPI, Python 3.11+
 - **Frontend**: HTMX, Hyperscript, TailwindCSS
-- **LLM Integration**: OpenAI, Google, DeepSeek, Ollama
-- **Template Engine**: Jinja2
-- **Document Processing**: PyPDF
+- **LLM**: Ollama (local)
+- **Storage**: JSON file-based
 
 ## License
 
 Apache 2.0
-
-## API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/` | GET | Main application interface |
-| `/chat` | POST | Send a message to an LLM |
-| `/update_provider` | POST | Change the LLM provider |
-| `/update_model` | POST | Change the LLM model |
-| `/rate` | POST | Submit a rating for two responses |
-| `/rlhf_data` | GET | Get the current RLHF dataset |
-| `/download_rlhf` | POST | Save and download the RLHF dataset |
-
-## Usage
-
-1. **Start the application** using the command in the "Running the Application" section.
-
-2. **Navigate to the web interface** by opening `http://localhost:8008` in your browser.
-
-3. **Configure LLM providers**:
-   - Select providers and models from the dropdown menus for LLM 1 and LLM 2.
-   - The application supports OpenAI, Google, DeepSeek, and Ollama models.
-
-4. **Generate responses**:
-   - Enter a prompt in the input area.
-   - Click "Generate with LLM 1" or "Generate with LLM 2" to see responses.
-   - You can generate responses from both models to compare them.
-
-5. **Rate responses**:
-   - After generating responses from both models, decide which one you prefer.
-   - Add optional notes to explain your reasoning.
-   - Click "Choose LLM 1" or "Choose LLM 2" to record your preference.
-
-6. **View the dataset**:
-   - Click "View RLHF Dataset" to see all the ratings you've collected.
-   - The dataset includes the prompt, responses, and your ratings.
-
-7. **Export the dataset**:
-   - Click "Download RLHF Dataset" to save the data as a JSONL file.
-   - This data can be used for fine-tuning or evaluating models.
-
-## Additional Features
-
-### Knowledge Triplet Extraction
-- Extract structured knowledge from text using LLMs
-- Manually add and edit subject-predicate-object triplets
-- Export knowledge graphs for downstream applications
-
-### Batch Dataset Processing
-- Upload CSV files with data for batch processing
-- Create custom prompt templates with variable substitution
-- Process large datasets efficiently and download results
-
-### Document Processor
-- Upload PDF documents for processing
-- Automatically detect and extract chapters
-- Generate structured datasets from documents

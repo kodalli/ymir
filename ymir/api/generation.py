@@ -9,7 +9,7 @@ from ymir.pipeline import TrajectoryGenerator
 from ymir.pipeline.llm import get_available_models
 from ymir.pipeline.personas import get_personas_for_category
 from ymir.data import get_store
-from ymir.api.shared import render_page
+from ymir.api.shared import render_page, templates
 
 router = APIRouter(prefix="/generation", tags=["generation"])
 

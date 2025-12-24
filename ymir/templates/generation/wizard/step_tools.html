@@ -103,18 +103,18 @@
                             </summary>
                             <div class="mt-2 space-y-2 pl-5">
                                 {% for param_name, param_info in function.parameters.properties.items() %}
-                                <div class="flex items-start gap-2 text-xs">
-                                    <div class="flex items-center gap-2 min-w-0 flex-1">
-                                        <code class="font-mono text-theme-secondary">{{ param_name }}</code>
+                                <div class="text-xs">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <code class="font-mono font-medium text-theme-primary">{{ param_name }}</code>
                                         <span class="text-theme-muted">{{ param_info.type if param_info.type else 'any' }}</span>
                                         {% if function.parameters.required and param_name in function.parameters.required %}
-                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-warning-500/10 text-warning-400 border border-warning-500/20">
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-warning-500/10 text-warning-400 border border-warning-500/20">
                                             required
                                         </span>
                                         {% endif %}
                                     </div>
                                     {% if param_info.description %}
-                                    <p class="text-theme-muted flex-1">{{ param_info.description }}</p>
+                                    <p class="text-theme-muted mt-0.5">{{ param_info.description }}</p>
                                     {% endif %}
                                 </div>
                                 {% endfor %}

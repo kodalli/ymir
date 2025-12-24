@@ -18,21 +18,18 @@
         </div>
     </div>
 
-    <!-- Hidden Input for Selected Scenario -->
-    <input type="hidden" id="wizard-scenario-id" name="scenario_id" value="{{ scenario.id if scenario else '' }}">
-
     <!-- Scenario Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {% for scen in scenarios %}
             {% set is_selected = scenario and scenario.id == scen.id %}
             <div
-                class="scenario-card p-4 rounded-lg border-2 cursor-pointer transition-all hover:border-ymir-400/50 {% if is_selected %}selected border-ymir-500 bg-ymir-500/5{% else %}border-theme bg-surface-sidebar{% endif %}"
+                class="scenario-card selectable-card p-4 rounded-lg {% if is_selected %}selected{% endif %} bg-surface-sidebar"
                 data-scenario-id="{{ scen.id }}"
                 _="on click remove .selected from .scenario-card then add .selected to me then set #wizard-scenario-id.value to my @data-scenario-id">
 
                 <div class="flex items-start gap-3">
                     <!-- Category Icon -->
-                    <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-surface-main flex items-center justify-center {% if is_selected %}text-ymir-500{% else %}text-theme-secondary{% endif %}">
+                    <div class="scenario-icon flex-shrink-0 w-10 h-10 rounded-lg bg-surface-main flex items-center justify-center text-theme-secondary">
                         {% if scen.category == 'scheduling' %}
                             <i data-lucide="calendar" class="w-5 h-5"></i>
                         {% elif scen.category == 'general' %}
@@ -58,13 +55,10 @@
 
                     <!-- Selection Indicator -->
                     <div class="flex-shrink-0">
-                        {% if is_selected %}
-                            <div class="w-6 h-6 rounded-full bg-ymir-500 flex items-center justify-center">
-                                <i data-lucide="check" class="w-4 h-4 text-white"></i>
-                            </div>
-                        {% else %}
-                            <div class="w-6 h-6 rounded-full border-2 border-theme"></div>
-                        {% endif %}
+                        <div class="scenario-check-empty w-6 h-6 rounded-full border-2 border-theme {% if is_selected %}hidden{% endif %}"></div>
+                        <div class="scenario-check-filled w-6 h-6 rounded-full bg-ymir-500 items-center justify-center {% if is_selected %}flex{% else %}hidden{% endif %}">
+                            <i data-lucide="check" class="w-4 h-4 text-white"></i>
+                        </div>
                     </div>
                 </div>
             </div>

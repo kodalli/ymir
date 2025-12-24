@@ -272,6 +272,23 @@ body {
     background-color: color-mix(in srgb, var(--color-primary-500) 5%, transparent);
 }
 
+/* Scenario card selected state */
+.scenario-card.selected .scenario-icon {
+    color: var(--color-primary-500);
+}
+
+.scenario-card.selected .scenario-check {
+    background-color: var(--color-primary-500);
+}
+
+.scenario-card.selected .scenario-check-empty {
+    display: none;
+}
+
+.scenario-card.selected .scenario-check-filled {
+    display: flex;
+}
+
 /* ========================================
    Tool Toggle Styles
    ======================================== */

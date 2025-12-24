@@ -48,35 +48,35 @@
             <nav class="space-y-1">
                 <a href="#"
                     class="sidebar-item active group"
-                    hx-get="/generation" hx-target="#main-content" hx-swap="innerHTML"
+                    hx-get="/generation/" hx-target="#main-content" hx-swap="innerHTML"
                     _="on click remove .active from .sidebar-item then add .active to me">
                     <i data-lucide="zap" class="w-5 h-5 mr-3"></i>
                     <span class="text-sm">Generate</span>
                 </a>
                 <a href="#"
                     class="sidebar-item group"
-                    hx-get="/functions" hx-target="#main-content" hx-swap="innerHTML"
+                    hx-get="/functions/" hx-target="#main-content" hx-swap="innerHTML"
                     _="on click remove .active from .sidebar-item then add .active to me">
                     <i data-lucide="code-2" class="w-5 h-5 mr-3"></i>
                     <span class="text-sm">Functions</span>
                 </a>
                 <a href="#"
                     class="sidebar-item group"
-                    hx-get="/conversion" hx-target="#main-content" hx-swap="innerHTML"
+                    hx-get="/conversion/" hx-target="#main-content" hx-swap="innerHTML"
                     _="on click remove .active from .sidebar-item then add .active to me">
                     <i data-lucide="import" class="w-5 h-5 mr-3"></i>
                     <span class="text-sm">Import</span>
                 </a>
                 <a href="#"
                     class="sidebar-item group"
-                    hx-get="/annotation" hx-target="#main-content" hx-swap="innerHTML"
+                    hx-get="/annotation/" hx-target="#main-content" hx-swap="innerHTML"
                     _="on click remove .active from .sidebar-item then add .active to me">
                     <i data-lucide="clipboard-check" class="w-5 h-5 mr-3"></i>
                     <span class="text-sm">Annotate</span>
                 </a>
                 <a href="#"
                     class="sidebar-item group"
-                    hx-get="/export" hx-target="#main-content" hx-swap="innerHTML"
+                    hx-get="/export/" hx-target="#main-content" hx-swap="innerHTML"
                     _="on click remove .active from .sidebar-item then add .active to me">
                     <i data-lucide="download" class="w-5 h-5 mr-3"></i>
                     <span class="text-sm">Export</span>
@@ -129,13 +129,13 @@
                 </p>
                 <div class="flex justify-center gap-4">
                     <button class="btn-primary flex items-center gap-2"
-                        hx-get="/generation" hx-target="#main-content" hx-swap="innerHTML"
+                        hx-get="/generation/" hx-target="#main-content" hx-swap="innerHTML"
                         _="on click remove .active from .sidebar-item then add .active to .sidebar-item:first-child">
                         <i data-lucide="play" class="w-4 h-4"></i>
                         Start Generating
                     </button>
                     <button class="btn-secondary flex items-center gap-2"
-                        hx-get="/conversion" hx-target="#main-content" hx-swap="innerHTML"
+                        hx-get="/conversion/" hx-target="#main-content" hx-swap="innerHTML"
                         _="on click remove .active from .sidebar-item then add .active to .sidebar-item:nth-child(3)">
                         <i data-lucide="upload" class="w-4 h-4"></i>
                         Import Dataset

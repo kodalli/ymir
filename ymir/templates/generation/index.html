@@ -1,10 +1,10 @@
 <div class="w-full">
     <!-- Header -->
-    <div class="mb-8 pb-6 border-b border-theme">
+    <div class="mb-4 pb-4 border-b border-theme">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-3xl font-bold tracking-tight">Agent Generation Wizard</h1>
-                <p class="text-theme-secondary mt-1">Create multi-turn agent training data in 4 simple steps</p>
+                <h1 class="text-xl font-bold tracking-tight">Agent Generation Wizard</h1>
+                <p class="text-theme-secondary text-sm">Create multi-turn agent training data in 4 simple steps</p>
             </div>
             <span id="generate-spinner" class="htmx-indicator flex items-center gap-2 px-4 py-2 bg-surface-sidebar rounded-lg text-theme-secondary text-sm border border-theme">
                 <i data-lucide="loader-2" class="w-4 h-4 animate-spin text-ymir-500"></i>
@@ -14,7 +14,7 @@
     </div>
 
     <!-- Stepper -->
-    <div id="wizard-stepper" class="mb-8">
+    <div id="wizard-stepper" class="mb-4">
         {% with step=1 %}
         {% include "generation/wizard/stepper.html" %}
         {% endwith %}

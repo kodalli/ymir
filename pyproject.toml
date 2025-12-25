@@ -27,7 +27,6 @@ dev = [
     "ruff>=0.9.6,<0.10",
     "pre-commit>=4.1.0,<5",
     "python-semantic-release>=9.19.1,<10",
-    "ipykernel>=6.29.5,<7",
 ]
 
 [build-system]

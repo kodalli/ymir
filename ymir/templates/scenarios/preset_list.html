@@ -1,0 +1,122 @@
+<!-- Tool Presets Section -->
+<div class="space-y-4">
+    <div class="flex items-center justify-between">
+        <div>
+            <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wide">Tool Presets</h3>
+            <p class="text-xs text-slate-500 mt-1">Save current tool selection as a preset for quick access</p>
+        </div>
+    </div>
+
+    <!-- Existing Presets -->
+    {% if presets %}
+    <div class="space-y-2">
+        {% for preset in presets %}
+        <div class="flex items-center justify-between p-3 bg-slate-800/30 border border-slate-700 rounded-lg">
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                    <span class="font-medium text-sm text-slate-200">{{ preset.name }}</span>
+                    {% if preset.is_default %}
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-ymir-500/10 text-ymir-500 border border-ymir-500/20">
+                        Default
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-3 mt-1">
+                    <p class="text-xs text-slate-500">{{ preset.description }}</p>
+                    <span class="text-xs text-slate-600">•</span>
+                    <span class="text-xs text-slate-500 flex items-center gap-1">
+                        <i data-lucide="wrench" class="w-3 h-3"></i>
+                        {{ preset.tool_ids | length if preset.tool_ids else 0 }} tools
+                    </span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <!-- Load Preset -->
+                <button type="button"
+                    class="p-2 rounded-lg text-slate-400 hover:text-ymir-500 hover:bg-slate-800 transition-colors"
+                    title="Load Preset"
+                    _="on click
+                       call document.querySelectorAll('input[name=tool_ids]').forEach((el) => el.checked = false)
+                       call document.querySelectorAll('input[name=tool_ids]').forEach((el) => {
+                           if ({{ preset.tool_ids | tojson }}.includes(el.value)) el.checked = true
+                       })
+                       then call updateToolCount()">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                </button>
+
+                <!-- Delete Preset -->
+                <button type="button"
+                    class="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-slate-800 transition-colors"
+                    title="Delete Preset"
+                    hx-delete="/scenarios/{{ scenario.id }}/presets/{{ preset.id }}"
+                    hx-confirm="Delete this preset?"
+                    hx-target="closest div"
+                    hx-swap="outerHTML swap:300ms">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Create New Preset Form -->
+    <div class="border border-slate-700 rounded-lg p-4 bg-slate-800/20">
+        <h4 class="text-sm font-bold text-slate-300 mb-3">Create New Preset</h4>
+        <form class="space-y-3"
+            hx-post="/scenarios/{{ scenario.id }}/presets"
+            hx-target="#tools-modal"
+            hx-swap="innerHTML"
+            _="on htmx:afterRequest if event.detail.successful reset me">
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <input type="text"
+                        name="name"
+                        required
+                        placeholder="Preset name"
+                        class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500">
+                </div>
+                <div>
+                    <input type="text"
+                        name="description"
+                        required
+                        placeholder="Description"
+                        class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500">
+                </div>
+            </div>
+
+            <!-- Hidden input for selected tools (will be populated by JS) -->
+            <input type="hidden" name="tool_ids" id="preset-tool-ids">
+
+            <div class="flex items-center gap-2">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox"
+                        name="is_default"
+                        value="true"
+                        class="w-3.5 h-3.5 rounded border-slate-600 bg-slate-800 text-ymir-500">
+                    <span class="text-xs text-slate-400">Set as default</span>
+                </label>
+            </div>
+
+            <button type="submit"
+                class="btn-secondary text-sm px-4 py-2 w-full flex items-center justify-center gap-2"
+                _="on click
+                   set selectedTools to []
+                   for checkbox in document.querySelectorAll('input[name=tool_ids]:checked')
+                       call selectedTools.push(checkbox.value)
+                   end
+                   set #preset-tool-ids.value to JSON.stringify(selectedTools)">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                Create Preset
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>

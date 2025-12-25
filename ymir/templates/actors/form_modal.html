@@ -1,0 +1,186 @@
+<!-- Modal Backdrop -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    id="actor-modal"
+    _="on click if event.target == me remove me">
+
+    <!-- Modal Content -->
+    <div class="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+        _="on click halt">
+
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold text-slate-200">
+                    {% if actor %}Edit Actor{% else %}Create New Actor{% endif %}
+                </h2>
+                <p class="text-sm text-slate-500 mt-1">
+                    {% if actor %}Update the actor details below{% else %}Define a new user persona for your scenarios{% endif %}
+                </p>
+            </div>
+            <button class="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-200 transition-colors"
+                _="on click remove #actor-modal">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body (scrollable) -->
+        <div class="flex-1 overflow-y-auto p-6">
+            <form id="actor-form"
+                {% if actor %}
+                hx-put="/actors/{{ actor.id }}"
+                {% else %}
+                hx-post="/actors"
+                {% endif %}
+                hx-target="#actors-table"
+                hx-swap="innerHTML"
+                _="on htmx:afterRequest if event.detail.successful remove #actor-modal">
+
+                <div class="space-y-5">
+                    <!-- Name Input -->
+                    <div>
+                        <label for="name" class="block text-sm font-bold text-slate-300 mb-2">
+                            Name <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text"
+                            id="name"
+                            name="name"
+                            value="{{ actor.name if actor else '' }}"
+                            required
+                            placeholder="e.g., Sarah Chen, Dr. Johnson, Alex Martinez"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500">
+                    </div>
+
+                    <!-- Icon Selection -->
+                    <div>
+                        <label for="icon" class="block text-sm font-bold text-slate-300 mb-2">
+                            Icon
+                        </label>
+                        <select id="icon"
+                            name="icon"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-ymir-500">
+                            <option value="">Select an icon...</option>
+                            {% set icon_options = [
+                                ('user', 'User'),
+                                ('user-circle', 'User Circle'),
+                                ('user-check', 'User Check'),
+                                ('user-cog', 'User Settings'),
+                                ('briefcase', 'Briefcase'),
+                                ('heart-pulse', 'Heart Pulse'),
+                                ('baby', 'Baby'),
+                                ('graduation-cap', 'Graduation Cap'),
+                                ('stethoscope', 'Stethoscope'),
+                                ('shield', 'Shield'),
+                                ('wrench', 'Wrench'),
+                                ('truck', 'Truck'),
+                                ('phone', 'Phone'),
+                                ('mail', 'Mail'),
+                                ('calendar', 'Calendar'),
+                                ('book', 'Book'),
+                                ('coffee', 'Coffee'),
+                                ('laptop', 'Laptop')
+                            ] %}
+                            {% for icon_value, icon_label in icon_options %}
+                            <option value="{{ icon_value }}" {% if actor and actor.icon == icon_value %}selected{% endif %}>
+                                {{ icon_label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-xs text-slate-500 mt-1">Choose an icon to represent this actor</p>
+                    </div>
+
+                    <!-- Background Textarea -->
+                    <div>
+                        <label for="background" class="block text-sm font-bold text-slate-300 mb-2">
+                            Background <span class="text-red-500">*</span>
+                        </label>
+                        <textarea id="background"
+                            name="background"
+                            required
+                            rows="4"
+                            placeholder="Describe the actor's background, profession, experience, and context..."
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500 resize-y">{{ actor.background if actor else '' }}</textarea>
+                        <p class="text-xs text-slate-500 mt-1">Provide context about who this person is</p>
+                    </div>
+
+                    <!-- Goal Textarea -->
+                    <div>
+                        <label for="goal" class="block text-sm font-bold text-slate-300 mb-2">
+                            Goal <span class="text-red-500">*</span>
+                        </label>
+                        <textarea id="goal"
+                            name="goal"
+                            required
+                            rows="3"
+                            placeholder="What is the actor trying to achieve? What are their objectives?"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500 resize-y">{{ actor.goal if actor else '' }}</textarea>
+                        <p class="text-xs text-slate-500 mt-1">Define what this actor wants to accomplish</p>
+                    </div>
+
+                    <!-- Tags Input -->
+                    <div>
+                        <label for="tags" class="block text-sm font-bold text-slate-300 mb-2">
+                            Tags
+                        </label>
+                        <input type="text"
+                            id="tags"
+                            name="tags"
+                            value="{{ actor.tags|join(', ') if actor and actor.tags else '' }}"
+                            placeholder="e.g., healthcare, beginner, urgent (comma-separated)"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500">
+                        <p class="text-xs text-slate-500 mt-1">Add tags to help categorize and search for this actor</p>
+                    </div>
+
+                    <!-- Category Selection -->
+                    <div>
+                        <label for="category" class="block text-sm font-bold text-slate-300 mb-2">
+                            Category
+                        </label>
+                        <select id="category"
+                            name="category"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-ymir-500">
+                            <option value="">No Category</option>
+                            {% set category_options = [
+                                'Healthcare',
+                                'Customer Service',
+                                'Technical Support',
+                                'Sales',
+                                'Education',
+                                'Finance',
+                                'Legal',
+                                'Other'
+                            ] %}
+                            {% for cat in category_options %}
+                            <option value="{{ cat }}" {% if actor and actor.category == cat %}selected{% endif %}>
+                                {{ cat }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-xs text-slate-500 mt-1">Optional: Assign this actor to a category</p>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-6 py-4 border-t border-slate-700 flex items-center justify-end gap-3">
+            <button type="button"
+                class="btn-secondary px-6 py-2.5"
+                _="on click remove #actor-modal">
+                Cancel
+            </button>
+            <button type="submit"
+                form="actor-form"
+                class="btn-primary px-6 py-2.5 flex items-center gap-2">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                {% if actor %}Update Actor{% else %}Create Actor{% endif %}
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Re-initialize Lucide icons -->
+<script>
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>

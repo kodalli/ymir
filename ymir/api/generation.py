@@ -5,20 +5,48 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from ymir.functions import get_registry
+from ymir.functions.schemas import FunctionDefinition, ScenarioTemplate
 from ymir.pipeline import TrajectoryGenerator
 from ymir.pipeline.llm import get_available_models
 from ymir.pipeline.personas import get_personas_for_category
 from ymir.data import get_store
+from ymir.data.scenario_store import get_scenario_store
+from ymir.core.scenario_schemas import ScenarioWithTools
 from ymir.api.shared import render_page, templates
 
 router = APIRouter(prefix="/generation", tags=["generation"])
 
 
+def scenario_with_tools_to_template(scenario: ScenarioWithTools) -> ScenarioTemplate:
+    """Convert a ScenarioWithTools from DB to a ScenarioTemplate for generation."""
+    # Convert tools to function definitions
+    functions = [
+        FunctionDefinition(
+            name=tool.name,
+            description=tool.description,
+            parameters=tool.parameters,
+            category=tool.category or scenario.category or "general",
+        )
+        for tool in scenario.tools
+    ]
+
+    return ScenarioTemplate(
+        id=scenario.id,
+        name=scenario.name,
+        description=scenario.description,
+        category=scenario.category or "general",
+        functions=functions,
+        system_prompt=scenario.system_prompt,
+        example_queries=scenario.example_queries,
+        mock_responses=scenario.mock_responses,
+    )
+
+
 @router.get("/", response_class=HTMLResponse)
 async def generation_page(request: Request):
     """Render the trajectory generation page."""
-    registry = get_registry()
-    scenarios = registry.list_scenarios()
+    store = get_scenario_store()
+    scenarios = await store.list_scenarios()
     models = get_available_models()
 
     return render_page(
@@ -36,11 +64,11 @@ async def generation_page(request: Request):
 @router.get("/scenario-info/{scenario_id}", response_class=HTMLResponse)
 async def get_scenario_info(request: Request, scenario_id: str):
     """Get detailed info about a scenario for the generation UI."""
-    registry = get_registry()
-    scenario = registry.get_scenario(scenario_id)
+    store = get_scenario_store()
+    scenario = await store.get_scenario_with_tools(scenario_id)
     if not scenario:
         return HTMLResponse(content="Scenario not found", status_code=404)
-    
+
     return templates.TemplateResponse(
         "generation/scenario_info.html",
         {"request": request, "scenario": scenario},
@@ -55,12 +83,12 @@ async def get_scenario_info_from_form(request: Request, scenario_id: str = None)
         scenario_id = request.query_params.get("scenario_id")
         if not scenario_id:
             return HTMLResponse(content="No scenario_id provided", status_code=400)
-    
-    registry = get_registry()
-    scenario = registry.get_scenario(scenario_id)
+
+    store = get_scenario_store()
+    scenario = await store.get_scenario_with_tools(scenario_id)
     if not scenario:
         return HTMLResponse(content="Scenario not found", status_code=404)
-    
+
     return templates.TemplateResponse(
         "generation/scenario_info.html",
         {"request": request, "scenario": scenario},
@@ -79,16 +107,21 @@ async def generate_trajectory(
     model: str = Form("qwen3:4b"),
     temperature: float = Form(0.7),
     save: bool = Form(True),
+    save_as_template: bool = Form(False),
+    template_name: str = Form(""),
 ):
     """Generate a single trajectory."""
-    registry = get_registry()
-    scenario = registry.get_scenario(scenario_id)
+    scenario_store = get_scenario_store()
+    scenario_db = await scenario_store.get_scenario_with_tools(scenario_id)
 
-    if not scenario:
+    if not scenario_db:
         return templates.TemplateResponse(
             "components/error.html",
             {"request": request, "error": f"Scenario not found: {scenario_id}"},
         )
+
+    # Convert to ScenarioTemplate for generation
+    scenario = scenario_with_tools_to_template(scenario_db)
 
     # Parse enabled_tools if provided
     enabled_tools_list = None
@@ -118,6 +151,45 @@ async def generate_trajectory(
             store = get_store()
             await store.save(trajectory)
 
+        # Save as template if requested
+        if save_as_template and template_name:
+            from ymir.core.scenario_schemas import GenerationTemplateCreate
+
+            # Create a tool preset if custom tools are selected
+            tool_preset_id = None
+            if enabled_tools_list:
+                from ymir.core.scenario_schemas import ToolPresetCreate
+
+                # Get tool IDs from names
+                tool_ids = []
+                for tool_name in enabled_tools_list:
+                    for tool in scenario_db.tools:
+                        if tool.name == tool_name:
+                            tool_ids.append(tool.id)
+                            break
+
+                if tool_ids:
+                    preset = await scenario_store.create_tool_preset(
+                        ToolPresetCreate(
+                            scenario_id=scenario_id,
+                            name=f"{template_name} Tools",
+                            description=f"Tool preset for {template_name}",
+                            tool_ids=tool_ids,
+                        )
+                    )
+                    tool_preset_id = preset.id
+
+            template = await scenario_store.create_generation_template(
+                GenerationTemplateCreate(
+                    name=template_name,
+                    description=f"Template for {scenario_db.name}",
+                    scenario_id=scenario_id,
+                    tool_preset_id=tool_preset_id,
+                    model=model,
+                    temperature=temperature,
+                )
+            )
+
         return templates.TemplateResponse(
             "generation/trajectory_preview.html",
             {"request": request, "trajectory": trajectory, "saved": save},
@@ -138,11 +210,14 @@ async def generate_batch(
     temperature: float = Form(0.7),
 ):
     """Generate multiple trajectories."""
-    registry = get_registry()
-    scenario = registry.get_scenario(scenario_id)
+    scenario_store = get_scenario_store()
+    scenario_db = await scenario_store.get_scenario_with_tools(scenario_id)
 
-    if not scenario:
+    if not scenario_db:
         return JSONResponse({"error": f"Scenario not found: {scenario_id}"}, status_code=404)
+
+    # Convert to ScenarioTemplate for generation
+    scenario = scenario_with_tools_to_template(scenario_db)
 
     try:
         queries = json.loads(queries_json)
@@ -183,19 +258,21 @@ async def list_models():
 @router.get("/step/{step_num}", response_class=HTMLResponse)
 async def wizard_step(request: Request, step_num: int, scenario_id: str = None):
     """Get content for a specific wizard step."""
-    registry = get_registry()
-    scenarios = registry.list_scenarios()
+    scenario_store = get_scenario_store()
+    scenarios = await scenario_store.list_scenarios()
     models = get_available_models()
 
     # Get scenario if specified
     scenario = None
+    actors = []
+    tool_presets = []
     if scenario_id:
-        scenario = registry.get_scenario(scenario_id)
-
-    # Get personas for scenario category
-    personas = []
-    if scenario:
-        personas = get_personas_for_category(scenario.category)
+        scenario = await scenario_store.get_scenario_with_tools(scenario_id)
+        if scenario:
+            # Get actors for this scenario's category
+            actors = await scenario_store.get_actors_for_category(scenario.category or "general")
+            # Get tool presets for this scenario
+            tool_presets = await scenario_store.list_scenario_presets(scenario_id)
 
     template_map = {
         1: "generation/wizard/step_scenario.html",
@@ -214,7 +291,8 @@ async def wizard_step(request: Request, step_num: int, scenario_id: str = None):
             "scenarios": scenarios,
             "scenario": scenario,
             "models": models,
-            "personas": personas,
+            "actors": actors,
+            "tool_presets": tool_presets,
         },
     )
 
@@ -222,32 +300,36 @@ async def wizard_step(request: Request, step_num: int, scenario_id: str = None):
 @router.get("/tools/{scenario_id}", response_class=HTMLResponse)
 async def get_scenario_tools(request: Request, scenario_id: str):
     """Get tools for a scenario with toggle UI."""
-    registry = get_registry()
-    scenario = registry.get_scenario(scenario_id)
+    scenario_store = get_scenario_store()
+    scenario = await scenario_store.get_scenario_with_tools(scenario_id)
 
     if not scenario:
         return HTMLResponse(content="Scenario not found", status_code=404)
 
+    # Get tool presets for this scenario
+    tool_presets = await scenario_store.list_scenario_presets(scenario_id)
+
     return templates.TemplateResponse(
         "generation/wizard/step_tools.html",
-        {"request": request, "scenario": scenario, "step": 2},
+        {"request": request, "scenario": scenario, "step": 2, "tool_presets": tool_presets},
     )
 
 
 @router.get("/personas/{scenario_id}", response_class=HTMLResponse)
 async def get_persona_presets(request: Request, scenario_id: str):
     """Get persona presets for a scenario category."""
-    registry = get_registry()
-    scenario = registry.get_scenario(scenario_id)
+    scenario_store = get_scenario_store()
+    scenario = await scenario_store.get_scenario_with_tools(scenario_id)
 
     if not scenario:
         return HTMLResponse(content="Scenario not found", status_code=404)
 
-    personas = get_personas_for_category(scenario.category)
+    # Get actors from database for this scenario's category
+    actors = await scenario_store.get_actors_for_category(scenario.category or "general")
 
     return templates.TemplateResponse(
         "generation/wizard/step_actor.html",
-        {"request": request, "scenario": scenario, "personas": personas, "step": 3},
+        {"request": request, "scenario": scenario, "actors": actors, "step": 3},
     )
 
 

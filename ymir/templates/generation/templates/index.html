@@ -1,0 +1,70 @@
+<div class="w-full">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h1 class="text-xl font-bold tracking-tight">Generation Templates</h1>
+            <p class="text-slate-400 text-sm">Manage and reuse generation configurations</p>
+        </div>
+        <div class="flex gap-3">
+            <button class="btn-secondary flex items-center gap-2"
+                hx-get="/generation/templates" hx-target="#main-content" hx-swap="innerHTML">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters Panel -->
+    <div class="card p-4 mb-4">
+        <form id="template-filter-form"
+            hx-get="/generation/templates/table"
+            hx-target="#templates-table"
+            hx-trigger="change from:select, change from:input[type='checkbox']"
+            hx-swap="innerHTML">
+
+            <div class="flex flex-wrap items-center gap-4">
+                <!-- Scenario Dropdown -->
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase">Scenario:</label>
+                    <select name="scenario" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white">
+                        <option value="">All Scenarios</option>
+                        {% for s in scenarios %}
+                        <option value="{{ s.id }}">{{ s.description[:30] }}{% if s.description|length > 30 %}...{% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Favorites Toggle -->
+                <div class="flex items-center gap-2">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="favorites_only" value="1"
+                            class="w-4 h-4 rounded border-slate-600 bg-slate-800 text-ymir-500">
+                        <span class="text-xs font-bold text-slate-500 uppercase">Favorites Only</span>
+                        <i data-lucide="star" class="w-3.5 h-3.5 text-yellow-500"></i>
+                    </label>
+                </div>
+
+                <!-- Clear Filters -->
+                <button type="button" class="text-xs text-slate-500 hover:text-ymir-500 underline"
+                    _="on click
+                       set document.querySelector('select[name=scenario]').value to ''
+                       set document.querySelector('input[name=favorites_only]').checked to false
+                       then trigger change on #template-filter-form">
+                    Clear Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Templates Table Container -->
+    <div id="templates-table"
+        hx-get="/generation/templates/table"
+        hx-trigger="load"
+        hx-swap="innerHTML">
+        <!-- Initial load spinner -->
+        <div class="card p-12 text-center">
+            <div class="animate-spin w-8 h-8 border-2 border-ymir-500 border-t-transparent rounded-full mx-auto"></div>
+            <p class="text-slate-400 text-sm mt-4">Loading templates...</p>
+        </div>
+    </div>
+</div>

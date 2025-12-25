@@ -4,6 +4,7 @@ from .database import Database, get_database
 from .store import TrajectoryStore, get_store
 from .session_store import SessionStore, get_session_store
 from .dataset_store import DatasetStore, get_dataset_store
+from .scenario_store import ScenarioStore, get_scenario_store
 
 __all__ = [
     # Database
@@ -17,4 +18,6 @@ __all__ = [
     "get_session_store",
     "DatasetStore",
     "get_dataset_store",
+    "ScenarioStore",
+    "get_scenario_store",
 ]

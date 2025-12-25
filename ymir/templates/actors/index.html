@@ -1,0 +1,147 @@
+<div class="w-full">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h1 class="text-xl font-bold tracking-tight">Actors</h1>
+            <p class="text-slate-400 text-sm">Manage user personas and actors for your scenarios</p>
+        </div>
+        <div class="flex gap-3">
+            <button class="btn-primary flex items-center gap-2"
+                hx-get="/actors/modal/new"
+                hx-target="#modal-container"
+                hx-swap="innerHTML">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                New Actor
+            </button>
+            <button class="btn-secondary flex items-center gap-2"
+                hx-get="/actors/" hx-target="#main-content" hx-swap="innerHTML">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Search & Filters Panel -->
+    <div class="card p-4 mb-4">
+        <form id="filter-form"
+            hx-get="/actors/list"
+            hx-target="#actors-table"
+            hx-trigger="change from:select, input from:input delay:300ms"
+            hx-swap="innerHTML">
+
+            <div class="flex flex-wrap items-center gap-4">
+                <!-- Search Input -->
+                <div class="flex-1 min-w-[300px]">
+                    <div class="relative">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                        <input type="text"
+                            name="search"
+                            placeholder="Search actors by name, background, or goal..."
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500">
+                    </div>
+                </div>
+
+                <!-- Category Filter -->
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase">Category:</label>
+                    <select name="category" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                        <option value="">All Categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.name }}">{{ cat.name }} ({{ cat.count }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Clear Filters -->
+                <button type="button" class="text-xs text-slate-500 hover:text-ymir-500 underline"
+                    _="on click
+                       set document.querySelector('input[name=search]').value to ''
+                       set document.querySelector('select[name=category]').value to ''
+                       then trigger change on #filter-form">
+                    Clear Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bulk Actions Bar (hidden by default) -->
+    <div id="bulk-actions" class="hidden card px-4 py-3 mb-4 bg-ymir-500/5 border-ymir-500/20">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button type="button" class="text-xs text-ymir-400 hover:text-ymir-300 underline"
+                    _="on click toggle @checked on #select-all then trigger change on #select-all">
+                    Toggle All
+                </button>
+                <span class="text-sm text-slate-400">
+                    <span id="selected-count" class="font-bold text-ymir-400">0</span> selected
+                </span>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button class="btn-secondary text-sm flex items-center gap-2 py-2"
+                    hx-delete="/actors/bulk"
+                    hx-vals='js:{"actor_ids": getSelectedIds()}'
+                    hx-confirm="Are you sure you want to delete the selected actors?"
+                    hx-target="#actors-table"
+                    hx-swap="innerHTML"
+                    _="on htmx:afterRequest call clearSelection()">
+                    <i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i>
+                    Delete Selected
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actors Table Container -->
+    <div id="actors-table"
+        hx-get="/actors/list"
+        hx-trigger="load"
+        hx-swap="innerHTML">
+        <!-- Initial load spinner -->
+        <div class="card p-12 text-center">
+            <div class="animate-spin w-8 h-8 border-2 border-ymir-500 border-t-transparent rounded-full mx-auto"></div>
+            <p class="text-slate-400 text-sm mt-4">Loading actors...</p>
+        </div>
+    </div>
+
+    <!-- Modal Container -->
+    <div id="modal-container"></div>
+</div>
+
+<script>
+function getSelectedIds() {
+    const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+    return JSON.stringify(Array.from(checkboxes).map(cb => cb.value));
+}
+
+function updateBulkActions() {
+    const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+    const count = checkboxes.length;
+    const countEl = document.getElementById('selected-count');
+    const bulkBar = document.getElementById('bulk-actions');
+
+    if (countEl) countEl.textContent = count;
+
+    if (bulkBar) {
+        if (count > 0) {
+            bulkBar.classList.remove('hidden');
+        } else {
+            bulkBar.classList.add('hidden');
+        }
+    }
+}
+
+function clearSelection() {
+    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = false);
+    const selectAll = document.getElementById('select-all');
+    if (selectAll) selectAll.checked = false;
+    updateBulkActions();
+}
+
+// Listen for checkbox changes
+document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('row-checkbox') || e.target.id === 'select-all') {
+        updateBulkActions();
+    }
+});
+</script>

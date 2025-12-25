@@ -1,0 +1,146 @@
+<!-- Modal Backdrop -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    id="link-modal"
+    _="on click if event.target == me remove me">
+
+    <!-- Modal Content -->
+    <div class="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col"
+        _="on click halt">
+
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold text-slate-200">Link Actor to Scenarios</h2>
+                <p class="text-sm text-slate-500 mt-1">
+                    Select scenarios to associate with <span class="text-ymir-500 font-bold">{{ actor.name }}</span>
+                </p>
+            </div>
+            <button class="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-200 transition-colors"
+                _="on click remove #link-modal">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body (scrollable) -->
+        <div class="flex-1 overflow-y-auto p-6">
+            <form id="link-form"
+                hx-post="/actors/{{ actor.id }}/link-scenarios"
+                hx-target="#actors-table"
+                hx-swap="innerHTML"
+                _="on htmx:afterRequest if event.detail.successful remove #link-modal">
+
+                <!-- Search Scenarios -->
+                <div class="mb-4">
+                    <div class="relative">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                        <input type="text"
+                            id="scenario-search"
+                            placeholder="Search scenarios..."
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500"
+                            _="on input
+                               set searchTerm to my.value.toLowerCase()
+                               for scenario in .scenario-item
+                                   set scenarioName to scenario.querySelector('.scenario-name').textContent.toLowerCase()
+                                   set scenarioDesc to scenario.querySelector('.scenario-desc').textContent.toLowerCase()
+                                   if scenarioName.includes(searchTerm) or scenarioDesc.includes(searchTerm)
+                                       remove .hidden from scenario
+                                   else
+                                       add .hidden to scenario
+                                   end
+                               end">
+                    </div>
+                </div>
+
+                <!-- Scenarios List -->
+                {% if scenarios %}
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between mb-3 pb-3 border-b border-slate-700">
+                        <span class="text-sm font-bold text-slate-400 uppercase">Available Scenarios</span>
+                        <button type="button"
+                            class="text-xs text-ymir-400 hover:text-ymir-300 underline"
+                            _="on click
+                               set allChecked to document.querySelectorAll('.scenario-checkbox:not(:checked)').length == 0
+                               call document.querySelectorAll('.scenario-checkbox').forEach((el) => el.checked = !allChecked)">
+                            Toggle All
+                        </button>
+                    </div>
+
+                    {% for scenario in scenarios %}
+                    <label class="scenario-item flex items-start gap-3 p-3 rounded-lg hover:bg-slate-800/50 cursor-pointer transition-colors">
+                        <input type="checkbox"
+                            name="scenario_ids"
+                            value="{{ scenario.id }}"
+                            class="scenario-checkbox w-4 h-4 mt-1 rounded border-slate-600 bg-slate-800 text-ymir-500"
+                            {% if scenario.id in linked_scenario_ids %}checked{% endif %}>
+                        <div class="flex-1 min-w-0">
+                            <div class="scenario-name font-medium text-sm text-slate-200">
+                                {{ scenario.name }}
+                            </div>
+                            <div class="scenario-desc text-xs text-slate-400 mt-1">
+                                {{ scenario.description[:100] }}{% if scenario.description|length > 100 %}...{% endif %}
+                            </div>
+                            {% if scenario.category %}
+                            <span class="inline-flex items-center px-2 py-0.5 mt-2 rounded text-xs bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                                {{ scenario.category }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-12">
+                    <div class="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-600">
+                        <i data-lucide="folder-open" class="w-7 h-7"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-300 mb-1">No Scenarios Available</h3>
+                    <p class="text-slate-500 text-sm">Create some scenarios first to link them to this actor.</p>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+
+        <!-- Modal Footer -->
+        {% if scenarios %}
+        <div class="px-6 py-4 border-t border-slate-700 flex items-center justify-between">
+            <div class="text-sm text-slate-400">
+                <span id="selected-scenario-count" class="font-bold text-ymir-400">
+                    {{ linked_scenario_ids|length if linked_scenario_ids else 0 }}
+                </span>
+                scenario(s) selected
+            </div>
+            <div class="flex items-center gap-3">
+                <button type="button"
+                    class="btn-secondary px-6 py-2.5"
+                    _="on click remove #link-modal">
+                    Cancel
+                </button>
+                <button type="submit"
+                    form="link-form"
+                    class="btn-primary px-6 py-2.5 flex items-center gap-2">
+                    <i data-lucide="link" class="w-4 h-4"></i>
+                    Save Links
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Update selected count dynamically -->
+<script>
+document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('scenario-checkbox')) {
+        const count = document.querySelectorAll('.scenario-checkbox:checked').length;
+        const countEl = document.getElementById('selected-scenario-count');
+        if (countEl) {
+            countEl.textContent = count;
+        }
+    }
+});
+
+// Re-initialize Lucide icons
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>

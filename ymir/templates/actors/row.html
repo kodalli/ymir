@@ -1,0 +1,108 @@
+<!-- Actor Row -->
+<tr class="actor-row hover:bg-slate-800/30 transition-colors"
+    id="row-{{ actor.id }}"
+    data-actor-id="{{ actor.id }}">
+
+    <!-- Checkbox -->
+    <td class="p-4" _="on click halt">
+        <input type="checkbox" class="row-checkbox w-4 h-4 rounded border-slate-600 bg-slate-800 text-ymir-500"
+            value="{{ actor.id }}"
+            _="on change call updateBulkActions()">
+    </td>
+
+    <!-- Name with Icon -->
+    <td class="p-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center text-ymir-500">
+                <i data-lucide="{{ actor.icon or 'user' }}" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <div class="font-medium text-sm text-slate-200">{{ actor.name }}</div>
+                {% if actor.tags %}
+                <div class="flex gap-1 mt-1">
+                    {% for tag in actor.tags[:3] %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-slate-700 text-slate-300">
+                        {{ tag }}
+                    </span>
+                    {% endfor %}
+                    {% if actor.tags|length > 3 %}
+                    <span class="text-xs text-slate-500">+{{ actor.tags|length - 3 }} more</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </td>
+
+    <!-- Background (truncated) -->
+    <td class="p-4">
+        <div class="max-w-[250px]">
+            <p class="text-sm text-slate-400 truncate" title="{{ actor.background }}">
+                {{ actor.background[:60] }}{% if actor.background|length > 60 %}...{% endif %}
+            </p>
+        </div>
+    </td>
+
+    <!-- Goal (truncated) -->
+    <td class="p-4">
+        <div class="max-w-[250px]">
+            <p class="text-sm text-slate-400 truncate" title="{{ actor.goal }}">
+                {{ actor.goal[:60] }}{% if actor.goal|length > 60 %}...{% endif %}
+            </p>
+        </div>
+    </td>
+
+    <!-- Category Badge -->
+    <td class="p-4 text-center">
+        {% if actor.category %}
+        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-blue-500/10 text-blue-500 border border-blue-500/20">
+            {{ actor.category }}
+        </span>
+        {% else %}
+        <span class="text-slate-600">--</span>
+        {% endif %}
+    </td>
+
+    <!-- Created Date -->
+    <td class="p-4 text-center">
+        <span class="text-sm text-slate-400">
+            {{ actor.created_at.strftime('%Y-%m-%d') }}
+        </span>
+        <div class="text-xs text-slate-600">
+            {{ actor.created_at.strftime('%H:%M') }}
+        </div>
+    </td>
+
+    <!-- Action Buttons -->
+    <td class="p-4">
+        <div class="flex items-center justify-center gap-2">
+            <!-- Edit Button -->
+            <button class="p-2 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-ymir-500 transition-colors"
+                hx-get="/actors/modal/edit/{{ actor.id }}"
+                hx-target="#modal-container"
+                hx-swap="innerHTML"
+                title="Edit Actor">
+                <i data-lucide="pencil" class="w-4 h-4"></i>
+            </button>
+
+            <!-- Link Scenarios Button -->
+            <button class="p-2 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-blue-500 transition-colors"
+                hx-get="/actors/modal/link/{{ actor.id }}"
+                hx-target="#modal-container"
+                hx-swap="innerHTML"
+                title="Link to Scenarios">
+                <i data-lucide="link" class="w-4 h-4"></i>
+            </button>
+
+            <!-- Delete Button -->
+            <button class="p-2 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
+                hx-delete="/actors/{{ actor.id }}"
+                hx-confirm="Are you sure you want to delete {{ actor.name }}?"
+                hx-target="#actors-table"
+                hx-swap="innerHTML"
+                title="Delete Actor">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </td>
+</tr>

@@ -1,0 +1,152 @@
+<!-- Modal Backdrop -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    id="tools-modal"
+    _="on click if event.target == me then remove me">
+
+    <!-- Modal Content -->
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+        _="on click halt">
+
+        <!-- Modal Header -->
+        <div class="p-6 border-b border-slate-700 flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i data-lucide="wrench" class="w-5 h-5 text-ymir-500"></i>
+                    Manage Tools
+                </h2>
+                <p class="text-sm text-slate-400 mt-1">
+                    {% if scenario %}{{ scenario.name }}{% endif %}
+                </p>
+            </div>
+            <button class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                _="on click remove #tools-modal">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body (scrollable) -->
+        <div class="flex-1 overflow-y-auto p-6">
+            <form id="tools-form"
+                hx-post="/scenarios/{{ scenario.id }}/tools"
+                hx-target="#scenarios-table"
+                hx-swap="innerHTML"
+                _="on htmx:afterRequest if event.detail.successful remove #tools-modal">
+
+                <!-- Tools List -->
+                <div class="space-y-3 mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wide">Available Tools</h3>
+                        <div class="text-xs text-slate-500">
+                            <span id="tool-count">{{ selected_tools | length if selected_tools else 0 }}</span> selected
+                        </div>
+                    </div>
+
+                    {% if all_tools %}
+                    <div class="space-y-2" id="tools-list">
+                        {% for tool in all_tools %}
+                        <label class="flex items-center gap-3 p-4 bg-slate-800/50 border border-slate-700 rounded-lg hover:border-slate-600 cursor-pointer transition-all group">
+                            <!-- Drag Handle (if reorderable) -->
+                            <div class="drag-handle text-slate-600 group-hover:text-slate-500 cursor-move hidden">
+                                <i data-lucide="grip-vertical" class="w-4 h-4"></i>
+                            </div>
+
+                            <!-- Checkbox -->
+                            <input type="checkbox"
+                                name="tool_ids"
+                                value="{{ tool.id }}"
+                                {% if selected_tools and tool.id in selected_tools %}checked{% endif %}
+                                class="w-4 h-4 rounded border-slate-600 bg-slate-800 text-ymir-500"
+                                _="on change call updateToolCount()">
+
+                            <!-- Tool Info -->
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-medium text-sm text-slate-200">{{ tool.name }}</span>
+                                    {% if tool.category %}
+                                    <span class="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-400">
+                                        {{ tool.category }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1 line-clamp-1">
+                                    {{ tool.description }}
+                                </p>
+                            </div>
+
+                            <!-- Status Badge -->
+                            <div class="text-xs text-slate-500">
+                                {% if tool.is_active %}
+                                <span class="text-green-500 flex items-center gap-1">
+                                    <i data-lucide="check-circle" class="w-3 h-3"></i>
+                                    Active
+                                </span>
+                                {% else %}
+                                <span class="text-slate-600 flex items-center gap-1">
+                                    <i data-lucide="circle" class="w-3 h-3"></i>
+                                    Inactive
+                                </span>
+                                {% endif %}
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-12">
+                        <div class="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-600">
+                            <i data-lucide="wrench" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-300 mb-1">No Tools Available</h3>
+                        <p class="text-slate-500 text-sm">Create tools first to add them to scenarios.</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Tool Presets Section -->
+                <div class="border-t border-slate-700 pt-6">
+                    {% include "scenarios/preset_list.html" %}
+                </div>
+
+            </form>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="p-6 border-t border-slate-700 flex items-center justify-between">
+            <button type="button"
+                class="text-sm text-slate-500 hover:text-ymir-500 underline"
+                _="on click
+                   call document.querySelectorAll('input[name=tool_ids]').forEach((el) => el.checked = false)
+                   then call updateToolCount()">
+                Deselect All
+            </button>
+            <div class="flex items-center gap-3">
+                <button type="button"
+                    class="btn-secondary px-6 py-2.5"
+                    _="on click remove #tools-modal">
+                    Cancel
+                </button>
+                <button type="submit"
+                    form="tools-form"
+                    class="btn-primary px-6 py-2.5 flex items-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i>
+                    Save Tools
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Re-initialize Lucide icons in modal
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+
+// Update tool count
+function updateToolCount() {
+    const checkboxes = document.querySelectorAll('input[name="tool_ids"]:checked');
+    const counter = document.getElementById('tool-count');
+    if (counter) {
+        counter.textContent = checkboxes.length;
+    }
+}
+</script>

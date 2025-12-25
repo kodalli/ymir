@@ -128,8 +128,44 @@
 
     <!-- Simulated Actor Fields -->
     <div id="simulated-fields" class="hidden">
-        <!-- Load Example Button -->
-        <div class="flex justify-end mb-4">
+        <!-- Actor Presets (if available) -->
+        {% if actors and actors|length > 0 %}
+        <div class="space-y-2 mb-6">
+            <label class="block text-sm font-medium text-theme-secondary">Saved Actors</label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {% for actor in actors %}
+                <button type="button"
+                        class="text-left px-4 py-3 bg-surface-sidebar hover:bg-ymir-500/10 border border-theme hover:border-ymir-500/50 rounded-lg transition-colors"
+                        data-actor-background="{{ actor.background }}"
+                        data-actor-goal="{{ actor.goal }}"
+                        _="on click
+                           set #persona-background.value to my @data-actor-background
+                           set #persona-goal.value to my @data-actor-goal">
+                    <div class="flex items-start gap-3">
+                        {% if actor.icon %}
+                        <div class="flex-shrink-0 text-2xl">{{ actor.icon }}</div>
+                        {% else %}
+                        <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-surface-main flex items-center justify-center">
+                            <i data-lucide="user" class="w-4 h-4 text-theme-secondary"></i>
+                        </div>
+                        {% endif %}
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-medium text-white mb-1">{{ actor.name }}</h4>
+                            <p class="text-xs text-theme-muted line-clamp-2">{{ actor.background }}</p>
+                        </div>
+                    </div>
+                </button>
+                {% endfor %}
+            </div>
+            <p class="text-xs text-theme-muted">Click an actor to load their background and goal</p>
+        </div>
+        {% endif %}
+
+        <!-- Manual Input Toggle -->
+        <div class="flex items-center justify-between mb-4">
+            <label class="block text-sm font-medium text-theme-secondary">
+                {% if actors and actors|length > 0 %}Custom Actor Details{% else %}Actor Details{% endif %}
+            </label>
             <button
                 type="button"
                 class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-theme-secondary bg-surface-hover hover:bg-theme-border rounded-lg transition-colors"

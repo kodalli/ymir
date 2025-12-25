@@ -1,0 +1,91 @@
+<div class="w-full">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h1 class="text-xl font-bold tracking-tight">Scenarios</h1>
+            <p class="text-slate-400 text-sm">Manage conversation scenarios and domain configurations</p>
+        </div>
+        <div class="flex gap-3">
+            <button class="btn-primary flex items-center gap-2"
+                hx-get="/scenarios/form"
+                hx-target="#modal-container"
+                hx-swap="innerHTML">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                New Scenario
+            </button>
+            <button class="btn-secondary flex items-center gap-2"
+                hx-get="/scenarios/" hx-target="#main-content" hx-swap="innerHTML">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="card p-4 mb-4">
+        <form id="scenarios-filter-form"
+            hx-get="/scenarios/list"
+            hx-target="#scenarios-table"
+            hx-trigger="input delay:300ms from:#search-input, change from:select"
+            hx-swap="innerHTML">
+
+            <div class="flex flex-wrap items-center gap-4">
+                <!-- Search -->
+                <div class="flex-1 min-w-[200px]">
+                    <div class="relative">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                        <input type="text"
+                            id="search-input"
+                            name="search"
+                            placeholder="Search scenarios..."
+                            class="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500">
+                    </div>
+                </div>
+
+                <!-- Category Filter -->
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase">Category:</label>
+                    <select name="category" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ymir-500">
+                        <option value="">All Categories</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="finance">Finance</option>
+                        <option value="retail">Retail</option>
+                        <option value="education">Education</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <!-- Clear Filters -->
+                <button type="button" class="text-xs text-slate-500 hover:text-ymir-500 underline"
+                    _="on click
+                       set #search-input.value to ''
+                       set document.querySelector('select[name=category]').value to ''
+                       then trigger input on #search-input">
+                    Clear Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Scenarios Table Container -->
+    <div id="scenarios-table"
+        hx-get="/scenarios/list"
+        hx-trigger="load"
+        hx-swap="innerHTML">
+        <!-- Initial load spinner -->
+        <div class="card p-12 text-center">
+            <div class="animate-spin w-8 h-8 border-2 border-ymir-500 border-t-transparent rounded-full mx-auto"></div>
+            <p class="text-slate-400 text-sm mt-4">Loading scenarios...</p>
+        </div>
+    </div>
+
+    <!-- Modal Container -->
+    <div id="modal-container"></div>
+</div>
+
+<script>
+// Re-initialize Lucide icons after page load
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>

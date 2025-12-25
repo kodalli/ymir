@@ -9,6 +9,9 @@ from .conversion import router as conversion_router
 from .annotation import router as annotation_router
 from .export import router as export_router
 from .datasets import router as datasets_router
+from .actors import router as actors_router
+from .scenarios import router as scenarios_router
+from .templates_api import router as templates_router
 from ymir.data import get_database
 
 routers = [
@@ -18,6 +21,9 @@ routers = [
     annotation_router,
     export_router,
     datasets_router,
+    actors_router,
+    scenarios_router,
+    templates_router,
 ]
 
 

@@ -47,18 +47,32 @@
 
             <nav class="space-y-1">
                 <a href="/generation/"
-                    class="sidebar-item group {% if '/generation' in request.url.path %}active{% endif %}"
+                    class="sidebar-item group {% if '/generation' in request.url.path and '/templates' not in request.url.path %}active{% endif %}"
                     hx-get="/generation/" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true"
                     _="on click remove .active from .sidebar-item then add .active to me">
                     <i data-lucide="zap" class="w-5 h-5 mr-3"></i>
                     <span class="text-sm">Generate</span>
                 </a>
-                <a href="/functions/"
-                    class="sidebar-item group {% if '/functions' in request.url.path %}active{% endif %}"
-                    hx-get="/functions/" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true"
+                <a href="/scenarios/"
+                    class="sidebar-item group {% if '/scenarios' in request.url.path %}active{% endif %}"
+                    hx-get="/scenarios/" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true"
                     _="on click remove .active from .sidebar-item then add .active to me">
-                    <i data-lucide="code-2" class="w-5 h-5 mr-3"></i>
+                    <i data-lucide="folder-kanban" class="w-5 h-5 mr-3"></i>
                     <span class="text-sm">Scenarios</span>
+                </a>
+                <a href="/actors/"
+                    class="sidebar-item group {% if '/actors' in request.url.path %}active{% endif %}"
+                    hx-get="/actors/" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true"
+                    _="on click remove .active from .sidebar-item then add .active to me">
+                    <i data-lucide="users" class="w-5 h-5 mr-3"></i>
+                    <span class="text-sm">Actors</span>
+                </a>
+                <a href="/templates/"
+                    class="sidebar-item group {% if '/templates' in request.url.path %}active{% endif %}"
+                    hx-get="/templates/" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true"
+                    _="on click remove .active from .sidebar-item then add .active to me">
+                    <i data-lucide="file-cog" class="w-5 h-5 mr-3"></i>
+                    <span class="text-sm">Templates</span>
                 </a>
                 <a href="/conversion/"
                     class="sidebar-item group {% if '/conversion' in request.url.path %}active{% endif %}"

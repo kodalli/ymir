@@ -91,19 +91,53 @@
     </div>
 
     <!-- Options -->
-    <div class="flex items-center justify-between p-3 bg-surface-sidebar/30 rounded-lg border border-theme/50">
-        <div class="flex items-center gap-2">
-            <label class="relative flex items-center cursor-pointer group">
-                <input type="checkbox" id="wizard-save" name="save" value="true" checked class="sr-only peer">
-                <div class="w-8 h-4 bg-surface-hover rounded-full peer peer-checked:bg-ymir-500 transition-all"></div>
-                <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full peer-checked:translate-x-4 transition-all"></div>
-            </label>
-            <span class="text-xs text-theme-secondary font-medium">Save trajectory to library</span>
+    <div class="space-y-3">
+        <div class="flex items-center justify-between p-3 bg-surface-sidebar/30 rounded-lg border border-theme/50">
+            <div class="flex items-center gap-2">
+                <label class="relative flex items-center cursor-pointer group">
+                    <input type="checkbox" id="wizard-save" name="save" value="true" checked class="sr-only peer">
+                    <div class="w-8 h-4 bg-surface-hover rounded-full peer peer-checked:bg-ymir-500 transition-all"></div>
+                    <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full peer-checked:translate-x-4 transition-all"></div>
+                </label>
+                <span class="text-xs text-theme-secondary font-medium">Save trajectory to library</span>
+            </div>
+
+            <div class="flex items-center gap-1.5 text-[10px] text-theme-muted">
+                <i data-lucide="info" class="w-3 h-3"></i>
+                <span>Saved trajectories can be reviewed and exported</span>
+            </div>
         </div>
 
-        <div class="flex items-center gap-1.5 text-[10px] text-theme-muted">
-            <i data-lucide="info" class="w-3 h-3"></i>
-            <span>Saved trajectories can be reviewed and exported</span>
+        <!-- Save as Template -->
+        <div class="p-3 bg-surface-sidebar/30 rounded-lg border border-theme/50">
+            <div class="flex items-center gap-2 mb-3">
+                <label class="relative flex items-center cursor-pointer group">
+                    <input type="checkbox" id="wizard-save-template" name="save_as_template" value="true" class="sr-only peer"
+                           _="on change
+                              if my.checked
+                                remove .hidden from #template-name-input
+                              else
+                                add .hidden to #template-name-input
+                              end">
+                    <div class="w-8 h-4 bg-surface-hover rounded-full peer peer-checked:bg-ymir-500 transition-all"></div>
+                    <div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full peer-checked:translate-x-4 transition-all"></div>
+                </label>
+                <span class="text-xs text-theme-secondary font-medium">Save as Template</span>
+            </div>
+
+            <div id="template-name-input" class="hidden">
+                <label for="wizard-template-name" class="block text-[10px] font-bold text-theme-muted uppercase tracking-wider mb-1.5">
+                    Template Name
+                </label>
+                <input type="text"
+                       id="wizard-template-name"
+                       name="template_name"
+                       placeholder="e.g., Quick Appointment Booking"
+                       class="w-full bg-surface-main border border-theme rounded-lg px-3 py-2 text-sm text-white placeholder-theme-muted focus:ring-2 focus:ring-ymir-500/20 focus:border-ymir-500 transition-all outline-none">
+                <p class="mt-1.5 text-[10px] text-theme-muted">
+                    Save this configuration (scenario, tools, model settings) for quick reuse
+                </p>
+            </div>
         </div>
     </div>
 

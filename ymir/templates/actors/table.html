@@ -1,0 +1,109 @@
+{% set filter_params = "&search=" ~ (search or '') ~ "&category=" ~ (category or '') %}
+
+<div class="card overflow-hidden">
+    <!-- Table -->
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-slate-800/50 border-b border-slate-700">
+                <tr>
+                    <th class="p-4 w-12">
+                        <input type="checkbox" id="select-all"
+                            class="w-4 h-4 rounded border-slate-600 bg-slate-800 text-ymir-500"
+                            _="on change
+                               set checked to my.checked
+                               call document.querySelectorAll('.row-checkbox').forEach((el) => el.checked = checked)
+                               then call updateBulkActions()">
+                    </th>
+                    <th class="p-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-ymir-500"
+                        hx-get="/actors/list?sort_by=name&sort_order={{ 'asc' if sort_by == 'name' and sort_order == 'desc' else 'desc' }}{{ filter_params }}"
+                        hx-target="#actors-table" hx-swap="innerHTML">
+                        Name
+                        {% if sort_by == 'name' %}
+                        <i data-lucide="{{ 'chevron-up' if sort_order == 'asc' else 'chevron-down' }}" class="w-3 h-3 inline"></i>
+                        {% endif %}
+                    </th>
+                    <th class="p-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Background</th>
+                    <th class="p-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Goal</th>
+                    <th class="p-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-ymir-500"
+                        hx-get="/actors/list?sort_by=category&sort_order={{ 'asc' if sort_by == 'category' and sort_order == 'desc' else 'desc' }}{{ filter_params }}"
+                        hx-target="#actors-table" hx-swap="innerHTML">
+                        Category
+                        {% if sort_by == 'category' %}
+                        <i data-lucide="{{ 'chevron-up' if sort_order == 'asc' else 'chevron-down' }}" class="w-3 h-3 inline"></i>
+                        {% endif %}
+                    </th>
+                    <th class="p-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-ymir-500"
+                        hx-get="/actors/list?sort_by=created_at&sort_order={{ 'asc' if sort_by == 'created_at' and sort_order == 'desc' else 'desc' }}{{ filter_params }}"
+                        hx-target="#actors-table" hx-swap="innerHTML">
+                        Created
+                        {% if sort_by == 'created_at' %}
+                        <i data-lucide="{{ 'chevron-up' if sort_order == 'asc' else 'chevron-down' }}" class="w-3 h-3 inline"></i>
+                        {% endif %}
+                    </th>
+                    <th class="p-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider w-32">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="table-body" class="divide-y divide-slate-700/50">
+                {% for actor in actors %}
+                {% include "actors/row.html" %}
+                {% else %}
+                <tr>
+                    <td colspan="7" class="p-12 text-center">
+                        <div class="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-600">
+                            <i data-lucide="users" class="w-7 h-7"></i>
+                        </div>
+                        <h2 class="text-lg font-bold text-slate-300 mb-1">No Actors Found</h2>
+                        <p class="text-slate-500 text-sm">Try adjusting your filters or create a new actor.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="p-4 border-t border-slate-700 flex items-center justify-between">
+        <div class="text-sm text-slate-400">
+            Showing {{ ((page - 1) * page_size) + 1 }}-{{ min(page * page_size, total_count) }} of {{ total_count }}
+        </div>
+        <div class="flex items-center gap-2">
+            {% if page > 1 %}
+            <button class="px-3 py-1.5 bg-slate-800 rounded-lg text-sm text-slate-300 hover:bg-slate-700"
+                hx-get="/actors/list?page={{ page - 1 }}&page_size={{ page_size }}&sort_by={{ sort_by }}&sort_order={{ sort_order }}{{ filter_params }}"
+                hx-target="#actors-table" hx-swap="innerHTML">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </button>
+            {% endif %}
+
+            <span class="px-3 py-1.5 text-sm text-slate-400">
+                Page {{ page }} of {{ total_pages }}
+            </span>
+
+            {% if page < total_pages %}
+            <button class="px-3 py-1.5 bg-slate-800 rounded-lg text-sm text-slate-300 hover:bg-slate-700"
+                hx-get="/actors/list?page={{ page + 1 }}&page_size={{ page_size }}&sort_by={{ sort_by }}&sort_order={{ sort_order }}{{ filter_params }}"
+                hx-target="#actors-table" hx-swap="innerHTML">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+            {% endif %}
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="text-sm text-slate-500">Rows:</span>
+            <select class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-sm text-white"
+                _="on change htmx.ajax('GET', '/actors/list?page=1&page_size=' + me.value + '&sort_by={{ sort_by }}&sort_order={{ sort_order }}{{ filter_params }}', {target: '#actors-table', swap: 'innerHTML'})">
+                <option value="25" {% if page_size == 25 %}selected{% endif %}>25</option>
+                <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+                <option value="100" {% if page_size == 100 %}selected{% endif %}>100</option>
+            </select>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Re-initialize Lucide icons after HTMX swap -->
+<script>
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>

@@ -14,31 +14,31 @@
     <div class="space-y-4">
         <div class="flex items-center gap-2 mb-3">
             <i data-lucide="wrench" class="w-4 h-4 text-slate-500"></i>
-            <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest">Available Tools ({{ scenario.functions|length }})</h4>
+            <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest">Available Tools ({{ scenario.tools|length }})</h4>
         </div>
-        
+
         <div class="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar">
-            {% for func in scenario.functions %}
+            {% for tool in scenario.tools %}
             <div class="bg-slate-800/40 border border-slate-700/50 p-3 rounded-lg group hover:border-ymir-500/30 transition-all">
                 <div class="flex items-start justify-between gap-2">
                     <div class="flex-grow">
                         <div class="flex items-center gap-2 mb-1">
-                            <code class="text-xs font-bold text-ymir-400">{{ func.name }}</code>
-                            <span class="text-[9px] font-black text-slate-600 uppercase tracking-tight bg-slate-900 px-1.5 py-0.5 rounded">{{ func.category }}</span>
+                            <code class="text-xs font-bold text-ymir-400">{{ tool.name }}</code>
+                            <span class="text-[9px] font-black text-slate-600 uppercase tracking-tight bg-slate-900 px-1.5 py-0.5 rounded">{{ tool.category }}</span>
                         </div>
-                        <p class="text-[11px] text-slate-500 leading-relaxed">{{ func.description }}</p>
+                        <p class="text-[11px] text-slate-500 leading-relaxed">{{ tool.description }}</p>
                     </div>
                 </div>
-                
-                {% if func.parameters and func.parameters.properties %}
+
+                {% if tool.parameters and tool.parameters.properties %}
                 <div class="mt-2 pt-2 border-t border-slate-700/30">
                     <div class="flex flex-wrap gap-1.5">
-                        {% for param_name, param_info in func.parameters.properties.items() %}
+                        {% for param_name, param_info in tool.parameters.properties.items() %}
                         <div class="flex items-center gap-1 bg-slate-900/50 px-1.5 py-0.5 rounded text-[9px]">
                             <span class="font-mono text-slate-400">{{ param_name }}</span>
                             <span class="text-ymir-500/60">:</span>
                             <span class="text-slate-500">{{ param_info.type|default('any') }}</span>
-                            {% if param_name in func.parameters.required|default([]) %}
+                            {% if param_name in tool.parameters.required|default([]) %}
                             <span class="text-red-500/60">*</span>
                             {% endif %}
                         </div>

@@ -106,7 +106,192 @@ class Database:
             "CREATE INDEX IF NOT EXISTS idx_dataset_sessions_session_id ON dataset_sessions(session_id)"
         )
 
-        # FTS5 for full-text search
+        # Scenarios table
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS scenarios (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL UNIQUE,
+                description TEXT,
+                category TEXT,
+                system_prompt TEXT,
+                example_queries TEXT,
+                mock_responses TEXT,
+                is_active INTEGER DEFAULT 1,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+        """)
+
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_scenarios_name ON scenarios(name)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_scenarios_category ON scenarios(category)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_scenarios_is_active ON scenarios(is_active)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_scenarios_category_active ON scenarios(category, is_active)"
+        )
+
+        # Tools table
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS tools (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT,
+                parameters TEXT,
+                category TEXT,
+                is_active INTEGER DEFAULT 1,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                UNIQUE(name, category)
+            )
+        """)
+
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_tools_name ON tools(name)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_tools_category ON tools(category)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_tools_is_active ON tools(is_active)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_tools_category_active ON tools(category, is_active)"
+        )
+
+        # Scenario-Tools junction table
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS scenario_tools (
+                scenario_id TEXT NOT NULL,
+                tool_id TEXT NOT NULL,
+                display_order INTEGER DEFAULT 0,
+                PRIMARY KEY (scenario_id, tool_id),
+                FOREIGN KEY (scenario_id) REFERENCES scenarios(id) ON DELETE CASCADE,
+                FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE
+            )
+        """)
+
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_scenario_tools_scenario_id ON scenario_tools(scenario_id)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_scenario_tools_tool_id ON scenario_tools(tool_id)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_scenario_tools_order ON scenario_tools(scenario_id, display_order)"
+        )
+
+        # Actors table
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS actors (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                icon TEXT,
+                background TEXT,
+                goal TEXT,
+                tags TEXT,
+                category TEXT,
+                is_active INTEGER DEFAULT 1,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+        """)
+
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_actors_name ON actors(name)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_actors_category ON actors(category)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_actors_is_active ON actors(is_active)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_actors_category_active ON actors(category, is_active)"
+        )
+
+        # Scenario-Actors junction table
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS scenario_actors (
+                scenario_id TEXT NOT NULL,
+                actor_id TEXT NOT NULL,
+                PRIMARY KEY (scenario_id, actor_id),
+                FOREIGN KEY (scenario_id) REFERENCES scenarios(id) ON DELETE CASCADE,
+                FOREIGN KEY (actor_id) REFERENCES actors(id) ON DELETE CASCADE
+            )
+        """)
+
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_scenario_actors_scenario_id ON scenario_actors(scenario_id)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_scenario_actors_actor_id ON scenario_actors(actor_id)"
+        )
+
+        # Tool Presets table
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS tool_presets (
+                id TEXT PRIMARY KEY,
+                scenario_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                description TEXT,
+                tool_ids TEXT,
+                is_default INTEGER DEFAULT 0,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                FOREIGN KEY (scenario_id) REFERENCES scenarios(id) ON DELETE CASCADE,
+                UNIQUE(scenario_id, name)
+            )
+        """)
+
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_tool_presets_scenario_id ON tool_presets(scenario_id)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_tool_presets_is_default ON tool_presets(scenario_id, is_default)"
+        )
+
+        # Generation Templates table
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS generation_templates (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL UNIQUE,
+                description TEXT,
+                scenario_id TEXT,
+                actor_id TEXT,
+                tool_preset_id TEXT,
+                model TEXT,
+                temperature REAL,
+                is_favorite INTEGER DEFAULT 0,
+                use_count INTEGER DEFAULT 0,
+                last_used_at TEXT,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                FOREIGN KEY (scenario_id) REFERENCES scenarios(id) ON DELETE CASCADE,
+                FOREIGN KEY (actor_id) REFERENCES actors(id) ON DELETE SET NULL,
+                FOREIGN KEY (tool_preset_id) REFERENCES tool_presets(id) ON DELETE SET NULL
+            )
+        """)
+
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_generation_templates_name ON generation_templates(name)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_generation_templates_scenario_id ON generation_templates(scenario_id)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_generation_templates_is_favorite ON generation_templates(is_favorite)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_generation_templates_use_count ON generation_templates(use_count DESC)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_generation_templates_last_used ON generation_templates(last_used_at DESC)"
+        )
+
+        # FTS5 for full-text search on sessions
         await conn.execute("""
             CREATE VIRTUAL TABLE IF NOT EXISTS sessions_fts USING fts5(
                 id UNINDEXED,
@@ -138,11 +323,151 @@ class Database:
             END
         """)
 
+        # FTS5 for scenarios
+        await conn.execute("""
+            CREATE VIRTUAL TABLE IF NOT EXISTS scenarios_fts USING fts5(
+                id UNINDEXED,
+                name,
+                description,
+                category
+            )
+        """)
+
+        await conn.execute("""
+            CREATE TRIGGER IF NOT EXISTS scenarios_ai AFTER INSERT ON scenarios BEGIN
+                INSERT INTO scenarios_fts(id, name, description, category)
+                VALUES (new.id, new.name, new.description, new.category);
+            END
+        """)
+
+        await conn.execute("""
+            CREATE TRIGGER IF NOT EXISTS scenarios_ad AFTER DELETE ON scenarios BEGIN
+                DELETE FROM scenarios_fts WHERE id = old.id;
+            END
+        """)
+
+        await conn.execute("""
+            CREATE TRIGGER IF NOT EXISTS scenarios_au AFTER UPDATE ON scenarios BEGIN
+                DELETE FROM scenarios_fts WHERE id = old.id;
+                INSERT INTO scenarios_fts(id, name, description, category)
+                VALUES (new.id, new.name, new.description, new.category);
+            END
+        """)
+
+        # FTS5 for tools
+        await conn.execute("""
+            CREATE VIRTUAL TABLE IF NOT EXISTS tools_fts USING fts5(
+                id UNINDEXED,
+                name,
+                description,
+                category
+            )
+        """)
+
+        await conn.execute("""
+            CREATE TRIGGER IF NOT EXISTS tools_ai AFTER INSERT ON tools BEGIN
+                INSERT INTO tools_fts(id, name, description, category)
+                VALUES (new.id, new.name, new.description, new.category);
+            END
+        """)
+
+        await conn.execute("""
+            CREATE TRIGGER IF NOT EXISTS tools_ad AFTER DELETE ON tools BEGIN
+                DELETE FROM tools_fts WHERE id = old.id;
+            END
+        """)
+
+        await conn.execute("""
+            CREATE TRIGGER IF NOT EXISTS tools_au AFTER UPDATE ON tools BEGIN
+                DELETE FROM tools_fts WHERE id = old.id;
+                INSERT INTO tools_fts(id, name, description, category)
+                VALUES (new.id, new.name, new.description, new.category);
+            END
+        """)
+
+        # FTS5 for actors
+        await conn.execute("""
+            CREATE VIRTUAL TABLE IF NOT EXISTS actors_fts USING fts5(
+                id UNINDEXED,
+                name,
+                background,
+                goal,
+                category
+            )
+        """)
+
+        await conn.execute("""
+            CREATE TRIGGER IF NOT EXISTS actors_ai AFTER INSERT ON actors BEGIN
+                INSERT INTO actors_fts(id, name, background, goal, category)
+                VALUES (new.id, new.name, new.background, new.goal, new.category);
+            END
+        """)
+
+        await conn.execute("""
+            CREATE TRIGGER IF NOT EXISTS actors_ad AFTER DELETE ON actors BEGIN
+                DELETE FROM actors_fts WHERE id = old.id;
+            END
+        """)
+
+        await conn.execute("""
+            CREATE TRIGGER IF NOT EXISTS actors_au AFTER UPDATE ON actors BEGIN
+                DELETE FROM actors_fts WHERE id = old.id;
+                INSERT INTO actors_fts(id, name, background, goal, category)
+                VALUES (new.id, new.name, new.background, new.goal, new.category);
+            END
+        """)
+
         await conn.commit()
         logger.info(f"Database initialized at {self.db_path}")
 
+        # Seed initial scenario and persona data if database is empty
+        await self._seed_initial_data()
+
         # Seed demo data if database is empty
         await self._seed_demo_data_if_empty()
+
+    async def _seed_initial_data(self) -> None:
+        """Seed the database with initial scenario and persona data if scenarios table is empty."""
+        count = await self.fetchone("SELECT COUNT(*) as count FROM scenarios")
+        if count and count["count"] > 0:
+            return  # Already has scenarios
+
+        logger.info("Seeding initial scenario and persona data...")
+
+        try:
+            # Import the hardcoded data
+            from ymir.functions.templates.scheduling import SCHEDULING_SCENARIO
+            from ymir.pipeline.personas import MEDICAL_SCHEDULING_PERSONAS
+            from ymir.data.scenario_store import ScenarioStore
+
+            # Get ScenarioStore instance
+            store = ScenarioStore(self)
+
+            # Migrate the hardcoded data to the database
+            scenario_id, tool_ids, actor_ids = await store.migrate_from_hardcoded(
+                SCHEDULING_SCENARIO, MEDICAL_SCHEDULING_PERSONAS
+            )
+
+            # Create a default "Full Access" tool preset with all tools
+            from ymir.core.scenario_schemas import ToolPresetCreate
+
+            await store.create_tool_preset(
+                ToolPresetCreate(
+                    scenario_id=scenario_id,
+                    name="Full Access",
+                    description="All available tools for this scenario",
+                    tool_ids=tool_ids,
+                    is_default=True,
+                )
+            )
+
+            logger.info(
+                f"Initial data seeded: 1 scenario ({scenario_id}), "
+                f"{len(tool_ids)} tools, {len(actor_ids)} actors, 1 tool preset"
+            )
+        except Exception as e:
+            logger.error(f"Error seeding initial data: {e}")
+            # Don't raise - allow app to continue even if seeding fails
 
     async def _seed_demo_data_if_empty(self) -> None:
         """Seed the database with demo trajectories if empty."""

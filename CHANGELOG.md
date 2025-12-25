@@ -1,6 +1,69 @@
 # CHANGELOG
 
 
+## v0.0.0-alpha.13 (2025-12-25)
+
+### Bug Fixes
+
+- **docs**: Update README instructions for running Ymir and modify sidebar item in index.html
+  ([`1002701`](https://github.com/kodalli/ymir/commit/1002701b31e273dda95921ff22c131aceccc4116))
+
+- Changed the command to run Ymir from `python main.py` to `uv run python -m ymir.app` for better
+  compatibility. - Updated the sidebar item label from "Annotate" to "Data" and changed the
+  associated icon for clarity.
+
+- **generation**: Fix wizard scenario selection and tool card layout
+  ([`50e2937`](https://github.com/kodalli/ymir/commit/50e2937602bd19887e52bc91c44cff73e1dfe5d1))
+
+- Add missing templates import causing backend errors - Remove duplicate hidden input causing DOM
+  selector issues - Add CSS for dynamic scenario card selection state - Fix tool parameter layout to
+  prevent text overlap
+
+- **generation**: Improve wizard UX and fix validation bugs
+  ([`70273b0`](https://github.com/kodalli/ymir/commit/70273b00dbbb90e9a82b14465726f7eb0e3be07f))
+
+- Fix simulated actor validation by syncing form values before validation - Make generate step
+  layout more compact with tighter spacing - Stack actor form fields vertically for better
+  readability - Fix tool counter showing wrong count (hyperscript array handling)
+
+- **generation**: Persist wizard state and improve tool card layout
+  ([`1a3e716`](https://github.com/kodalli/ymir/commit/1a3e7164671d55909774be1869ea7319328a7166))
+
+- Upgrade HTMX to 2.0.4 for proper script execution in swapped content - Use window namespace for
+  wizard state to avoid re-declaration errors - Add localStorage persistence for wizard progress
+  across navigation - Redesign tool cards with toggle on right and single-column list - Fix stepper
+  click navigation to call goToStep directly - Add missing templates import in conversion.py
+
+### Features
+
+- **annotation**: Improve UX with smooth animations and voice-friendly demos
+  ([`1bb0992`](https://github.com/kodalli/ymir/commit/1bb0992468968b74a0eeb1cc591919cdbfd0039d))
+
+- Add CSS grid-based expand/collapse animation for table rows - Make demo conversation messages
+  TTS-friendly (remove markdown formatting) - Add inline notes editing with toggle button - Remove
+  fixed heights and scrolling from detail panel (page scrolls instead) - Remove table horizontal
+  scroll constraint
+
+- **annotation**: Redesign as data management table with filtering
+  ([`f49e28c`](https://github.com/kodalli/ymir/commit/f49e28cbb1857dd5fc4b3258f02086f9be9819d8))
+
+Replace single-trajectory view with paginated table supporting: - Status, scenario, and quality
+  score range filtering - Issue type filtering (hallucination, goal drift, tool skip, suspicious) -
+  Sortable columns with preserved filter state - Bulk approve/reject actions - Expandable row
+  details with quick review - Agentic quality detection (hallucination, goal drift, tool skipping,
+  suspicious patterns)
+
+- **data**: Add healthcare front desk demo trajectories
+  ([`fd4947b`](https://github.com/kodalli/ymir/commit/fd4947b65527fa026421a49369e42c0f815ef9ab))
+
+Replace generic demo data with healthcare-specific scenarios: - Appointment scheduling with provider
+  availability check - Insurance verification with copay lookup - Billing inquiry (includes
+  hallucination example for QA)
+
+Demo data seeds automatically on empty database with realistic multi-turn conversations including
+  tool calls and results.
+
+
 ## v0.0.0-alpha.12 (2025-12-24)
 
 ### Bug Fixes

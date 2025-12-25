@@ -437,7 +437,7 @@ class Database:
         try:
             # Import the hardcoded data
             from ymir.functions.templates.scheduling import SCHEDULING_SCENARIO
-            from ymir.pipeline.personas import MEDICAL_SCHEDULING_PERSONAS
+            from ymir.pipeline.personas import SCHEDULING_PERSONAS
             from ymir.data.scenario_store import ScenarioStore
 
             # Get ScenarioStore instance
@@ -445,7 +445,7 @@ class Database:
 
             # Migrate the hardcoded data to the database
             scenario_id, tool_ids, actor_ids = await store.migrate_from_hardcoded(
-                SCHEDULING_SCENARIO, MEDICAL_SCHEDULING_PERSONAS
+                SCHEDULING_SCENARIO, SCHEDULING_PERSONAS
             )
 
             # Create a default "Full Access" tool preset with all tools

@@ -50,7 +50,7 @@
             <!-- Edit -->
             <button class="p-2 rounded-lg text-slate-400 hover:text-ymir-500 hover:bg-slate-800 transition-colors"
                 title="Edit Scenario"
-                hx-get="/scenarios/form/{{ scenario.id }}"
+                hx-get="/scenarios/{{ scenario.id }}/edit"
                 hx-target="#modal-container"
                 hx-swap="innerHTML"
                 _="on click halt">

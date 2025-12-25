@@ -109,15 +109,22 @@ async def create_scenario(
     description: str = Form(""),
     category: str = Form(...),
     system_prompt: str = Form(""),
-    example_queries: str = Form("[]"),
+    example_queries: str = Form(""),
     mock_responses: str = Form("{}"),
 ):
     """Create a new scenario."""
     store = get_store()
 
     try:
-        # Parse JSON fields
-        example_queries_list = json.loads(example_queries) if example_queries else []
+        # Parse example_queries - can be JSON array or newline-separated text
+        if example_queries:
+            try:
+                example_queries_list = json.loads(example_queries)
+            except json.JSONDecodeError:
+                # Treat as newline-separated text
+                example_queries_list = [q.strip() for q in example_queries.split("\n") if q.strip()]
+        else:
+            example_queries_list = []
         mock_responses_dict = json.loads(mock_responses) if mock_responses else {}
 
         # Create scenario
@@ -130,14 +137,23 @@ async def create_scenario(
             mock_responses=mock_responses_dict,
         )
 
-        scenario = await store.create_scenario(scenario_data)
-        scenario.tool_count = 0  # New scenario has no tools yet
+        await store.create_scenario(scenario_data)
+
+        # Return the full table with all scenarios
+        scenarios = await store.list_scenarios()
+        for s in scenarios:
+            tools = await store.get_scenario_tools(s.id)
+            s.tool_count = len(tools)
 
         return templates.TemplateResponse(
-            "scenarios/row.html",
+            "scenarios/table.html",
             {
                 "request": request,
-                "scenario": scenario,
+                "scenarios": scenarios,
+                "page": 1,
+                "page_size": 25,
+                "total_pages": 1,
+                "total_count": len(scenarios),
             },
             headers={"HX-Trigger": "scenarioCreated"},
         )
@@ -152,6 +168,28 @@ async def create_scenario(
             content=f"Error creating scenario: {e}",
             status_code=500,
         )
+
+
+@router.get("/new", response_class=HTMLResponse)
+async def new_scenario_modal(request: Request):
+    """Render new scenario modal."""
+    store = get_store()
+
+    # Get categories for dropdown
+    scenarios = await store.list_scenarios()
+    categories = sorted(set(s.category for s in scenarios if s.category))
+    if not categories:
+        categories = ["scheduling", "healthcare", "finance", "retail", "education", "general"]
+
+    return templates.TemplateResponse(
+        "scenarios/form_modal.html",
+        {
+            "request": request,
+            "scenario": None,
+            "categories": categories,
+            "mode": "create",
+        },
+    )
 
 
 @router.get("/{id}", response_class=JSONResponse)
@@ -201,15 +239,22 @@ async def update_scenario(
     description: str = Form(""),
     category: str = Form(...),
     system_prompt: str = Form(""),
-    example_queries: str = Form("[]"),
+    example_queries: str = Form(""),
     mock_responses: str = Form("{}"),
 ):
     """Update an existing scenario."""
     store = get_store()
 
     try:
-        # Parse JSON fields
-        example_queries_list = json.loads(example_queries) if example_queries else []
+        # Parse example_queries - can be JSON array or newline-separated text
+        if example_queries:
+            try:
+                example_queries_list = json.loads(example_queries)
+            except json.JSONDecodeError:
+                # Treat as newline-separated text
+                example_queries_list = [q.strip() for q in example_queries.split("\n") if q.strip()]
+        else:
+            example_queries_list = []
         mock_responses_dict = json.loads(mock_responses) if mock_responses else {}
 
         # Update scenario
@@ -226,15 +271,21 @@ async def update_scenario(
         if scenario is None:
             return HTMLResponse(content="Scenario not found", status_code=404)
 
-        # Get tool count
-        tools = await store.get_scenario_tools(scenario.id)
-        scenario.tool_count = len(tools)
+        # Return the full table with all scenarios
+        scenarios = await store.list_scenarios()
+        for s in scenarios:
+            tools = await store.get_scenario_tools(s.id)
+            s.tool_count = len(tools)
 
         return templates.TemplateResponse(
-            "scenarios/row.html",
+            "scenarios/table.html",
             {
                 "request": request,
-                "scenario": scenario,
+                "scenarios": scenarios,
+                "page": 1,
+                "page_size": 25,
+                "total_pages": 1,
+                "total_count": len(scenarios),
             },
         )
 
@@ -277,48 +328,56 @@ async def get_scenario_tools_panel(request: Request, id: str):
     if scenario is None:
         return HTMLResponse(content="Scenario not found", status_code=404)
 
-    # Get current tools
-    tools = await store.get_scenario_tools(id)
+    # Get current tools attached to this scenario
+    current_tools = await store.get_scenario_tools(id)
+    selected_tool_ids = [t.id for t in current_tools]
 
-    # Get all available tools (not already attached)
+    # Get all available tools
     all_tools = await store.list_tools()
-    attached_tool_ids = {t.id for t in tools}
-    available_tools = [t for t in all_tools if t.id not in attached_tool_ids]
+
+    # Get presets for this scenario
+    presets = await store.list_scenario_presets(id)
 
     return templates.TemplateResponse(
         "scenarios/tools_panel.html",
         {
             "request": request,
             "scenario": scenario,
-            "tools": tools,
-            "available_tools": available_tools,
+            "all_tools": all_tools,
+            "selected_tools": selected_tool_ids,
+            "presets": presets,
         },
     )
 
 
 @router.post("/{id}/tools", response_class=HTMLResponse)
-async def add_tool_to_scenario(
+async def update_scenario_tools(
     request: Request,
     id: str,
-    tool_id: str = Form(...),
+    tool_ids: list[str] = Form(default=[]),
 ):
-    """Add a tool to a scenario."""
+    """Update tools for a scenario (replaces all current tools)."""
     store = get_store()
 
-    # Attach the tool
-    await store.attach_tools_to_scenario(id, [tool_id])
+    # Check scenario exists
+    scenario = await store.get_scenario(id)
+    if scenario is None:
+        return HTMLResponse(content="Scenario not found", status_code=404)
 
-    # Get the tool details
-    tool = await store.get_tool(tool_id)
-    if tool is None:
-        return HTMLResponse(content="Tool not found", status_code=404)
+    # Replace all tools with the new selection
+    await store.attach_tools_to_scenario(id, tool_ids, replace=True)
+
+    # Return updated scenario list
+    scenarios = await store.list_scenarios()
 
     return templates.TemplateResponse(
-        "scenarios/tool_row.html",
+        "scenarios/table.html",
         {
             "request": request,
-            "tool": tool,
-            "scenario_id": id,
+            "scenarios": scenarios,
+            "page": 1,
+            "total_pages": 1,
+            "total_count": len(scenarios),
         },
     )
 
@@ -406,21 +465,23 @@ async def create_tool_preset(
             is_default=is_default,
         )
 
-        preset = await store.create_tool_preset(preset_data)
+        await store.create_tool_preset(preset_data)
 
-        # Enrich with tool data
-        preset.tools = []
-        for tool_id in preset.tool_ids:
-            tool = await store.get_tool(tool_id)
-            if tool:
-                preset.tools.append(tool)
+        # Return the full tools panel to refresh the modal
+        scenario = await store.get_scenario(id)
+        current_tools = await store.get_scenario_tools(id)
+        selected_tool_ids = [t.id for t in current_tools]
+        all_tools = await store.list_tools()
+        presets = await store.list_scenario_presets(id)
 
         return templates.TemplateResponse(
-            "scenarios/preset_row.html",
+            "scenarios/tools_panel.html",
             {
                 "request": request,
-                "preset": preset,
-                "scenario_id": id,
+                "scenario": scenario,
+                "all_tools": all_tools,
+                "selected_tools": selected_tool_ids,
+                "presets": presets,
             },
         )
 

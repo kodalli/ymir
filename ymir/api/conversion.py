@@ -9,7 +9,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 
 from ymir.data.converters import APIGenMTConverter, HermesFCConverter
 from ymir.data import get_store
-from ymir.api.shared import render_page
+from ymir.api.shared import render_page, templates
 
 router = APIRouter(prefix="/conversion", tags=["conversion"])
 

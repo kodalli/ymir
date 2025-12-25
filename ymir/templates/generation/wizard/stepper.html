@@ -16,8 +16,9 @@
             <div class="flex flex-col items-center relative z-10">
                 {% if is_completed %}
                     <button
+                        type="button"
                         class="w-10 h-10 rounded-full bg-success-500 text-white flex items-center justify-center transition-all hover:bg-success-600"
-                        _="on click trigger stepNavigate(step: {{ s.num }}) on closest <form/>">
+                        _="on click call goToStep({{ s.num }})">
                         <i data-lucide="check" class="w-5 h-5"></i>
                     </button>
                 {% elif is_current %}

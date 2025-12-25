@@ -10,7 +10,7 @@ const YmirTheme = {
     availableThemes: {
         'survey-corps': {
             name: 'Survey Corps',
-            description: 'Attack on Titan inspired - deep greens and earth tones'
+            description: 'Attack on Titan inspired theme'
         },
         'default': {
             name: 'Classic Red',

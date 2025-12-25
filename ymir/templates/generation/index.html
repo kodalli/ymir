@@ -63,35 +63,79 @@
 </div>
 
 <script>
-// Wizard state
-let currentStep = 1;
-const totalSteps = 4;
+// Use window namespace to avoid re-declaration errors on HTMX navigation
+window.wizardState = window.wizardState || {
+    currentStep: 1,
+    totalSteps: 4,
+    STORAGE_KEY: 'ymir_wizard_state'
+};
+var wizard = window.wizardState;
 
-// Initialize
-document.addEventListener('DOMContentLoaded', function() {
-    updateNavButtons();
-    initializeToolsList();
-    lucide.createIcons();
-});
+// Reset step to 1 for fresh page load (localStorage will override if state exists)
+wizard.currentStep = 1;
 
-// Re-initialize icons after HTMX swaps
-document.body.addEventListener('htmx:afterSwap', function(e) {
-    lucide.createIcons();
-    if (e.detail.target.id === 'wizard-step-content') {
-        // Re-initialize any step-specific behavior
-        if (currentStep === 2) {
-            initializeToolsList();
-        }
+// State persistence functions
+function saveWizardState() {
+    var state = {
+        currentStep: wizard.currentStep,
+        scenarioId: document.getElementById('wizard-scenario-id').value,
+        enabledTools: document.getElementById('wizard-enabled-tools').value,
+        mode: document.getElementById('wizard-mode').value,
+        userQuery: document.getElementById('wizard-user-query').value,
+        userSituation: document.getElementById('wizard-user-situation').value,
+        userBackground: document.getElementById('wizard-user-background').value,
+        userGoal: document.getElementById('wizard-user-goal').value,
+    };
+    localStorage.setItem(wizard.STORAGE_KEY, JSON.stringify(state));
+}
+
+function loadWizardState() {
+    var saved = localStorage.getItem(wizard.STORAGE_KEY);
+    if (!saved) return false;
+
+    try {
+        var state = JSON.parse(saved);
+        document.getElementById('wizard-scenario-id').value = state.scenarioId || '';
+        document.getElementById('wizard-enabled-tools').value = state.enabledTools || '[]';
+        document.getElementById('wizard-mode').value = state.mode || 'single';
+        document.getElementById('wizard-user-query').value = state.userQuery || '';
+        document.getElementById('wizard-user-situation').value = state.userSituation || '';
+        document.getElementById('wizard-user-background').value = state.userBackground || '';
+        document.getElementById('wizard-user-goal').value = state.userGoal || '';
+        wizard.currentStep = state.currentStep || 1;
+        return true;
+    } catch (e) {
+        return false;
     }
-});
+}
+
+function clearWizardState() {
+    localStorage.removeItem(wizard.STORAGE_KEY);
+}
+
+// Initialize wizard
+function initWizard() {
+    var hasState = loadWizardState();
+
+    if (hasState && wizard.currentStep > 1) {
+        loadStep(wizard.currentStep);
+    } else {
+        updateNavButtons();
+        initializeToolsList();
+    }
+
+    lucide.createIcons();
+}
+
+// Run initialization
+initWizard();
 
 function initializeToolsList() {
-    // Initialize enabled tools with all tools from current scenario
-    const scenarioId = document.getElementById('wizard-scenario-id').value;
+    var scenarioId = document.getElementById('wizard-scenario-id').value;
     if (scenarioId) {
-        const toolCheckboxes = document.querySelectorAll('input[data-tool-name]');
-        const enabledTools = [];
-        toolCheckboxes.forEach(cb => {
+        var toolCheckboxes = document.querySelectorAll('input[data-tool-name]');
+        var enabledTools = [];
+        toolCheckboxes.forEach(function(cb) {
             if (cb.checked) {
                 enabledTools.push(cb.dataset.toolName);
             }
@@ -103,120 +147,106 @@ function initializeToolsList() {
 }
 
 function goToNextStep() {
-    if (currentStep >= totalSteps) return;
+    if (wizard.currentStep >= wizard.totalSteps) return;
 
-    // Sync form values before validation
     syncFormValues();
+    if (!validateStep(wizard.currentStep)) return;
 
-    // Validate current step
-    if (!validateStep(currentStep)) return;
-
-    currentStep++;
-    loadStep(currentStep);
+    wizard.currentStep++;
+    loadStep(wizard.currentStep);
 }
 
 function goToPrevStep() {
-    if (currentStep <= 1) return;
+    if (wizard.currentStep <= 1) return;
 
-    // Sync form values before navigation
     syncFormValues();
-
-    currentStep--;
-    loadStep(currentStep);
+    wizard.currentStep--;
+    loadStep(wizard.currentStep);
 }
 
 function goToStep(step) {
-    if (step < 1 || step > totalSteps) return;
-    if (step > currentStep) {
-        // Can only go forward if current step is valid
-        for (let s = currentStep; s < step; s++) {
+    if (step < 1 || step > wizard.totalSteps) return;
+    if (step > wizard.currentStep) {
+        for (var s = wizard.currentStep; s < step; s++) {
             if (!validateStep(s)) return;
         }
     }
 
     syncFormValues();
-    currentStep = step;
-    loadStep(currentStep);
+    wizard.currentStep = step;
+    loadStep(wizard.currentStep);
 }
 
 function syncFormValues() {
-    // Sync any visible input values to hidden fields
-
-    // Sync mode toggle
-    const modeRadio = document.querySelector('input[name="mode_toggle"]:checked');
+    var modeRadio = document.querySelector('input[name="mode_toggle"]:checked');
     if (modeRadio) {
         document.getElementById('wizard-mode').value = modeRadio.value;
     }
 
-    // Sync user query
-    const queryInput = document.querySelector('textarea[name="user_query_input"]');
+    var queryInput = document.querySelector('textarea[name="user_query_input"]');
     if (queryInput) {
         document.getElementById('wizard-user-query').value = queryInput.value;
     }
 
-    // Sync situation
-    const sitInput = document.querySelector('textarea[name="user_situation_input"]');
+    var sitInput = document.querySelector('textarea[name="user_situation_input"]');
     if (sitInput) {
         document.getElementById('wizard-user-situation').value = sitInput.value;
     }
 
-    // Sync background
-    const bgInput = document.querySelector('textarea[name="user_background_input"]');
+    var bgInput = document.querySelector('textarea[name="user_background_input"]');
     if (bgInput) {
         document.getElementById('wizard-user-background').value = bgInput.value;
     }
 
-    // Sync goal
-    const goalInput = document.querySelector('textarea[name="user_goal_input"]');
+    var goalInput = document.querySelector('textarea[name="user_goal_input"]');
     if (goalInput) {
         document.getElementById('wizard-user-goal').value = goalInput.value;
     }
 
-    // Sync enabled tools
-    const toolCheckboxes = document.querySelectorAll('input[data-tool-name]');
+    var toolCheckboxes = document.querySelectorAll('input[data-tool-name]');
     if (toolCheckboxes.length > 0) {
-        const enabledTools = [];
-        toolCheckboxes.forEach(cb => {
+        var enabledTools = [];
+        toolCheckboxes.forEach(function(cb) {
             if (cb.checked) {
                 enabledTools.push(cb.dataset.toolName);
             }
         });
         document.getElementById('wizard-enabled-tools').value = JSON.stringify(enabledTools);
     }
+
+    saveWizardState();
 }
 
 function validateStep(step) {
     switch (step) {
         case 1:
-            const scenarioId = document.getElementById('wizard-scenario-id').value;
+            var scenarioId = document.getElementById('wizard-scenario-id').value;
             if (!scenarioId) {
                 showToast('Please select a scenario', 'error');
                 return false;
             }
             return true;
         case 2:
-            const enabledTools = document.getElementById('wizard-enabled-tools').value;
+            var enabledTools = document.getElementById('wizard-enabled-tools').value;
             try {
-                const tools = JSON.parse(enabledTools);
+                var tools = JSON.parse(enabledTools);
                 if (tools.length === 0) {
                     showToast('Please enable at least one tool', 'error');
                     return false;
                 }
-            } catch (e) {
-                // No tools parsed, might be initial state
-            }
+            } catch (e) {}
             return true;
         case 3:
-            const mode = document.getElementById('wizard-mode').value;
+            var mode = document.getElementById('wizard-mode').value;
             if (mode === 'single') {
-                const query = document.getElementById('wizard-user-query').value;
+                var query = document.getElementById('wizard-user-query').value;
                 if (!query.trim()) {
                     showToast('Please enter a query', 'error');
                     return false;
                 }
             } else {
-                const sit = document.getElementById('wizard-user-situation').value;
-                const goal = document.getElementById('wizard-user-goal').value;
+                var sit = document.getElementById('wizard-user-situation').value;
+                var goal = document.getElementById('wizard-user-goal').value;
                 if (!sit.trim()) {
                     showToast('Please fill in the situation details', 'error');
                     return false;
@@ -233,30 +263,27 @@ function validateStep(step) {
 }
 
 function loadStep(step) {
-    const scenarioId = document.getElementById('wizard-scenario-id').value;
-    const url = `/generation/step/${step}?scenario_id=${encodeURIComponent(scenarioId)}`;
+    var scenarioId = document.getElementById('wizard-scenario-id').value;
+    var url = '/generation/step/' + step + '?scenario_id=' + encodeURIComponent(scenarioId);
 
     htmx.ajax('GET', url, {
         target: '#wizard-step-content',
         swap: 'innerHTML'
-    }).then(() => {
+    }).then(function() {
         updateNavButtons();
         updateStepper();
         document.getElementById('wizard-current-step').value = step;
-
-        // Restore form values for the step
         restoreFormValues(step);
     });
 }
 
 function restoreFormValues(step) {
-    setTimeout(() => {
+    setTimeout(function() {
         if (step === 2) {
-            // Restore tool selections
-            const enabledTools = document.getElementById('wizard-enabled-tools').value;
+            var enabledTools = document.getElementById('wizard-enabled-tools').value;
             try {
-                const tools = JSON.parse(enabledTools);
-                document.querySelectorAll('input[data-tool-name]').forEach(cb => {
+                var tools = JSON.parse(enabledTools);
+                document.querySelectorAll('input[data-tool-name]').forEach(function(cb) {
                     cb.checked = tools.includes(cb.dataset.toolName);
                 });
                 updateToolCount();
@@ -264,40 +291,30 @@ function restoreFormValues(step) {
         }
 
         if (step === 3) {
-            // Restore mode selection
-            const mode = document.getElementById('wizard-mode').value;
-            const modeRadio = document.querySelector(`input[name="mode_toggle"][value="${mode}"]`);
+            var mode = document.getElementById('wizard-mode').value;
+            var modeRadio = document.querySelector('input[name="mode_toggle"][value="' + mode + '"]');
             if (modeRadio) {
                 modeRadio.checked = true;
                 modeRadio.dispatchEvent(new Event('change'));
             }
 
-            // Restore query
-            const query = document.getElementById('wizard-user-query').value;
-            const queryInput = document.querySelector('textarea[name="user_query_input"]');
+            var query = document.getElementById('wizard-user-query').value;
+            var queryInput = document.querySelector('textarea[name="user_query_input"]');
             if (queryInput) queryInput.value = query;
 
-            // Restore situation/background/goal
-            const sit = document.getElementById('wizard-user-situation').value;
-            const bg = document.getElementById('wizard-user-background').value;
-            const goal = document.getElementById('wizard-user-goal').value;
-            const sitInput = document.querySelector('textarea[name="user_situation_input"]');
-            const bgInput = document.querySelector('textarea[name="user_background_input"]');
-            const goalInput = document.querySelector('textarea[name="user_goal_input"]');
+            var sit = document.getElementById('wizard-user-situation').value;
+            var bg = document.getElementById('wizard-user-background').value;
+            var goal = document.getElementById('wizard-user-goal').value;
+            var sitInput = document.querySelector('textarea[name="user_situation_input"]');
+            var bgInput = document.querySelector('textarea[name="user_background_input"]');
+            var goalInput = document.querySelector('textarea[name="user_goal_input"]');
             if (sitInput) sitInput.value = sit;
             if (bgInput) bgInput.value = bg;
             if (goalInput) goalInput.value = goal;
-
         }
 
         if (step === 4) {
-            // Update summary display
             updateGenerateSummary();
-
-            // Restore model/temperature
-            const model = document.getElementById('wizard-model');
-            const temp = document.getElementById('wizard-temperature');
-            // These keep their values from the form
         }
 
         lucide.createIcons();
@@ -305,59 +322,54 @@ function restoreFormValues(step) {
 }
 
 function updateToolCount() {
-    const checkboxes = document.querySelectorAll('input[data-tool-name]');
-    const total = checkboxes.length;
-    const enabled = Array.from(checkboxes).filter(cb => cb.checked).length;
-    const counter = document.getElementById('tool-count');
+    var checkboxes = document.querySelectorAll('input[data-tool-name]');
+    var total = checkboxes.length;
+    var enabled = Array.from(checkboxes).filter(function(cb) { return cb.checked; }).length;
+    var counter = document.getElementById('tool-count');
     if (counter) {
-        counter.textContent = `${enabled} of ${total} tools enabled`;
+        counter.textContent = enabled + ' of ' + total + ' tools enabled';
     }
 }
 
 function updateNavButtons() {
-    const backBtn = document.getElementById('wizard-back');
-    const nextBtn = document.getElementById('wizard-next');
-    const stepIndicator = document.getElementById('step-indicator');
+    var backBtn = document.getElementById('wizard-back');
+    var nextBtn = document.getElementById('wizard-next');
+    var stepIndicator = document.getElementById('step-indicator');
 
-    // Show/hide back button
-    if (currentStep === 1) {
+    if (wizard.currentStep === 1) {
         backBtn.classList.add('invisible');
     } else {
         backBtn.classList.remove('invisible');
     }
 
-    // Change next button text on last step
-    if (currentStep === totalSteps) {
+    if (wizard.currentStep === wizard.totalSteps) {
         nextBtn.classList.add('hidden');
     } else {
         nextBtn.classList.remove('hidden');
-        nextBtn.innerHTML = `<span>Next</span><i data-lucide="arrow-right" class="w-4 h-4"></i>`;
+        nextBtn.innerHTML = '<span>Next</span><i data-lucide="arrow-right" class="w-4 h-4"></i>';
     }
 
-    // Update step indicator
-    stepIndicator.textContent = `Step ${currentStep} of ${totalSteps}`;
-
+    stepIndicator.textContent = 'Step ' + wizard.currentStep + ' of ' + wizard.totalSteps;
     lucide.createIcons();
 }
 
 function updateStepper() {
-    // Fetch the stepper template with the current step
-    htmx.ajax('GET', `/generation/stepper/${currentStep}`, {
+    htmx.ajax('GET', '/generation/stepper/' + wizard.currentStep, {
         target: '#wizard-stepper',
         swap: 'innerHTML'
-    }).then(() => {
+    }).then(function() {
         lucide.createIcons();
     });
 }
 
 function updateGenerateSummary() {
-    const scenarioId = document.getElementById('wizard-scenario-id').value;
-    const enabledTools = document.getElementById('wizard-enabled-tools').value;
-    const mode = document.getElementById('wizard-mode').value;
+    var scenarioId = document.getElementById('wizard-scenario-id').value;
+    var enabledTools = document.getElementById('wizard-enabled-tools').value;
+    var mode = document.getElementById('wizard-mode').value;
 
-    const scenarioEl = document.getElementById('summary-scenario');
-    const toolsEl = document.getElementById('summary-tools');
-    const modeEl = document.getElementById('summary-mode');
+    var scenarioEl = document.getElementById('summary-scenario');
+    var toolsEl = document.getElementById('summary-tools');
+    var modeEl = document.getElementById('summary-mode');
 
     if (scenarioEl) {
         scenarioEl.textContent = scenarioId || 'Not selected';
@@ -365,8 +377,8 @@ function updateGenerateSummary() {
 
     if (toolsEl) {
         try {
-            const tools = JSON.parse(enabledTools);
-            toolsEl.textContent = `${tools.length} tool${tools.length !== 1 ? 's' : ''} enabled`;
+            var tools = JSON.parse(enabledTools);
+            toolsEl.textContent = tools.length + ' tool' + (tools.length !== 1 ? 's' : '') + ' enabled';
         } catch (e) {
             toolsEl.textContent = 'All enabled';
         }
@@ -377,22 +389,16 @@ function updateGenerateSummary() {
     }
 }
 
-function showToast(message, type = 'info') {
-    // Simple toast notification
-    const toast = document.createElement('div');
-    toast.className = `fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 animate-in slide-in-from-right ${
-        type === 'error' ? 'bg-error-500/90 text-white' : 'bg-surface-sidebar text-white border border-theme'
-    }`;
+function showToast(message, type) {
+    type = type || 'info';
+    var toast = document.createElement('div');
+    toast.className = 'fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 animate-in slide-in-from-right ' +
+        (type === 'error' ? 'bg-error-500/90 text-white' : 'bg-surface-sidebar text-white border border-theme');
     toast.textContent = message;
     document.body.appendChild(toast);
 
-    setTimeout(() => {
+    setTimeout(function() {
         toast.remove();
     }, 3000);
 }
-
-// Listen for step navigation from stepper clicks
-document.addEventListener('stepNavigate', function(e) {
-    goToStep(e.detail.step);
-});
 </script>

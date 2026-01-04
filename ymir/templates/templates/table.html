@@ -1,0 +1,42 @@
+<div class="card overflow-hidden">
+    <!-- Table -->
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-slate-800/50 border-b border-slate-700">
+                <tr>
+                    <th class="p-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Name</th>
+                    <th class="p-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Scenario</th>
+                    <th class="p-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Actor</th>
+                    <th class="p-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Tools</th>
+                    <th class="p-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Model</th>
+                    <th class="p-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Temp</th>
+                    <th class="p-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Usage</th>
+                    <th class="p-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider w-16">Fav</th>
+                    <th class="p-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider w-40">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="table-body" class="divide-y divide-slate-700/50">
+                {% for template in templates %}
+                {% include "templates/row.html" %}
+                {% else %}
+                <tr>
+                    <td colspan="9" class="p-12 text-center">
+                        <div class="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-600">
+                            <i data-lucide="file-cog" class="w-7 h-7"></i>
+                        </div>
+                        <h2 class="text-lg font-bold text-slate-300 mb-1">No Templates Found</h2>
+                        <p class="text-slate-500 text-sm">Create a template to save your generation configurations.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Re-initialize Lucide icons after HTMX swap -->
+<script>
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>

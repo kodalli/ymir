@@ -1,0 +1,198 @@
+<!-- Modal Backdrop -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    id="template-modal"
+    _="on click if event.target == me remove me">
+
+    <!-- Modal Content -->
+    <div class="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+        _="on click halt">
+
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold text-slate-200">
+                    {% if template %}Edit Template{% else %}Create New Template{% endif %}
+                </h2>
+                <p class="text-sm text-slate-500 mt-1">
+                    {% if template %}Update the template settings{% else %}Save a generation configuration for quick reuse{% endif %}
+                </p>
+            </div>
+            <button class="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-200 transition-colors"
+                _="on click remove #template-modal">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body (scrollable) -->
+        <div class="flex-1 overflow-y-auto p-6">
+            <form id="template-form"
+                {% if template %}
+                hx-put="/templates/{{ template.id }}"
+                {% else %}
+                hx-post="/templates"
+                {% endif %}
+                hx-target="#templates-table"
+                hx-swap="innerHTML"
+                _="on htmx:afterRequest if event.detail.successful remove #template-modal">
+
+                <div class="space-y-5">
+                    <!-- Name Input -->
+                    <div>
+                        <label for="name" class="block text-sm font-bold text-slate-300 mb-2">
+                            Name <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text"
+                            id="name"
+                            name="name"
+                            value="{{ template.name if template else '' }}"
+                            required
+                            placeholder="e.g., Customer Service - VIP Client"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500">
+                    </div>
+
+                    <!-- Description -->
+                    <div>
+                        <label for="description" class="block text-sm font-bold text-slate-300 mb-2">
+                            Description
+                        </label>
+                        <textarea id="description"
+                            name="description"
+                            rows="2"
+                            placeholder="Describe when to use this template..."
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500 resize-y">{{ template.description if template else '' }}</textarea>
+                    </div>
+
+                    <!-- Scenario Selection -->
+                    <div>
+                        <label for="scenario_id" class="block text-sm font-bold text-slate-300 mb-2">
+                            Scenario <span class="text-red-500">*</span>
+                        </label>
+                        <select id="scenario_id"
+                            name="scenario_id"
+                            required
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-ymir-500"
+                            hx-get="/templates/options/actors"
+                            hx-target="#actor-select"
+                            hx-swap="innerHTML"
+                            hx-trigger="change"
+                            hx-include="this"
+                            _="on change also fetch `/templates/options/presets?scenario_id=${me.value}` then put the result into #preset-select">
+                            <option value="">Select a scenario...</option>
+                            {% for scenario in scenarios %}
+                            <option value="{{ scenario.id }}" {% if template and template.scenario_id == scenario.id %}selected{% endif %}>
+                                {{ scenario.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-xs text-slate-500 mt-1">The conversation context and system prompt</p>
+                    </div>
+
+                    <!-- Actor Selection (dynamic based on scenario) -->
+                    <div>
+                        <label for="actor_id" class="block text-sm font-bold text-slate-300 mb-2">
+                            Actor (Optional)
+                        </label>
+                        <div id="actor-select">
+                            <select id="actor_id"
+                                name="actor_id"
+                                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-ymir-500">
+                                <option value="">No actor (use default)</option>
+                                {% if actors %}
+                                {% for actor in actors %}
+                                <option value="{{ actor.id }}" {% if template and template.actor_id == actor.id %}selected{% endif %}>
+                                    {{ actor.name }}
+                                </option>
+                                {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">User persona with background and goals</p>
+                    </div>
+
+                    <!-- Tool Preset Selection (dynamic based on scenario) -->
+                    <div>
+                        <label for="tool_preset_id" class="block text-sm font-bold text-slate-300 mb-2">
+                            Tool Preset (Optional)
+                        </label>
+                        <div id="preset-select">
+                            <select id="tool_preset_id"
+                                name="tool_preset_id"
+                                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-ymir-500">
+                                <option value="">Default tools</option>
+                                {% if presets %}
+                                {% for preset in presets %}
+                                <option value="{{ preset.id }}" {% if template and template.tool_preset_id == preset.id %}selected{% endif %}>
+                                    {{ preset.name }}
+                                </option>
+                                {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">Predefined set of tools to enable</p>
+                    </div>
+
+                    <hr class="border-slate-700">
+
+                    <!-- Model Selection -->
+                    <div>
+                        <label for="model" class="block text-sm font-bold text-slate-300 mb-2">
+                            Model <span class="text-red-500">*</span>
+                        </label>
+                        <select id="model"
+                            name="model"
+                            required
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-ymir-500">
+                            {% for model in models %}
+                            <option value="{{ model }}" {% if template and template.model == model %}selected{% elif not template and loop.first %}selected{% endif %}>
+                                {{ model }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Temperature Slider -->
+                    <div>
+                        <label for="temperature" class="block text-sm font-bold text-slate-300 mb-2">
+                            Temperature: <span id="temp-value" class="text-ymir-400 font-mono">{{ "%.1f"|format(template.temperature if template else 0.7) }}</span>
+                        </label>
+                        <input type="range"
+                            id="temperature"
+                            name="temperature"
+                            min="0"
+                            max="1"
+                            step="0.1"
+                            value="{{ template.temperature if template else 0.7 }}"
+                            class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-ymir-500"
+                            _="on input set #temp-value.innerText to me.value">
+                        <div class="flex justify-between text-xs text-slate-500 mt-1">
+                            <span>Precise (0.0)</span>
+                            <span>Creative (1.0)</span>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-6 py-4 border-t border-slate-700 flex items-center justify-end gap-3">
+            <button type="button"
+                class="btn-secondary px-6 py-2.5"
+                _="on click remove #template-modal">
+                Cancel
+            </button>
+            <button type="submit"
+                form="template-form"
+                class="btn-primary px-6 py-2.5 flex items-center gap-2">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                {% if template %}Update Template{% else %}Create Template{% endif %}
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Re-initialize Lucide icons -->
+<script>
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>

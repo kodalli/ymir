@@ -1,0 +1,79 @@
+<div class="w-full">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h1 class="text-xl font-bold tracking-tight">Templates</h1>
+            <p class="text-slate-400 text-sm">Saved generation configurations for quick reuse</p>
+        </div>
+        <div class="flex gap-3">
+            <button class="btn-primary flex items-center gap-2"
+                hx-get="/templates/modal/new"
+                hx-target="#modal-container"
+                hx-swap="innerHTML">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                New Template
+            </button>
+            <button class="btn-secondary flex items-center gap-2"
+                hx-get="/templates/" hx-target="#main-content" hx-swap="innerHTML">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Search & Filters Panel -->
+    <div class="card p-4 mb-4">
+        <form id="filter-form"
+            hx-get="/templates/list"
+            hx-target="#templates-table"
+            hx-trigger="change from:select, change from:input[type=checkbox]"
+            hx-swap="innerHTML">
+
+            <div class="flex flex-wrap items-center gap-4">
+                <!-- Scenario Filter -->
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase">Scenario:</label>
+                    <select name="scenario_id" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                        <option value="all">All Scenarios</option>
+                        {% for scenario in scenarios %}
+                        <option value="{{ scenario.id }}">{{ scenario.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Favorites Toggle -->
+                <div class="flex items-center gap-2">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="favorites_only" value="true"
+                            class="w-4 h-4 rounded border-slate-600 bg-slate-800 text-ymir-500">
+                        <span class="text-sm text-slate-400">Favorites only</span>
+                    </label>
+                </div>
+
+                <!-- Clear Filters -->
+                <button type="button" class="text-xs text-slate-500 hover:text-ymir-500 underline"
+                    _="on click
+                       set document.querySelector('select[name=scenario_id]').value to 'all'
+                       set document.querySelector('input[name=favorites_only]').checked to false
+                       then trigger change on #filter-form">
+                    Clear Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Templates Table Container -->
+    <div id="templates-table"
+        hx-get="/templates/list"
+        hx-trigger="load"
+        hx-swap="innerHTML">
+        <!-- Initial load spinner -->
+        <div class="card p-12 text-center">
+            <div class="animate-spin w-8 h-8 border-2 border-ymir-500 border-t-transparent rounded-full mx-auto"></div>
+            <p class="text-slate-400 text-sm mt-4">Loading templates...</p>
+        </div>
+    </div>
+
+    <!-- Modal Container -->
+    <div id="modal-container"></div>
+</div>

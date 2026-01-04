@@ -1,0 +1,132 @@
+<!-- Template Row -->
+<tr class="template-row hover:bg-slate-800/30 transition-colors"
+    id="row-{{ template.id }}"
+    data-template-id="{{ template.id }}">
+
+    <!-- Name with Description -->
+    <td class="p-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center text-ymir-500">
+                <i data-lucide="file-cog" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <div class="font-medium text-sm text-slate-200">{{ template.name }}</div>
+                {% if template.description %}
+                <p class="text-xs text-slate-500 mt-0.5 max-w-[200px] truncate" title="{{ template.description }}">
+                    {{ template.description[:50] }}{% if template.description|length > 50 %}...{% endif %}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </td>
+
+    <!-- Scenario -->
+    <td class="p-4">
+        {% if template.scenario %}
+        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
+            {{ template.scenario.name }}
+        </span>
+        {% else %}
+        <span class="text-slate-600">--</span>
+        {% endif %}
+    </td>
+
+    <!-- Actor -->
+    <td class="p-4">
+        {% if template.actor %}
+        <div class="flex items-center gap-2">
+            <i data-lucide="{{ template.actor.icon or 'user' }}" class="w-4 h-4 text-slate-400"></i>
+            <span class="text-sm text-slate-300">{{ template.actor.name }}</span>
+        </div>
+        {% else %}
+        <span class="text-slate-600">--</span>
+        {% endif %}
+    </td>
+
+    <!-- Tool Preset -->
+    <td class="p-4">
+        {% if template.tool_preset %}
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-slate-700 text-slate-300">
+            {{ template.tool_preset.name }}
+        </span>
+        {% else %}
+        <span class="text-xs text-slate-500">Default</span>
+        {% endif %}
+    </td>
+
+    <!-- Model -->
+    <td class="p-4 text-center">
+        <span class="text-xs text-slate-400 font-mono">{{ template.model }}</span>
+    </td>
+
+    <!-- Temperature -->
+    <td class="p-4 text-center">
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono
+            {% if template.temperature < 0.3 %}bg-blue-500/10 text-blue-400
+            {% elif template.temperature > 0.8 %}bg-orange-500/10 text-orange-400
+            {% else %}bg-slate-700 text-slate-300{% endif %}">
+            {{ "%.1f"|format(template.temperature) }}
+        </span>
+    </td>
+
+    <!-- Usage -->
+    <td class="p-4 text-center">
+        <div class="text-sm text-slate-300">{{ template.use_count }}</div>
+        {% if template.last_used_at %}
+        <div class="text-xs text-slate-500">{{ template.last_used_at.strftime('%m/%d') }}</div>
+        {% endif %}
+    </td>
+
+    <!-- Favorite Toggle -->
+    <td class="p-4 text-center">
+        <button class="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+            hx-post="/templates/{{ template.id }}/favorite"
+            hx-target="#row-{{ template.id }}"
+            hx-swap="outerHTML"
+            title="{% if template.is_favorite %}Remove from favorites{% else %}Add to favorites{% endif %}">
+            <i data-lucide="star" class="w-4 h-4 {% if template.is_favorite %}text-yellow-500 fill-yellow-500{% else %}text-slate-500{% endif %}"></i>
+        </button>
+    </td>
+
+    <!-- Action Buttons -->
+    <td class="p-4">
+        <div class="flex items-center justify-center gap-1">
+            <!-- Quick Generate Button -->
+            <button class="p-2 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-green-500 transition-colors"
+                hx-get="/templates/modal/generate/{{ template.id }}"
+                hx-target="#modal-container"
+                hx-swap="innerHTML"
+                title="Quick Generate">
+                <i data-lucide="zap" class="w-4 h-4"></i>
+            </button>
+
+            <!-- Edit Button -->
+            <button class="p-2 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-ymir-500 transition-colors"
+                hx-get="/templates/modal/edit/{{ template.id }}"
+                hx-target="#modal-container"
+                hx-swap="innerHTML"
+                title="Edit Template">
+                <i data-lucide="pencil" class="w-4 h-4"></i>
+            </button>
+
+            <!-- Clone Button -->
+            <button class="p-2 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-blue-500 transition-colors"
+                hx-get="/templates/modal/clone/{{ template.id }}"
+                hx-target="#modal-container"
+                hx-swap="innerHTML"
+                title="Clone Template">
+                <i data-lucide="copy" class="w-4 h-4"></i>
+            </button>
+
+            <!-- Delete Button -->
+            <button class="p-2 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
+                hx-delete="/templates/{{ template.id }}"
+                hx-confirm="Are you sure you want to delete '{{ template.name }}'?"
+                hx-target="#templates-table"
+                hx-swap="innerHTML"
+                title="Delete Template">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </td>
+</tr>

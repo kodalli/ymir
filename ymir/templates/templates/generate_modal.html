@@ -1,0 +1,86 @@
+<!-- Quick Generate Modal -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    id="generate-modal"
+    _="on click if event.target == me remove me">
+
+    <!-- Modal Content -->
+    <div class="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden"
+        _="on click halt">
+
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold text-slate-200">Quick Generate</h2>
+                <p class="text-sm text-slate-500 mt-1">Using template: {{ template.name }}</p>
+            </div>
+            <button class="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-200 transition-colors"
+                _="on click remove #generate-modal">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Template Info -->
+        <div class="px-6 py-4 bg-slate-800/50 border-b border-slate-700">
+            <div class="flex flex-wrap gap-3 text-sm">
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-500">Scenario:</span>
+                    <span class="text-purple-400">{{ template.scenario.name if template.scenario else 'Unknown' }}</span>
+                </div>
+                {% if template.actor %}
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-500">Actor:</span>
+                    <span class="text-slate-300">{{ template.actor.name }}</span>
+                </div>
+                {% endif %}
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-500">Model:</span>
+                    <span class="text-slate-300 font-mono text-xs">{{ template.model }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-6">
+            <form id="generate-form"
+                hx-post="/templates/{{ template.id }}/generate"
+                hx-target="#modal-container"
+                hx-swap="innerHTML">
+
+                <div>
+                    <label for="user_query" class="block text-sm font-bold text-slate-300 mb-2">
+                        User Query <span class="text-red-500">*</span>
+                    </label>
+                    <textarea id="user_query"
+                        name="user_query"
+                        required
+                        rows="4"
+                        placeholder="Enter the user's message to generate a conversation trajectory..."
+                        class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500 resize-y"></textarea>
+                    <p class="text-xs text-slate-500 mt-1">The initial user message to start the conversation</p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-6 py-4 border-t border-slate-700 flex items-center justify-end gap-3">
+            <button type="button"
+                class="btn-secondary px-6 py-2.5"
+                _="on click remove #generate-modal">
+                Cancel
+            </button>
+            <button type="submit"
+                form="generate-form"
+                class="btn-primary px-6 py-2.5 flex items-center gap-2">
+                <i data-lucide="zap" class="w-4 h-4"></i>
+                Generate
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Re-initialize Lucide icons -->
+<script>
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>

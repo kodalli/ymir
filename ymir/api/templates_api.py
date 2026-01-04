@@ -204,16 +204,30 @@ async def update_template(
         )
 
 
-@router.delete("/{id}")
-async def delete_template(id: str):
+@router.delete("/{id}", response_class=HTMLResponse)
+async def delete_template(request: Request, id: str):
     """Delete a generation template."""
     store = get_store()
 
     success = await store.delete_generation_template(id)
     if not success:
-        return Response(status_code=404)
+        return HTMLResponse(content="Template not found", status_code=404)
 
-    return Response(status_code=200)
+    # Return refreshed table
+    all_templates = await store.list_generation_templates()
+    enriched_templates = []
+    for template in all_templates:
+        full_template = await store.get_generation_template_full(template.id)
+        if full_template:
+            enriched_templates.append(full_template)
+
+    return templates.TemplateResponse(
+        "templates/table.html",
+        {
+            "request": request,
+            "templates": enriched_templates,
+        },
+    )
 
 
 @router.post("/{id}/clone", response_class=HTMLResponse)
@@ -242,16 +256,21 @@ async def clone_template(
             temperature=original.temperature,
         )
 
-        cloned_template = await store.create_generation_template(template_data)
+        await store.create_generation_template(template_data)
 
-        # Load full details for rendering
-        full_template = await store.get_generation_template_full(cloned_template.id)
+        # Return refreshed table
+        all_templates = await store.list_generation_templates()
+        enriched_templates = []
+        for template in all_templates:
+            full_template = await store.get_generation_template_full(template.id)
+            if full_template:
+                enriched_templates.append(full_template)
 
         return templates.TemplateResponse(
-            "templates/row.html",
+            "templates/table.html",
             {
                 "request": request,
-                "template": full_template,
+                "templates": enriched_templates,
             },
         )
 
@@ -411,3 +430,135 @@ async def get_recent_templates(
         result.append(template_dict)
 
     return JSONResponse({"templates": result})
+
+
+# ============ Modal Endpoints ============
+
+
+@router.get("/modal/new", response_class=HTMLResponse)
+async def new_template_modal(request: Request):
+    """Return the new template modal form."""
+    store = get_store()
+
+    scenarios = await store.list_scenarios()
+    models = get_available_models()
+
+    return templates.TemplateResponse(
+        "templates/form_modal.html",
+        {
+            "request": request,
+            "template": None,
+            "scenarios": scenarios,
+            "actors": [],
+            "presets": [],
+            "models": models,
+        },
+    )
+
+
+@router.get("/modal/edit/{id}", response_class=HTMLResponse)
+async def edit_template_modal(request: Request, id: str):
+    """Return the edit template modal form."""
+    store = get_store()
+
+    template = await store.get_generation_template_full(id)
+    if not template:
+        return HTMLResponse(content="Template not found", status_code=404)
+
+    scenarios = await store.list_scenarios()
+    models = get_available_models()
+
+    # Get actors and presets for the current scenario
+    actors = []
+    presets = []
+    if template.scenario_id:
+        actors = await store.get_scenario_actors(template.scenario_id)
+        presets = await store.list_scenario_presets(template.scenario_id)
+
+    return templates.TemplateResponse(
+        "templates/form_modal.html",
+        {
+            "request": request,
+            "template": template,
+            "scenarios": scenarios,
+            "actors": actors,
+            "presets": presets,
+            "models": models,
+        },
+    )
+
+
+@router.get("/modal/clone/{id}", response_class=HTMLResponse)
+async def clone_template_modal(request: Request, id: str):
+    """Return the clone template modal."""
+    store = get_store()
+
+    template = await store.get_generation_template(id)
+    if not template:
+        return HTMLResponse(content="Template not found", status_code=404)
+
+    return templates.TemplateResponse(
+        "templates/clone_modal.html",
+        {
+            "request": request,
+            "template": template,
+        },
+    )
+
+
+@router.get("/modal/generate/{id}", response_class=HTMLResponse)
+async def generate_template_modal(request: Request, id: str):
+    """Return the quick generate modal."""
+    store = get_store()
+
+    template = await store.get_generation_template_full(id)
+    if not template:
+        return HTMLResponse(content="Template not found", status_code=404)
+
+    return templates.TemplateResponse(
+        "templates/generate_modal.html",
+        {
+            "request": request,
+            "template": template,
+        },
+    )
+
+
+@router.get("/options/actors", response_class=HTMLResponse)
+async def get_actors_options(
+    request: Request,
+    scenario_id: str = Query(...),
+):
+    """Get actor options for a scenario (used for dynamic dropdown)."""
+    store = get_store()
+
+    actors = await store.get_scenario_actors(scenario_id)
+
+    # Return just the select options HTML
+    html = '<select id="actor_id" name="actor_id" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-ymir-500">'
+    html += '<option value="">No actor (use default)</option>'
+    for actor in actors:
+        html += f'<option value="{actor.id}">{actor.name}</option>'
+    html += "</select>"
+
+    return HTMLResponse(content=html)
+
+
+@router.get("/options/presets", response_class=HTMLResponse)
+async def get_presets_options(
+    request: Request,
+    scenario_id: str = Query(...),
+):
+    """Get tool preset options for a scenario (used for dynamic dropdown)."""
+    store = get_store()
+
+    presets = await store.list_scenario_presets(scenario_id)
+
+    # Return just the select options HTML
+    html = '<select id="tool_preset_id" name="tool_preset_id" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-ymir-500">'
+    html += '<option value="">Default tools</option>'
+    for preset in presets:
+        html += f'<option value="{preset.id}">{preset.name}</option>'
+    html += "</select>"
+
+    return HTMLResponse(content=html)

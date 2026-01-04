@@ -1,0 +1,66 @@
+<!-- Clone Template Modal -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    id="clone-modal"
+    _="on click if event.target == me remove me">
+
+    <!-- Modal Content -->
+    <div class="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md overflow-hidden"
+        _="on click halt">
+
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold text-slate-200">Clone Template</h2>
+                <p class="text-sm text-slate-500 mt-1">Create a copy of "{{ template.name }}"</p>
+            </div>
+            <button class="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-200 transition-colors"
+                _="on click remove #clone-modal">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-6">
+            <form id="clone-form"
+                hx-post="/templates/{{ template.id }}/clone"
+                hx-target="#templates-table"
+                hx-swap="innerHTML"
+                _="on htmx:afterRequest if event.detail.successful remove #clone-modal">
+
+                <div>
+                    <label for="new_name" class="block text-sm font-bold text-slate-300 mb-2">
+                        New Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text"
+                        id="new_name"
+                        name="new_name"
+                        required
+                        value="{{ template.name }} (Copy)"
+                        class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500">
+                </div>
+            </form>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-6 py-4 border-t border-slate-700 flex items-center justify-end gap-3">
+            <button type="button"
+                class="btn-secondary px-6 py-2.5"
+                _="on click remove #clone-modal">
+                Cancel
+            </button>
+            <button type="submit"
+                form="clone-form"
+                class="btn-primary px-6 py-2.5 flex items-center gap-2">
+                <i data-lucide="copy" class="w-4 h-4"></i>
+                Clone
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Re-initialize Lucide icons -->
+<script>
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>

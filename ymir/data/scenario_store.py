@@ -267,7 +267,7 @@ class ScenarioStore:
             tools = await self.get_scenario_tools(id)
 
             return ScenarioWithTools(
-                **scenario.model_dump(),
+                **scenario.model_dump(exclude={"tool_count"}),
                 tools=tools,
                 tool_count=len(tools),
             )

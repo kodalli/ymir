@@ -47,6 +47,9 @@ async def list_actors(
     search: str | None = Query(None),
     category: str | None = Query(None),
     page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    sort_by: str = Query("name"),
+    sort_order: str = Query("asc"),
 ):
     """HTMX table body refresh with filtering."""
     store = get_store()
@@ -69,15 +72,36 @@ async def list_actors(
             or any(search_lower in tag.lower() for tag in actor.tags)
         ]
 
+    # Apply sorting
+    if sort_by == "name":
+        actors = sorted(actors, key=lambda a: a.name.lower(), reverse=(sort_order == "desc"))
+    elif sort_by == "category":
+        actors = sorted(actors, key=lambda a: (a.category or "").lower(), reverse=(sort_order == "desc"))
+    elif sort_by == "created_at":
+        actors = sorted(actors, key=lambda a: a.created_at, reverse=(sort_order == "desc"))
+
+    # Compute pagination
+    total_count = len(actors)
+    total_pages = (total_count + page_size - 1) // page_size if total_count > 0 else 1
+
+    # Apply pagination
+    start_idx = (page - 1) * page_size
+    end_idx = start_idx + page_size
+    paginated_actors = actors[start_idx:end_idx]
+
     return templates.TemplateResponse(
         "actors/table.html",
         {
             "request": request,
-            "actors": actors,
-            "total_count": len(actors),
-            "search": search,
-            "category": category,
+            "actors": paginated_actors,
+            "total_count": total_count,
+            "total_pages": total_pages,
+            "page_size": page_size,
+            "search": search or "",
+            "category": category or "",
             "page": page,
+            "sort_by": sort_by,
+            "sort_order": sort_order,
         },
     )
 
@@ -135,6 +159,12 @@ async def get_actor(id: str):
         return JSONResponse({"error": "Actor not found"}, status_code=404)
 
     return JSONResponse(actor.model_dump(mode="json"))
+
+
+@router.get("/modal/edit/{id}", response_class=HTMLResponse)
+async def edit_actor_modal(request: Request, id: str):
+    """Render edit modal for an actor (modal path)."""
+    return await edit_actor_form(request, id)
 
 
 @router.get("/{id}/edit", response_class=HTMLResponse)

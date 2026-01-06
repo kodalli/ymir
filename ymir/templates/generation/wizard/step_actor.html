@@ -1,14 +1,14 @@
 <!-- Step 3: Configure Actor -->
 <div class="space-y-6">
     <!-- Header -->
-    <div class="flex items-start gap-4">
-        <div class="flex-shrink-0">
-            <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-ymir-500/10 text-ymir-500 font-semibold">
-                3
-            </span>
-        </div>
-        <div class="flex-1">
-            <h2 class="text-2xl font-bold text-white mb-2">Configure the Actor</h2>
+    <div class="flex items-start justify-between">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-ymir-500/10 text-ymir-400 border border-ymir-500/20">
+                    Step {{ step }} of 4
+                </span>
+                <h2 class="text-2xl font-semibold text-theme-primary">Configure the Actor</h2>
+            </div>
             <p class="text-theme-secondary">Define who will interact with the agent during the trajectory</p>
         </div>
     </div>
@@ -20,180 +20,105 @@
             <div class="text-sm text-theme-secondary space-y-1">
                 <p><strong class="text-theme-primary">ACTOR:</strong> The simulated user who will interact with the agent.</p>
                 <p>In a medical scenario, this might be a patient calling to schedule an appointment.</p>
-                <p>Choose how you want to provide input to the agent.</p>
+                <p>Select a saved actor or customize the details below.</p>
             </div>
         </div>
     </div>
 
-    <!-- Mode Selection -->
-    <div class="space-y-4">
-        <label class="block text-sm font-medium text-theme-secondary">Input Mode</label>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Single Query Mode -->
-            <label class="relative flex cursor-pointer">
-                <input
-                    type="radio"
-                    name="mode_toggle"
-                    value="single"
-                    checked
-                    class="peer sr-only"
-                    _="on change
-                       if my.checked
-                         remove .hidden from #single-fields
-                         add .hidden to #simulated-fields
-                       end"
-                >
-                <div class="flex-1 border-2 border-theme rounded-lg p-6 transition-all
-                            peer-checked:border-ymir-500 peer-checked:bg-ymir-500/5
-                            hover:border-theme-hover hover:bg-surface-hover/50">
-                    <div class="flex items-start gap-4">
-                        <div class="flex-shrink-0 p-2 rounded-lg bg-surface-sidebar">
-                            <i data-lucide="message-square" class="w-6 h-6 text-ymir-500"></i>
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="text-lg font-semibold text-white mb-1">Single Query</h3>
-                            <p class="text-sm text-theme-secondary">Provide one query. The agent will use tools to complete the task.</p>
-                        </div>
-                    </div>
-                </div>
-            </label>
+    <!-- Hidden input to maintain mode as simulated -->
+    <input type="hidden" name="mode_toggle" value="simulated">
 
-            <!-- Simulated Actor Mode -->
-            <label class="relative flex cursor-pointer">
+    <!-- Actor Presets (if available) -->
+    {% if actors and actors|length > 0 %}
+    <div class="space-y-3 mb-6">
+        <div class="flex items-center justify-between">
+            <label class="block text-sm font-medium text-theme-secondary">Saved Actors</label>
+            <div class="relative">
+                <i data-lucide="search" class="w-4 h-4 text-theme-muted absolute left-3 top-1/2 -translate-y-1/2"></i>
                 <input
-                    type="radio"
-                    name="mode_toggle"
-                    value="simulated"
-                    class="peer sr-only"
-                    _="on change
-                       if my.checked
-                         add .hidden to #single-fields
-                         remove .hidden from #simulated-fields
+                    type="text"
+                    id="actor-search"
+                    placeholder="Search actors..."
+                    class="pl-9 pr-3 py-1.5 text-sm bg-surface-sidebar border border-theme rounded-lg
+                           text-white placeholder-theme-muted focus:outline-none focus:ring-2
+                           focus:ring-ymir-500 focus:border-transparent w-48"
+                    _="on keyup
+                       set query to my.value.toLowerCase()
+                       for card in .actor-card
+                         set name to card @data-actor-name.toLowerCase()
+                         set bg to card @data-actor-background.toLowerCase()
+                         if query is '' or name.includes(query) or bg.includes(query)
+                           remove .hidden from card
+                         else
+                           add .hidden to card
+                         end
                        end"
                 >
-                <div class="flex-1 border-2 border-theme rounded-lg p-6 transition-all
-                            peer-checked:border-ymir-500 peer-checked:bg-ymir-500/5
-                            hover:border-theme-hover hover:bg-surface-hover/50">
-                    <div class="flex items-start gap-4">
-                        <div class="flex-shrink-0 p-2 rounded-lg bg-surface-sidebar">
-                            <i data-lucide="users" class="w-6 h-6 text-ymir-500"></i>
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="text-lg font-semibold text-white mb-1">Simulated Actor</h3>
-                            <p class="text-sm text-theme-secondary">AI simulates a person with a background and goal, having a natural conversation.</p>
-                        </div>
+            </div>
+        </div>
+        <div id="actor-grid" class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {% for actor in actors %}
+            <button type="button"
+                    class="actor-card text-left px-4 py-3 bg-surface-sidebar hover:bg-ymir-500/10 border border-theme hover:border-ymir-500/50 rounded-lg transition-colors"
+                    data-actor-name="{{ actor.name }}"
+                    data-actor-background="{{ actor.background }}"
+                    data-actor-goal="{{ actor.goal }}"
+                    _="on click
+                       set #persona-background.value to my @data-actor-background
+                       set #persona-goal.value to my @data-actor-goal">
+                <div class="flex items-start gap-3">
+                    {% if actor.icon %}
+                    <div class="flex-shrink-0 text-2xl">{{ actor.icon }}</div>
+                    {% else %}
+                    <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-surface-main flex items-center justify-center">
+                        <i data-lucide="user" class="w-4 h-4 text-theme-secondary"></i>
+                    </div>
+                    {% endif %}
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-medium text-white mb-1">{{ actor.name }}</h4>
+                        <p class="text-xs text-theme-muted line-clamp-2">{{ actor.background }}</p>
                     </div>
                 </div>
-            </label>
+            </button>
+            {% endfor %}
         </div>
+        <p class="text-xs text-theme-muted">Click an actor to load their background and goal</p>
+    </div>
+    {% endif %}
+
+    <!-- Custom Actor Details -->
+    <div class="flex items-center justify-between mb-4">
+        <label class="block text-sm font-medium text-theme-secondary">
+            {% if actors and actors|length > 0 %}Custom Actor Details{% else %}Actor Details{% endif %}
+        </label>
+        <button
+            type="button"
+            class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-theme-secondary bg-surface-hover hover:bg-theme-border rounded-lg transition-colors"
+            _="on click
+               set #persona-situation.value to 'Patient Name: Mark Nolan\nPhone Number: (614) 443-4790\nDate of Birth: 08/18/1980\nReason for Visit: Leg pain\nEmail: mark.nolan@gmail.com\nPreferred Date: Next Monday or Tuesday (flexible)\nPreferred Time: Flexible\nAdditional Notes: Experiencing persistent leg pain in right leg, started about a week ago after lifting weights'
+               set #persona-background.value to 'You are a new patient. You are friendly and cooperative but want to get this scheduled quickly.'
+               set #persona-goal.value to 'Schedule an appointment to see a doctor about your leg pain as soon as possible.'"
+        >
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+            Load Example
+        </button>
     </div>
 
-    <!-- Single Query Fields -->
-    <div id="single-fields" class="space-y-4">
+    <div class="space-y-4">
+        <!-- Situation Details -->
         <div>
-            <label for="query-input" class="block text-sm font-medium text-theme-secondary mb-2">
-                User Query
+            <label for="persona-situation" class="block text-sm font-medium text-theme-secondary mb-2">
+                Situation Details
+                <span class="text-theme-muted font-normal ml-1">- Facts the actor knows (hidden from agent)</span>
             </label>
             <textarea
-                id="query-input"
-                name="user_query_input"
+                id="persona-situation"
+                name="user_situation_input"
                 rows="6"
                 class="w-full px-4 py-3 bg-surface-sidebar border border-theme rounded-lg
                        text-white placeholder-theme-muted focus:outline-none focus:ring-2
-                       focus:ring-ymir-500 focus:border-transparent resize-none"
-                placeholder="Enter the query the user will ask the agent..."
-            ></textarea>
-        </div>
-
-        {% if scenario.example_queries and scenario.example_queries|length > 0 %}
-        <div>
-            <label class="block text-sm font-medium text-theme-secondary mb-2">
-                Example Queries
-            </label>
-            <div class="flex flex-wrap gap-2">
-                {% for query in scenario.example_queries %}
-                <button
-                    type="button"
-                    class="px-3 py-2 text-sm bg-surface-sidebar hover:bg-surface-hover text-theme-secondary
-                           rounded-lg border border-theme hover:border-theme-hover transition-colors"
-                    _="on click set #query-input.value to '{{ query|replace("'", "\\'") }}'"
-                >
-                    {{ query }}
-                </button>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Simulated Actor Fields -->
-    <div id="simulated-fields" class="hidden">
-        <!-- Actor Presets (if available) -->
-        {% if actors and actors|length > 0 %}
-        <div class="space-y-2 mb-6">
-            <label class="block text-sm font-medium text-theme-secondary">Saved Actors</label>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {% for actor in actors %}
-                <button type="button"
-                        class="text-left px-4 py-3 bg-surface-sidebar hover:bg-ymir-500/10 border border-theme hover:border-ymir-500/50 rounded-lg transition-colors"
-                        data-actor-background="{{ actor.background }}"
-                        data-actor-goal="{{ actor.goal }}"
-                        _="on click
-                           set #persona-background.value to my @data-actor-background
-                           set #persona-goal.value to my @data-actor-goal">
-                    <div class="flex items-start gap-3">
-                        {% if actor.icon %}
-                        <div class="flex-shrink-0 text-2xl">{{ actor.icon }}</div>
-                        {% else %}
-                        <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-surface-main flex items-center justify-center">
-                            <i data-lucide="user" class="w-4 h-4 text-theme-secondary"></i>
-                        </div>
-                        {% endif %}
-                        <div class="flex-1 min-w-0">
-                            <h4 class="font-medium text-white mb-1">{{ actor.name }}</h4>
-                            <p class="text-xs text-theme-muted line-clamp-2">{{ actor.background }}</p>
-                        </div>
-                    </div>
-                </button>
-                {% endfor %}
-            </div>
-            <p class="text-xs text-theme-muted">Click an actor to load their background and goal</p>
-        </div>
-        {% endif %}
-
-        <!-- Manual Input Toggle -->
-        <div class="flex items-center justify-between mb-4">
-            <label class="block text-sm font-medium text-theme-secondary">
-                {% if actors and actors|length > 0 %}Custom Actor Details{% else %}Actor Details{% endif %}
-            </label>
-            <button
-                type="button"
-                class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-theme-secondary bg-surface-hover hover:bg-theme-border rounded-lg transition-colors"
-                _="on click
-                   set #persona-situation.value to 'Patient Name: Mark Nolan\nPhone Number: (614) 443-4790\nDate of Birth: 08/18/1980\nReason for Visit: Leg pain\nEmail: mark.nolan@gmail.com\nPreferred Date: Next Monday or Tuesday (flexible)\nPreferred Time: Flexible\nAdditional Notes: Experiencing persistent leg pain in right leg, started about a week ago after lifting weights'
-                   set #persona-background.value to 'You are a new patient. You are friendly and cooperative but want to get this scheduled quickly.'
-                   set #persona-goal.value to 'Schedule an appointment to see a doctor about your leg pain as soon as possible.'"
-            >
-                <i data-lucide="sparkles" class="w-4 h-4"></i>
-                Load Example
-            </button>
-        </div>
-
-        <div class="space-y-6">
-            <!-- Situation Details -->
-            <div>
-                <label for="persona-situation" class="block text-sm font-medium text-theme-secondary mb-2">
-                    Situation Details
-                    <span class="text-theme-muted font-normal ml-1">- Facts the actor knows (hidden from agent)</span>
-                </label>
-                <textarea
-                    id="persona-situation"
-                    name="user_situation_input"
-                    rows="6"
-                    class="w-full px-4 py-3 bg-surface-sidebar border border-theme rounded-lg
-                           text-white placeholder-theme-muted focus:outline-none focus:ring-2
-                           focus:ring-ymir-500 focus:border-transparent font-mono text-sm"
-                    placeholder="Patient Name: John Smith
+                       focus:ring-ymir-500 focus:border-transparent font-mono text-sm"
+                placeholder="Patient Name: John Smith
 Phone Number: (555) 123-4567
 Date of Birth: 03/15/1985
 Reason for Visit: Annual checkup
@@ -201,22 +126,24 @@ Email: john.smith@email.com
 Preferred Date: Next Monday or Tuesday
 Preferred Time: Morning, before 11am
 Additional Notes: First time patient, referred by Dr. Johnson"
-                ></textarea>
-                <p class="mt-1.5 text-xs text-theme-muted">
-                    Enter the structured details the actor will use when responding to the agent's questions.
-                </p>
-            </div>
+            ></textarea>
+            <p class="mt-1.5 text-xs text-theme-muted">
+                Enter the structured details the actor will use when responding to the agent's questions.
+            </p>
+        </div>
 
+        <!-- Actor Background + Goal (side by side) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Actor Background -->
             <div>
                 <label for="persona-background" class="block text-sm font-medium text-theme-secondary mb-2">
                     Actor Background
-                    <span class="text-theme-muted font-normal ml-1">- Optional: personality and communication style</span>
+                    <span class="text-theme-muted font-normal ml-1">- Personality</span>
                 </label>
                 <textarea
                     id="persona-background"
                     name="user_background_input"
-                    rows="2"
+                    rows="3"
                     class="w-full px-4 py-3 bg-surface-sidebar border border-theme rounded-lg
                            text-white placeholder-theme-muted focus:outline-none focus:ring-2
                            focus:ring-ymir-500 focus:border-transparent resize-none"
@@ -228,12 +155,12 @@ Additional Notes: First time patient, referred by Dr. Johnson"
             <div>
                 <label for="persona-goal" class="block text-sm font-medium text-theme-secondary mb-2">
                     Goal
-                    <span class="text-theme-muted font-normal ml-1">- What the actor wants to accomplish</span>
+                    <span class="text-theme-muted font-normal ml-1">- What the actor wants</span>
                 </label>
                 <textarea
                     id="persona-goal"
                     name="user_goal_input"
-                    rows="2"
+                    rows="3"
                     class="w-full px-4 py-3 bg-surface-sidebar border border-theme rounded-lg
                            text-white placeholder-theme-muted focus:outline-none focus:ring-2
                            focus:ring-ymir-500 focus:border-transparent resize-none"

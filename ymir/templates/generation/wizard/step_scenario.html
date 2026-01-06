@@ -1,10 +1,15 @@
 <div class="space-y-6">
     <!-- Step Header -->
-    <div class="flex items-center gap-3 mb-6">
-        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-ymir-500/10 text-ymir-500 font-semibold text-sm">
-            1
-        </span>
-        <h2 class="text-2xl font-bold text-white">Select Scenario</h2>
+    <div class="flex items-start justify-between">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-ymir-500/10 text-ymir-400 border border-ymir-500/20">
+                    Step {{ step }} of 4
+                </span>
+                <h2 class="text-2xl font-semibold text-theme-primary">Select Scenario</h2>
+            </div>
+            <p class="text-theme-secondary">Choose the domain context for your agent training</p>
+        </div>
     </div>
 
     <!-- Info Box -->

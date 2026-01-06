@@ -25,7 +25,7 @@
         <!-- Hidden fields for wizard state -->
         <input type="hidden" id="wizard-scenario-id" name="scenario_id" value="{{ default_scenario.id if default_scenario else '' }}">
         <input type="hidden" id="wizard-enabled-tools" name="enabled_tools" value="[]">
-        <input type="hidden" id="wizard-mode" name="mode_toggle" value="single">
+        <input type="hidden" id="wizard-mode" name="mode_toggle" value="simulated">
         <input type="hidden" id="wizard-user-query" name="user_query" value="">
         <input type="hidden" id="wizard-user-situation" name="user_situation" value="">
         <input type="hidden" id="wizard-user-background" name="user_background" value="">
@@ -97,7 +97,7 @@ function loadWizardState() {
         var state = JSON.parse(saved);
         document.getElementById('wizard-scenario-id').value = state.scenarioId || '';
         document.getElementById('wizard-enabled-tools').value = state.enabledTools || '[]';
-        document.getElementById('wizard-mode').value = state.mode || 'single';
+        document.getElementById('wizard-mode').value = 'simulated';
         document.getElementById('wizard-user-query').value = state.userQuery || '';
         document.getElementById('wizard-user-situation').value = state.userSituation || '';
         document.getElementById('wizard-user-background').value = state.userBackground || '';
@@ -178,15 +178,8 @@ function goToStep(step) {
 }
 
 function syncFormValues() {
-    var modeRadio = document.querySelector('input[name="mode_toggle"]:checked');
-    if (modeRadio) {
-        document.getElementById('wizard-mode').value = modeRadio.value;
-    }
-
-    var queryInput = document.querySelector('textarea[name="user_query_input"]');
-    if (queryInput) {
-        document.getElementById('wizard-user-query').value = queryInput.value;
-    }
+    // Mode is always simulated
+    document.getElementById('wizard-mode').value = 'simulated';
 
     var sitInput = document.querySelector('textarea[name="user_situation_input"]');
     if (sitInput) {
@@ -237,24 +230,15 @@ function validateStep(step) {
             } catch (e) {}
             return true;
         case 3:
-            var mode = document.getElementById('wizard-mode').value;
-            if (mode === 'single') {
-                var query = document.getElementById('wizard-user-query').value;
-                if (!query.trim()) {
-                    showToast('Please enter a query', 'error');
-                    return false;
-                }
-            } else {
-                var sit = document.getElementById('wizard-user-situation').value;
-                var goal = document.getElementById('wizard-user-goal').value;
-                if (!sit.trim()) {
-                    showToast('Please fill in the situation details', 'error');
-                    return false;
-                }
-                if (!goal.trim()) {
-                    showToast('Please fill in the actor goal', 'error');
-                    return false;
-                }
+            var sit = document.getElementById('wizard-user-situation').value;
+            var goal = document.getElementById('wizard-user-goal').value;
+            if (!sit.trim()) {
+                showToast('Please fill in the situation details', 'error');
+                return false;
+            }
+            if (!goal.trim()) {
+                showToast('Please fill in the actor goal', 'error');
+                return false;
             }
             return true;
         default:
@@ -291,17 +275,6 @@ function restoreFormValues(step) {
         }
 
         if (step === 3) {
-            var mode = document.getElementById('wizard-mode').value;
-            var modeRadio = document.querySelector('input[name="mode_toggle"][value="' + mode + '"]');
-            if (modeRadio) {
-                modeRadio.checked = true;
-                modeRadio.dispatchEvent(new Event('change'));
-            }
-
-            var query = document.getElementById('wizard-user-query').value;
-            var queryInput = document.querySelector('textarea[name="user_query_input"]');
-            if (queryInput) queryInput.value = query;
-
             var sit = document.getElementById('wizard-user-situation').value;
             var bg = document.getElementById('wizard-user-background').value;
             var goal = document.getElementById('wizard-user-goal').value;

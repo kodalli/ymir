@@ -1,11 +1,15 @@
 <!-- Step 4: Generate -->
 <div class="space-y-4">
     <!-- Step Header -->
-    <div class="flex items-center gap-2 mb-4">
-        <span class="flex items-center justify-center w-6 h-6 rounded-md bg-ymir-500 text-white text-xs font-bold">4</span>
+    <div class="flex items-start justify-between mb-4">
         <div>
-            <h2 class="text-base font-bold text-white">Generate Trajectory</h2>
-            <p class="text-xs text-theme-secondary">Review your configuration and generate training data</p>
+            <div class="flex items-center gap-3 mb-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-ymir-500/10 text-ymir-400 border border-ymir-500/20">
+                    Step {{ step }} of 4
+                </span>
+                <h2 class="text-2xl font-semibold text-theme-primary">Generate Trajectory</h2>
+            </div>
+            <p class="text-theme-secondary">Review your configuration and generate training data</p>
         </div>
     </div>
 
@@ -41,7 +45,7 @@
                     <i data-lucide="user" class="w-3.5 h-3.5 text-success-400"></i>
                     <span class="text-[10px] font-bold text-theme-muted uppercase">Mode</span>
                 </div>
-                <p id="summary-mode" class="text-xs text-white font-medium">Single Query</p>
+                <p id="summary-mode" class="text-xs text-white font-medium">Simulated Actor</p>
             </div>
         </div>
     </div>

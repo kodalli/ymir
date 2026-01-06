@@ -132,6 +132,7 @@ async def create_actor_template(
                 "scenarios": await store.list_scenarios(),
                 "mode": "create",
                 "errors": errors,
+                "ollama_models": get_available_models(),
             },
         )
 
@@ -228,6 +229,7 @@ async def update_actor_template(
                 "scenarios": await store.list_scenarios(),
                 "mode": "edit",
                 "errors": errors,
+                "ollama_models": get_available_models(),
             },
         )
 

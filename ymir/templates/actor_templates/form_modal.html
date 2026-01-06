@@ -2,7 +2,7 @@
 <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
     id="template-modal"
     _="on click if event.target == me then remove me
-       on closeModal remove me">
+       on closeModal from body remove me">
 
     <!-- Modal Content -->
     <div class="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
@@ -59,14 +59,7 @@
             </div>
             {% endif %}
 
-            <form id="template-form"
-                {% if template %}
-                hx-put="/actor-templates/{{ template.id }}"
-                {% else %}
-                hx-post="/actor-templates/"
-                {% endif %}
-                hx-target="#templates-table"
-                hx-swap="innerHTML">
+            <form id="template-form">
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Left Column -->
@@ -264,22 +257,30 @@ Preferred Date: <rule>next monday or wednesday</rule>"
                     <!-- Preview Container -->
                     <div id="preview-container"></div>
                 </div>
-            </form>
-        </div>
 
-        <!-- Modal Footer -->
-        <div class="p-6 border-t border-slate-700 flex items-center justify-end gap-3">
-            <button type="button"
-                class="btn-secondary px-6 py-2.5"
-                _="on click remove #template-modal">
-                Cancel
-            </button>
-            <button type="submit"
-                form="template-form"
-                class="btn-primary px-6 py-2.5 flex items-center gap-2">
-                <i data-lucide="save" class="w-4 h-4"></i>
-                {% if template %}Update Template{% else %}Create Template{% endif %}
-            </button>
+                <!-- Form Footer -->
+                <div class="mt-6 pt-6 border-t border-slate-700 flex items-center justify-end gap-3">
+                    <button type="button"
+                        class="btn-secondary px-6 py-2.5"
+                        _="on click remove #template-modal">
+                        Cancel
+                    </button>
+                    <button type="button"
+                        class="btn-primary px-6 py-2.5 flex items-center gap-2"
+                        {% if template %}
+                        hx-put="/actor-templates/{{ template.id }}"
+                        {% else %}
+                        hx-post="/actor-templates/"
+                        {% endif %}
+                        hx-include="#template-form"
+                        hx-target="#templates-table"
+                        hx-swap="innerHTML"
+                        _="on htmx:afterRequest if event.detail.successful then remove #template-modal">
+                        <i data-lucide="save" class="w-4 h-4"></i>
+                        {% if template %}Update Template{% else %}Create Template{% endif %}
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

@@ -27,9 +27,7 @@
         <input type="hidden" id="wizard-enabled-tools" name="enabled_tools" value="[]">
         <input type="hidden" id="wizard-mode" name="mode_toggle" value="simulated">
         <input type="hidden" id="wizard-user-query" name="user_query" value="">
-        <input type="hidden" id="wizard-user-situation" name="user_situation" value="">
-        <input type="hidden" id="wizard-user-background" name="user_background" value="">
-        <input type="hidden" id="wizard-user-goal" name="user_goal" value="">
+        <input type="hidden" id="wizard-actor-ids" name="actor_ids" value="[]">
         <input type="hidden" id="wizard-current-step" value="1">
 
         <!-- Step Content -->
@@ -82,9 +80,7 @@ function saveWizardState() {
         enabledTools: document.getElementById('wizard-enabled-tools').value,
         mode: document.getElementById('wizard-mode').value,
         userQuery: document.getElementById('wizard-user-query').value,
-        userSituation: document.getElementById('wizard-user-situation').value,
-        userBackground: document.getElementById('wizard-user-background').value,
-        userGoal: document.getElementById('wizard-user-goal').value,
+        actorIds: document.getElementById('wizard-actor-ids').value,
     };
     localStorage.setItem(wizard.STORAGE_KEY, JSON.stringify(state));
 }
@@ -99,9 +95,7 @@ function loadWizardState() {
         document.getElementById('wizard-enabled-tools').value = state.enabledTools || '[]';
         document.getElementById('wizard-mode').value = 'simulated';
         document.getElementById('wizard-user-query').value = state.userQuery || '';
-        document.getElementById('wizard-user-situation').value = state.userSituation || '';
-        document.getElementById('wizard-user-background').value = state.userBackground || '';
-        document.getElementById('wizard-user-goal').value = state.userGoal || '';
+        document.getElementById('wizard-actor-ids').value = state.actorIds || '[]';
         wizard.currentStep = state.currentStep || 1;
         return true;
     } catch (e) {
@@ -181,21 +175,7 @@ function syncFormValues() {
     // Mode is always simulated
     document.getElementById('wizard-mode').value = 'simulated';
 
-    var sitInput = document.querySelector('textarea[name="user_situation_input"]');
-    if (sitInput) {
-        document.getElementById('wizard-user-situation').value = sitInput.value;
-    }
-
-    var bgInput = document.querySelector('textarea[name="user_background_input"]');
-    if (bgInput) {
-        document.getElementById('wizard-user-background').value = bgInput.value;
-    }
-
-    var goalInput = document.querySelector('textarea[name="user_goal_input"]');
-    if (goalInput) {
-        document.getElementById('wizard-user-goal').value = goalInput.value;
-    }
-
+    // Sync tool checkboxes
     var toolCheckboxes = document.querySelectorAll('input[data-tool-name]');
     if (toolCheckboxes.length > 0) {
         var enabledTools = [];
@@ -206,6 +186,8 @@ function syncFormValues() {
         });
         document.getElementById('wizard-enabled-tools').value = JSON.stringify(enabledTools);
     }
+
+    // Actor selection is synced via selectActor() function
 
     saveWizardState();
 }
@@ -230,14 +212,15 @@ function validateStep(step) {
             } catch (e) {}
             return true;
         case 3:
-            var sit = document.getElementById('wizard-user-situation').value;
-            var goal = document.getElementById('wizard-user-goal').value;
-            if (!sit.trim()) {
-                showToast('Please fill in the situation details', 'error');
-                return false;
-            }
-            if (!goal.trim()) {
-                showToast('Please fill in the actor goal', 'error');
+            var actorIds = document.getElementById('wizard-actor-ids').value;
+            try {
+                var ids = JSON.parse(actorIds);
+                if (!ids || ids.length === 0) {
+                    showToast('Please select at least one actor', 'error');
+                    return false;
+                }
+            } catch (e) {
+                showToast('Please select at least one actor', 'error');
                 return false;
             }
             return true;
@@ -275,15 +258,29 @@ function restoreFormValues(step) {
         }
 
         if (step === 3) {
-            var sit = document.getElementById('wizard-user-situation').value;
-            var bg = document.getElementById('wizard-user-background').value;
-            var goal = document.getElementById('wizard-user-goal').value;
-            var sitInput = document.querySelector('textarea[name="user_situation_input"]');
-            var bgInput = document.querySelector('textarea[name="user_background_input"]');
-            var goalInput = document.querySelector('textarea[name="user_goal_input"]');
-            if (sitInput) sitInput.value = sit;
-            if (bgInput) bgInput.value = bg;
-            if (goalInput) goalInput.value = goal;
+            // Restore actor selections
+            var actorIds = [];
+            try {
+                actorIds = JSON.parse(document.getElementById('wizard-actor-ids').value);
+            } catch (e) {
+                actorIds = [];
+            }
+
+            actorIds.forEach(function(actorId) {
+                var row = document.querySelector('.actor-select-row[data-actor-id="' + actorId + '"]');
+                if (row) {
+                    row.classList.add('bg-ymir-500/10');
+                    var checkbox = row.querySelector('.actor-checkbox');
+                    var check = row.querySelector('.actor-check');
+                    if (checkbox) checkbox.classList.add('border-ymir-500', 'bg-ymir-500/20');
+                    if (check) {
+                        check.classList.remove('opacity-0');
+                        check.classList.add('opacity-100');
+                    }
+                }
+            });
+
+            updateSelectedActorCount();
         }
 
         if (step === 4) {
@@ -292,6 +289,85 @@ function restoreFormValues(step) {
 
         lucide.createIcons();
     }, 100);
+}
+
+// Actor selection function called from checkbox click only
+function selectActor(actorId, actorName) {
+    // Get current selection
+    var actorIdsField = document.getElementById('wizard-actor-ids');
+    var actorIds = [];
+    try {
+        actorIds = JSON.parse(actorIdsField.value);
+    } catch (e) {
+        actorIds = [];
+    }
+
+    // Toggle selection
+    var index = actorIds.indexOf(actorId);
+    if (index > -1) {
+        // Remove from selection
+        actorIds.splice(index, 1);
+    } else {
+        // Add to selection
+        actorIds.push(actorId);
+    }
+
+    // Save updated selection
+    actorIdsField.value = JSON.stringify(actorIds);
+
+    // Update row UI
+    var row = document.querySelector('.actor-select-row[data-actor-id="' + actorId + '"]');
+    if (row) {
+        var checkbox = row.querySelector('.actor-checkbox');
+        var check = row.querySelector('.actor-check');
+
+        if (actorIds.includes(actorId)) {
+            row.classList.add('bg-ymir-500/10');
+            if (checkbox) checkbox.classList.add('border-ymir-500', 'bg-ymir-500/20');
+            if (check) {
+                check.classList.remove('opacity-0');
+                check.classList.add('opacity-100');
+            }
+        } else {
+            row.classList.remove('bg-ymir-500/10');
+            if (checkbox) checkbox.classList.remove('border-ymir-500', 'bg-ymir-500/20');
+            if (check) {
+                check.classList.remove('opacity-100');
+                check.classList.add('opacity-0');
+            }
+        }
+    }
+
+    // Update selected count display
+    updateSelectedActorCount();
+    saveWizardState();
+}
+
+function updateSelectedActorCount() {
+    var actorIds = [];
+    try {
+        actorIds = JSON.parse(document.getElementById('wizard-actor-ids').value);
+    } catch (e) {
+        actorIds = [];
+    }
+
+    var selectedDisplay = document.getElementById('selected-actor-name');
+    if (selectedDisplay) {
+        if (actorIds.length === 0) {
+            selectedDisplay.textContent = 'None';
+        } else if (actorIds.length === 1) {
+            // Get the actor name from the row
+            var row = document.querySelector('.actor-select-row[data-actor-id="' + actorIds[0] + '"]');
+            if (row) {
+                var nameEl = row.querySelector('.font-medium');
+                selectedDisplay.textContent = nameEl ? nameEl.textContent : '1 actor';
+            } else {
+                selectedDisplay.textContent = '1 actor';
+            }
+        } else {
+            selectedDisplay.textContent = actorIds.length + ' actors';
+        }
+    }
 }
 
 function updateToolCount() {

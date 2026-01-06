@@ -1,7 +1,7 @@
 """Routes for trajectory generation."""
 
 import json
-from fastapi import APIRouter, Form, Request
+from fastapi import APIRouter, Form, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from ymir.functions import get_registry
@@ -100,9 +100,7 @@ async def generate_trajectory(
     request: Request,
     scenario_id: str = Form(...),
     user_query: str = Form(""),
-    user_situation: str = Form(None),
-    user_background: str = Form(None),
-    user_goal: str = Form(None),
+    actor_ids: str = Form("[]"),  # JSON array of selected actor IDs
     enabled_tools: str = Form(None),  # JSON array of tool names
     model: str = Form("qwen3:4b"),
     temperature: float = Form(0.7),
@@ -110,7 +108,7 @@ async def generate_trajectory(
     save_as_template: bool = Form(False),
     template_name: str = Form(""),
 ):
-    """Generate a single trajectory."""
+    """Generate trajectories for selected actors."""
     scenario_store = get_scenario_store()
     scenario_db = await scenario_store.get_scenario_with_tools(scenario_id)
 
@@ -119,6 +117,15 @@ async def generate_trajectory(
             "components/error.html",
             {"request": request, "error": f"Scenario not found: {scenario_id}"},
         )
+
+    # Parse actor_ids
+    actor_id_list = []
+    try:
+        actor_id_list = json.loads(actor_ids)
+        if not isinstance(actor_id_list, list):
+            actor_id_list = []
+    except json.JSONDecodeError:
+        actor_id_list = []
 
     # Convert to ScenarioTemplate for generation
     scenario = scenario_with_tools_to_template(scenario_db)
@@ -138,20 +145,31 @@ async def generate_trajectory(
             model=model,
             temperature=temperature,
         )
-        trajectory = await generator.generate(
-            scenario,
-            user_query,
-            user_situation=user_situation if user_situation else None,
-            user_background=user_background if user_background else None,
-            user_goal=user_goal if user_goal else None,
-            enabled_tools=enabled_tools_list,
-        )
 
-        if save:
-            store = get_store()
-            await store.save(trajectory)
+        trajectories = []
+        store = get_store()
 
-        # Save as template if requested
+        # Generate for each actor
+        for actor_id in actor_id_list:
+            actor = await scenario_store.get_actor(actor_id)
+            if not actor:
+                continue
+
+            trajectory = await generator.generate(
+                scenario,
+                user_query,
+                user_situation=actor.situation if actor.situation else None,
+                user_background=actor.background if actor.background else None,
+                user_goal=actor.goal if actor.goal else None,
+                enabled_tools=enabled_tools_list,
+            )
+
+            if save:
+                await store.save(trajectory)
+
+            trajectories.append(trajectory)
+
+        # Save as template if requested (only once, not per actor)
         if save_as_template and template_name:
             from ymir.core.scenario_schemas import GenerationTemplateCreate
 
@@ -179,7 +197,7 @@ async def generate_trajectory(
                     )
                     tool_preset_id = preset.id
 
-            template = await scenario_store.create_generation_template(
+            await scenario_store.create_generation_template(
                 GenerationTemplateCreate(
                     name=template_name,
                     description=f"Template for {scenario_db.name}",
@@ -192,7 +210,7 @@ async def generate_trajectory(
 
         return templates.TemplateResponse(
             "generation/trajectory_preview.html",
-            {"request": request, "trajectory": trajectory, "saved": save},
+            {"request": request, "trajectories": trajectories, "saved": save, "count": len(trajectories)},
         )
     except Exception as e:
         return templates.TemplateResponse(
@@ -267,11 +285,12 @@ async def wizard_step(request: Request, step_num: int, scenario_id: str = None):
     actors = []
     tool_presets = []
     actor_templates = []
+    categories = []
+    actor_groups = []
+
     if scenario_id:
         scenario = await scenario_store.get_scenario_with_tools(scenario_id)
         if scenario:
-            # Get actors for this scenario's category
-            actors = await scenario_store.get_actors_for_category(scenario.category or "general")
             # Get tool presets for this scenario
             tool_presets = await scenario_store.list_scenario_presets(scenario_id)
             # Get actor templates for this scenario
@@ -284,6 +303,14 @@ async def wizard_step(request: Request, step_num: int, scenario_id: str = None):
                     if t.id not in existing_ids:
                         actor_templates.append(t)
 
+    # For step 3 (actor selection), get all actors with filters
+    if step_num == 3:
+        actors = await scenario_store.list_actors()
+        # Get unique categories
+        categories = sorted(set(a.category for a in actors if a.category))
+        # Get actor groups
+        actor_groups = await scenario_store.list_actor_groups()
+
     template_map = {
         1: "generation/wizard/step_scenario.html",
         2: "generation/wizard/step_tools.html",
@@ -292,6 +319,9 @@ async def wizard_step(request: Request, step_num: int, scenario_id: str = None):
     }
 
     template = template_map.get(step_num, "generation/wizard/step_scenario.html")
+
+    # Build actor_groups dict for template
+    actor_groups_dict = {g.id: g for g in actor_groups}
 
     return templates.TemplateResponse(
         template,
@@ -304,6 +334,9 @@ async def wizard_step(request: Request, step_num: int, scenario_id: str = None):
             "actors": actors,
             "tool_presets": tool_presets,
             "actor_templates": actor_templates,
+            "categories": categories,
+            "actor_groups": actor_groups,
+            "actor_groups_dict": actor_groups_dict,
         },
     )
 
@@ -360,4 +393,50 @@ async def get_stepper(request: Request, step_num: int):
     return templates.TemplateResponse(
         "generation/wizard/stepper.html",
         {"request": request, "step": step_num},
+    )
+
+
+@router.get("/actors-list", response_class=HTMLResponse)
+async def list_actors_for_wizard(
+    request: Request,
+    search: str | None = Query(None),
+    category: str | None = Query(None),
+    group_id: str | None = Query(None),
+):
+    """Get filtered actor cards for wizard selection."""
+    scenario_store = get_scenario_store()
+
+    # Get actors with optional filters
+    if group_id:
+        actors = await scenario_store.get_actors_in_group(group_id)
+    elif category:
+        actors = await scenario_store.list_actors(category=category)
+    else:
+        actors = await scenario_store.list_actors()
+
+    # Apply search filter
+    if search:
+        search_lower = search.lower()
+        actors = [
+            a for a in actors
+            if search_lower in a.name.lower()
+            or search_lower in a.background.lower()
+            or search_lower in a.goal.lower()
+            or (a.situation and search_lower in a.situation.lower())
+        ]
+
+    # Get actor groups for display
+    actor_groups = await scenario_store.list_actor_groups()
+    actor_groups_dict = {g.id: g for g in actor_groups}
+
+    return templates.TemplateResponse(
+        "generation/wizard/actor_cards.html",
+        {
+            "request": request,
+            "actors": actors,
+            "actor_groups": actor_groups_dict,
+            "search": search,
+            "category": category,
+            "group_id": group_id,
+        },
     )

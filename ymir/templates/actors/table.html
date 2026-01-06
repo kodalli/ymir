@@ -22,9 +22,9 @@
                         <i data-lucide="{{ 'chevron-up' if sort_order == 'asc' else 'chevron-down' }}" class="w-3 h-3 inline"></i>
                         {% endif %}
                     </th>
-                    <th class="p-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Background</th>
-                    <th class="p-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Goal</th>
-                    <th class="p-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-ymir-500"
+                    <th class="p-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider" data-column="background">Background</th>
+                    <th class="p-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider" data-column="goal">Goal</th>
+                    <th class="p-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-ymir-500" data-column="category"
                         hx-get="/actors/list?sort_by=category&sort_order={{ 'asc' if sort_by == 'category' and sort_order == 'desc' else 'desc' }}{{ filter_params }}"
                         hx-target="#actors-table" hx-swap="innerHTML">
                         Category
@@ -32,7 +32,10 @@
                         <i data-lucide="{{ 'chevron-up' if sort_order == 'asc' else 'chevron-down' }}" class="w-3 h-3 inline"></i>
                         {% endif %}
                     </th>
-                    <th class="p-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-ymir-500"
+                    <th class="p-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider" data-column="group">
+                        Group
+                    </th>
+                    <th class="p-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-ymir-500" data-column="created"
                         hx-get="/actors/list?sort_by=created_at&sort_order={{ 'asc' if sort_by == 'created_at' and sort_order == 'desc' else 'desc' }}{{ filter_params }}"
                         hx-target="#actors-table" hx-swap="innerHTML">
                         Created
@@ -48,7 +51,7 @@
                 {% include "actors/row.html" %}
                 {% else %}
                 <tr>
-                    <td colspan="7" class="p-12 text-center">
+                    <td colspan="8" class="p-12 text-center">
                         <div class="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-600">
                             <i data-lucide="users" class="w-7 h-7"></i>
                         </div>

@@ -124,6 +124,7 @@ class Actor(BaseModel):
     goal: str
     tags: list[str] = Field(default_factory=list)
     category: str | None = None
+    group_id: str | None = None  # Reference to actor group for batch organization
     is_active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -139,6 +140,7 @@ class ActorCreate(BaseModel):
     goal: str
     tags: list[str] = Field(default_factory=list)
     category: str | None = None
+    group_id: str | None = None
 
 
 class ActorUpdate(BaseModel):
@@ -150,7 +152,31 @@ class ActorUpdate(BaseModel):
     goal: str | None = None
     tags: list[str] | None = None
     category: str | None = None
+    group_id: str | None = None
     is_active: bool | None = None
+
+
+# ============================================================================
+# ActorGroup Models
+# ============================================================================
+
+
+class ActorGroup(BaseModel):
+    """Group/batch for organizing actors generated together."""
+
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    name: str
+    description: str | None = None
+    template_id: str | None = None  # Source template if generated from template
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ActorGroupCreate(BaseModel):
+    """Schema for creating an actor group."""
+
+    name: str
+    description: str | None = None
+    template_id: str | None = None
 
 
 # ============================================================================

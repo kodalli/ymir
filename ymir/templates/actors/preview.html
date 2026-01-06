@@ -1,0 +1,33 @@
+<!-- Actor Preview Card -->
+<div class="p-4 rounded-lg bg-slate-900 border border-slate-600 space-y-3">
+    <div class="flex items-center justify-between">
+        <h4 class="text-sm font-bold text-slate-300">Sample Generated Actor</h4>
+        <span class="text-xs text-slate-500">From: {{ template.name }}</span>
+    </div>
+
+    <div class="space-y-2">
+        <!-- Background -->
+        <div>
+            <label class="text-xs font-bold text-slate-500 uppercase">Background</label>
+            <p class="text-sm text-slate-300 mt-1">{{ preview.background }}</p>
+        </div>
+
+        <!-- Goal -->
+        <div>
+            <label class="text-xs font-bold text-slate-500 uppercase">Goal</label>
+            <p class="text-sm text-slate-300 mt-1">{{ preview.goal }}</p>
+        </div>
+
+        <!-- Situation (from template) -->
+        {% if preview.situation %}
+        <div>
+            <label class="text-xs font-bold text-slate-500 uppercase">Situation Details</label>
+            <p class="text-sm text-slate-400 mt-1 italic">{{ preview.situation }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <p class="text-xs text-slate-600 italic">
+        Each generated actor will have unique random values based on the template placeholders.
+    </p>
+</div>

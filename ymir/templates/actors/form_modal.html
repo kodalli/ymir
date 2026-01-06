@@ -11,10 +11,10 @@
         <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
             <div>
                 <h2 class="text-xl font-bold text-slate-200">
-                    {% if actor %}Edit Actor{% else %}Create New Actor{% endif %}
+                    {% if actor %}Edit Actor{% else %}Create Actor(s){% endif %}
                 </h2>
                 <p class="text-sm text-slate-500 mt-1">
-                    {% if actor %}Update the actor details below{% else %}Define a new user persona for your scenarios{% endif %}
+                    {% if actor %}Update the actor details below{% else %}Create manually or generate from a template{% endif %}
                 </p>
             </div>
             <button class="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-200 transition-colors"
@@ -25,140 +25,160 @@
 
         <!-- Modal Body (scrollable) -->
         <div class="flex-1 overflow-y-auto p-6">
+            {% if actor %}
+            <!-- Edit Mode: Standard Form -->
             <form id="actor-form"
-                {% if actor %}
                 hx-put="/actors/{{ actor.id }}"
-                {% else %}
-                hx-post="/actors"
-                {% endif %}
                 hx-target="#actors-table"
                 hx-swap="innerHTML"
                 _="on htmx:afterRequest if event.detail.successful remove #actor-modal">
 
                 <div class="space-y-5">
-                    <!-- Name Input -->
-                    <div>
-                        <label for="name" class="block text-sm font-bold text-slate-300 mb-2">
-                            Name <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text"
-                            id="name"
-                            name="name"
-                            value="{{ actor.name if actor else '' }}"
-                            required
-                            placeholder="e.g., Sarah Chen, Dr. Johnson, Alex Martinez"
-                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500">
-                    </div>
-
-                    <!-- Icon Selection -->
-                    <div>
-                        <label for="icon" class="block text-sm font-bold text-slate-300 mb-2">
-                            Icon
-                        </label>
-                        <select id="icon"
-                            name="icon"
-                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-ymir-500">
-                            <option value="">Select an icon...</option>
-                            {% set icon_options = [
-                                ('user', 'User'),
-                                ('user-circle', 'User Circle'),
-                                ('user-check', 'User Check'),
-                                ('user-cog', 'User Settings'),
-                                ('briefcase', 'Briefcase'),
-                                ('heart-pulse', 'Heart Pulse'),
-                                ('baby', 'Baby'),
-                                ('graduation-cap', 'Graduation Cap'),
-                                ('stethoscope', 'Stethoscope'),
-                                ('shield', 'Shield'),
-                                ('wrench', 'Wrench'),
-                                ('truck', 'Truck'),
-                                ('phone', 'Phone'),
-                                ('mail', 'Mail'),
-                                ('calendar', 'Calendar'),
-                                ('book', 'Book'),
-                                ('coffee', 'Coffee'),
-                                ('laptop', 'Laptop')
-                            ] %}
-                            {% for icon_value, icon_label in icon_options %}
-                            <option value="{{ icon_value }}" {% if actor and actor.icon == icon_value %}selected{% endif %}>
-                                {{ icon_label }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                        <p class="text-xs text-slate-500 mt-1">Choose an icon to represent this actor</p>
-                    </div>
-
-                    <!-- Background Textarea -->
-                    <div>
-                        <label for="background" class="block text-sm font-bold text-slate-300 mb-2">
-                            Background <span class="text-red-500">*</span>
-                        </label>
-                        <textarea id="background"
-                            name="background"
-                            required
-                            rows="4"
-                            placeholder="Describe the actor's background, profession, experience, and context..."
-                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500 resize-y">{{ actor.background if actor else '' }}</textarea>
-                        <p class="text-xs text-slate-500 mt-1">Provide context about who this person is</p>
-                    </div>
-
-                    <!-- Goal Textarea -->
-                    <div>
-                        <label for="goal" class="block text-sm font-bold text-slate-300 mb-2">
-                            Goal <span class="text-red-500">*</span>
-                        </label>
-                        <textarea id="goal"
-                            name="goal"
-                            required
-                            rows="3"
-                            placeholder="What is the actor trying to achieve? What are their objectives?"
-                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500 resize-y">{{ actor.goal if actor else '' }}</textarea>
-                        <p class="text-xs text-slate-500 mt-1">Define what this actor wants to accomplish</p>
-                    </div>
-
-                    <!-- Tags Input -->
-                    <div>
-                        <label for="tags" class="block text-sm font-bold text-slate-300 mb-2">
-                            Tags
-                        </label>
-                        <input type="text"
-                            id="tags"
-                            name="tags"
-                            value="{{ actor.tags|join(', ') if actor and actor.tags else '' }}"
-                            placeholder="e.g., healthcare, beginner, urgent (comma-separated)"
-                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500">
-                        <p class="text-xs text-slate-500 mt-1">Add tags to help categorize and search for this actor</p>
-                    </div>
-
-                    <!-- Category Selection -->
-                    <div>
-                        <label for="category" class="block text-sm font-bold text-slate-300 mb-2">
-                            Category
-                        </label>
-                        <select id="category"
-                            name="category"
-                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-ymir-500">
-                            <option value="">No Category</option>
-                            {% set category_options = [
-                                'Healthcare',
-                                'Customer Service',
-                                'Technical Support',
-                                'Sales',
-                                'Education',
-                                'Finance',
-                                'Legal',
-                                'Other'
-                            ] %}
-                            {% for cat in category_options %}
-                            <option value="{{ cat }}" {% if actor and actor.category == cat %}selected{% endif %}>
-                                {{ cat }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                        <p class="text-xs text-slate-500 mt-1">Optional: Assign this actor to a category</p>
-                    </div>
+                    {% include "actors/_form_fields.html" %}
                 </div>
             </form>
+            {% else %}
+            <!-- Create Mode: Unified Workflow -->
+            <div class="space-y-6">
+                <!-- Template Selection Section -->
+                <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="text-sm font-bold text-slate-300">Generate from Template</label>
+                        <a href="/actor-templates/"
+                            class="text-xs text-ymir-400 hover:text-ymir-300 underline flex items-center gap-1"
+                            hx-get="/actor-templates/"
+                            hx-target="#main-content"
+                            hx-swap="innerHTML"
+                            _="on click remove #actor-modal">
+                            <i data-lucide="settings" class="w-3 h-3"></i>
+                            Manage Templates
+                        </a>
+                    </div>
+
+                    <select id="template-select"
+                        class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-ymir-500"
+                        _="on change
+                           if me.value != ''
+                             remove .hidden from #batch-options
+                             add .hidden to #manual-form
+                             set #create-btn-text.innerText to 'Generate Actors'
+                           else
+                             add .hidden to #batch-options
+                             remove .hidden from #manual-form
+                             set #create-btn-text.innerText to 'Create Actor'
+                           end">
+                        <option value="">-- Select a template (optional) --</option>
+                        {% for template in actor_templates %}
+                        <option value="{{ template.id }}" data-name="{{ template.name }}">{{ template.name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    {% if not actor_templates %}
+                    <p class="text-xs text-slate-500 mt-2">No templates available. Create templates to enable batch generation.</p>
+                    {% endif %}
+
+                    <!-- Batch Options (shown when template selected) -->
+                    <div id="batch-options" class="hidden mt-4 pt-4 border-t border-slate-700 space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="batch-count" class="block text-xs font-bold text-slate-400 mb-1.5">
+                                    Number of Actors
+                                </label>
+                                <input type="number"
+                                    id="batch-count"
+                                    name="count"
+                                    value="5"
+                                    min="1"
+                                    max="50"
+                                    class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ymir-500">
+                            </div>
+                            <div>
+                                <label for="group-name" class="block text-xs font-bold text-slate-400 mb-1.5">
+                                    Group Name
+                                </label>
+                                <input type="text"
+                                    id="group-name"
+                                    name="group_name"
+                                    placeholder="e.g., Healthcare Batch 1"
+                                    class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-ymir-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="batch-category" class="block text-xs font-bold text-slate-400 mb-1.5">
+                                Category (for all generated actors)
+                            </label>
+                            <select id="batch-category"
+                                name="batch_category"
+                                class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ymir-500">
+                                <option value="">No Category</option>
+                                {% set category_options = [
+                                    'Healthcare',
+                                    'Customer Service',
+                                    'Technical Support',
+                                    'Sales',
+                                    'Education',
+                                    'Finance',
+                                    'Legal',
+                                    'Other'
+                                ] %}
+                                {% for cat in category_options %}
+                                <option value="{{ cat }}">{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Preview Button -->
+                        <button type="button"
+                            class="w-full py-2 px-4 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm text-slate-300 flex items-center justify-center gap-2 transition-colors"
+                            hx-get="/actors/preview-batch"
+                            hx-include="#template-select, #batch-count"
+                            hx-target="#preview-area"
+                            hx-swap="innerHTML">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                            Preview Sample Actor
+                        </button>
+
+                        <!-- Preview Area -->
+                        <div id="preview-area"></div>
+                    </div>
+                </div>
+
+                <!-- Divider -->
+                <div id="manual-form-divider" class="flex items-center gap-4">
+                    <div class="flex-1 h-px bg-slate-700"></div>
+                    <span class="text-xs font-bold text-slate-500 uppercase">Or Create Manually</span>
+                    <div class="flex-1 h-px bg-slate-700"></div>
+                </div>
+
+                <!-- Manual Form (hidden when template selected) -->
+                <div id="manual-form">
+                    <form id="actor-form"
+                        hx-post="/actors"
+                        hx-target="#actors-table"
+                        hx-swap="innerHTML"
+                        _="on htmx:afterRequest if event.detail.successful remove #actor-modal">
+
+                        <div class="space-y-5">
+                            {% include "actors/_form_fields.html" %}
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Batch Form (for template-based generation) -->
+                <form id="batch-form"
+                    class="hidden"
+                    hx-post="/actors/generate-batch"
+                    hx-target="#actors-table"
+                    hx-swap="innerHTML"
+                    _="on htmx:afterRequest if event.detail.successful remove #actor-modal">
+                    <!-- Hidden fields populated by JS -->
+                    <input type="hidden" name="template_id" id="batch-template-id">
+                    <input type="hidden" name="count" id="batch-count-hidden">
+                    <input type="hidden" name="group_name" id="batch-group-name-hidden">
+                    <input type="hidden" name="category" id="batch-category-hidden">
+                </form>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Modal Footer -->
@@ -168,12 +188,31 @@
                 _="on click remove #actor-modal">
                 Cancel
             </button>
+            {% if actor %}
             <button type="submit"
                 form="actor-form"
                 class="btn-primary px-6 py-2.5 flex items-center gap-2">
                 <i data-lucide="save" class="w-4 h-4"></i>
-                {% if actor %}Update Actor{% else %}Create Actor{% endif %}
+                Update Actor
             </button>
+            {% else %}
+            <button type="button"
+                id="create-btn"
+                class="btn-primary px-6 py-2.5 flex items-center gap-2"
+                _="on click
+                   if #template-select.value != ''
+                     set #batch-template-id.value to #template-select.value
+                     set #batch-count-hidden.value to #batch-count.value
+                     set #batch-group-name-hidden.value to #group-name.value
+                     set #batch-category-hidden.value to #batch-category.value
+                     trigger submit on #batch-form
+                   else
+                     trigger submit on #actor-form
+                   end">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span id="create-btn-text">Create Actor</span>
+            </button>
+            {% endif %}
         </div>
     </div>
 </div>

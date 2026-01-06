@@ -10,6 +10,8 @@ from loguru import logger
 from ymir.core.scenario_schemas import (
     Actor,
     ActorCreate,
+    ActorGroup,
+    ActorGroupCreate,
     ActorTemplate,
     ActorTemplateCreate,
     ActorTemplateUpdate,
@@ -469,6 +471,7 @@ class ScenarioStore:
                 goal=data.goal,
                 tags=data.tags,
                 category=data.category,
+                group_id=data.group_id,
                 is_active=True,
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow(),
@@ -477,9 +480,9 @@ class ScenarioStore:
             await self.db.execute(
                 """
                 INSERT INTO actors (
-                    id, name, icon, background, goal, tags, category,
+                    id, name, icon, background, goal, tags, category, group_id,
                     is_active, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     actor.id,
@@ -489,6 +492,7 @@ class ScenarioStore:
                     actor.goal,
                     json.dumps(actor.tags),
                     actor.category,
+                    actor.group_id,
                     1 if actor.is_active else 0,
                     actor.created_at.isoformat(),
                     actor.updated_at.isoformat(),
@@ -542,6 +546,9 @@ class ScenarioStore:
             if updates.category is not None:
                 fields.append("category = ?")
                 params.append(updates.category)
+            if updates.group_id is not None:
+                fields.append("group_id = ?")
+                params.append(updates.group_id)
             if updates.is_active is not None:
                 fields.append("is_active = ?")
                 params.append(1 if updates.is_active else 0)
@@ -682,6 +689,89 @@ class ScenarioStore:
             return [self._parse_actor(row) for row in rows]
         except Exception as e:
             logger.error(f"Error getting actors for category {category}: {e}")
+            return []
+
+    # ========================================================================
+    # ActorGroup Methods
+    # ========================================================================
+
+    async def create_actor_group(self, data: ActorGroupCreate) -> ActorGroup:
+        """Create a new actor group."""
+        try:
+            group = ActorGroup(
+                id=str(uuid4()),
+                name=data.name,
+                description=data.description,
+                template_id=data.template_id,
+                created_at=datetime.utcnow(),
+            )
+
+            await self.db.execute(
+                """
+                INSERT INTO actor_groups (id, name, description, template_id, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    group.id,
+                    group.name,
+                    group.description,
+                    group.template_id,
+                    group.created_at.isoformat(),
+                ),
+            )
+
+            logger.debug(f"Created actor group {group.id}: {group.name}")
+            return group
+        except Exception as e:
+            logger.error(f"Error creating actor group: {e}")
+            raise
+
+    async def get_actor_group(self, id: str) -> ActorGroup | None:
+        """Get an actor group by ID."""
+        try:
+            row = await self.db.fetchone(
+                "SELECT * FROM actor_groups WHERE id = ?", (id,)
+            )
+            if row is None:
+                return None
+            return self._parse_actor_group(row)
+        except Exception as e:
+            logger.error(f"Error getting actor group {id}: {e}")
+            return None
+
+    async def list_actor_groups(self) -> list[ActorGroup]:
+        """List all actor groups."""
+        try:
+            rows = await self.db.fetchall(
+                "SELECT * FROM actor_groups ORDER BY created_at DESC"
+            )
+            return [self._parse_actor_group(row) for row in rows]
+        except Exception as e:
+            logger.error(f"Error listing actor groups: {e}")
+            return []
+
+    async def delete_actor_group(self, id: str) -> bool:
+        """Delete an actor group (actors in group will have group_id set to NULL)."""
+        try:
+            await self.db.execute(
+                "DELETE FROM actor_groups WHERE id = ?", (id,)
+            )
+            logger.debug(f"Deleted actor group {id}")
+            return True
+        except Exception as e:
+            logger.error(f"Error deleting actor group {id}: {e}")
+            return False
+
+    async def get_actors_in_group(self, group_id: str) -> list[Actor]:
+        """Get all actors in a specific group."""
+        try:
+            rows = await self.db.fetchall(
+                "SELECT * FROM actors WHERE group_id = ? ORDER BY name",
+                (group_id,),
+            )
+            return [self._parse_actor(row) for row in rows]
+        except Exception as e:
+            logger.error(f"Error getting actors in group {group_id}: {e}")
             return []
 
     # ========================================================================
@@ -1417,6 +1507,8 @@ class ScenarioStore:
 
     def _parse_actor(self, row: dict) -> Actor:
         """Parse an actor from a database row."""
+        # Handle group_id which may not exist in older databases
+        group_id = row["group_id"] if "group_id" in row.keys() else None
         return Actor(
             id=row["id"],
             name=row["name"],
@@ -1425,9 +1517,20 @@ class ScenarioStore:
             goal=row["goal"] or "",
             tags=json.loads(row["tags"]) if row["tags"] else [],
             category=row["category"],
+            group_id=group_id,
             is_active=bool(row["is_active"]),
             created_at=datetime.fromisoformat(row["created_at"]),
             updated_at=datetime.fromisoformat(row["updated_at"]),
+        )
+
+    def _parse_actor_group(self, row: dict) -> ActorGroup:
+        """Parse an actor group from a database row."""
+        return ActorGroup(
+            id=row["id"],
+            name=row["name"],
+            description=row["description"],
+            template_id=row["template_id"],
+            created_at=datetime.fromisoformat(row["created_at"]),
         )
 
     def _parse_actor_template(self, row: dict) -> ActorTemplate:

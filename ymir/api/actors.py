@@ -1,13 +1,16 @@
 """Routes for managing actors/personas."""
 
 import json
+from uuid import uuid4
 
 from fastapi import APIRouter, Form, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse
+from loguru import logger
 
-from ymir.core.scenario_schemas import ActorCreate, ActorUpdate
+from ymir.core.scenario_schemas import ActorCreate, ActorGroupCreate, ActorUpdate
 from ymir.data import get_database, get_scenario_store
 from ymir.api.shared import render_page, templates
+from ymir.pipeline.actor_generator import ActorGenerator
 
 router = APIRouter(prefix="/actors", tags=["actors"])
 
@@ -29,12 +32,16 @@ async def actors_page(request: Request):
     # Get unique categories for filter
     categories = sorted(set(actor.category for actor in actors if actor.category))
 
+    # Get actor groups for filter
+    actor_groups = await store.list_actor_groups()
+
     return render_page(
         request,
         "actors/index.html",
         {
             "actors": actors,
             "categories": categories,
+            "actor_groups": actor_groups,
             "total_count": len(actors),
         },
         page_title="Actors",
@@ -46,6 +53,7 @@ async def list_actors(
     request: Request,
     search: str | None = Query(None),
     category: str | None = Query(None),
+    group_id: str | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     sort_by: str = Query("name"),
@@ -55,10 +63,16 @@ async def list_actors(
     store = get_store()
 
     # Get actors with optional category filter
-    if category and category != "all":
+    if group_id and group_id != "all":
+        actors = await store.get_actors_in_group(group_id)
+    elif category and category != "all":
         actors = await store.list_actors(category=category)
     else:
         actors = await store.list_actors()
+
+    # Get all groups for display
+    groups = await store.list_actor_groups()
+    actor_groups = {g.id: g for g in groups}
 
     # Apply search filter if provided
     if search:
@@ -94,6 +108,7 @@ async def list_actors(
         {
             "request": request,
             "actors": paginated_actors,
+            "actor_groups": actor_groups,
             "total_count": total_count,
             "total_pages": total_pages,
             "page_size": page_size,
@@ -147,6 +162,141 @@ async def create_actor(
     )
     response.headers["HX-Trigger"] = "actorCreated"
     return response
+
+
+@router.post("/generate-batch", response_class=HTMLResponse)
+async def generate_actors_from_template(
+    request: Request,
+    template_id: str = Form(...),
+    count: int = Form(5),
+    group_name: str = Form(""),
+    category: str = Form(""),
+):
+    """Generate multiple actors from a template and save them."""
+    store = get_store()
+
+    # Get the template
+    template = await store.get_actor_template(template_id)
+    if not template:
+        return HTMLResponse(content="Template not found", status_code=404)
+
+    # Create actor group
+    group_name = group_name.strip() or f"{template.name} Batch"
+    group = await store.create_actor_group(
+        ActorGroupCreate(
+            name=group_name,
+            description=f"Generated from template: {template.name}",
+            template_id=template_id,
+        )
+    )
+
+    # Generate actors using ActorGenerator
+    generator = ActorGenerator()
+    try:
+        generated_data = await generator.agenerate_batch(template, count)
+    except Exception as e:
+        logger.error(f"Error generating actors: {e}")
+        return HTMLResponse(content=f"Error generating actors: {e}", status_code=500)
+
+    # Save each generated actor
+    actors = []
+    for i, data in enumerate(generated_data, 1):
+        actor = await store.create_actor(
+            ActorCreate(
+                name=f"{template.name} #{i}",
+                icon="user",
+                background=data.background,
+                goal=data.goal,
+                tags=[template.category] if template.category else [],
+                category=category or template.category,
+                group_id=group.id,
+            )
+        )
+        actors.append(actor)
+
+    logger.info(f"Generated {len(actors)} actors in group '{group_name}'")
+
+    # Get updated list of actors for table refresh
+    all_actors = await store.list_actors()
+    groups = await store.list_actor_groups()
+    actor_groups = {g.id: g for g in groups}
+
+    # Return updated table
+    response = templates.TemplateResponse(
+        "actors/table.html",
+        {
+            "request": request,
+            "actors": all_actors,
+            "actor_groups": actor_groups,
+            "total_count": len(all_actors),
+            "total_pages": 1,
+            "page_size": 20,
+            "search": "",
+            "category": "",
+            "page": 1,
+            "sort_by": "created_at",
+            "sort_order": "desc",
+        },
+    )
+    response.headers["HX-Trigger"] = "actorsGenerated"
+    return response
+
+
+@router.get("/preview-batch", response_class=HTMLResponse)
+async def preview_batch_generation(
+    request: Request,
+    template_id: str = Query(None, alias="template-select"),
+    count: int = Query(1, alias="batch-count"),
+):
+    """Preview a sample actor from a template."""
+    if not template_id:
+        return HTMLResponse(content="<p class='text-slate-500 text-sm'>Select a template to preview</p>")
+
+    store = get_store()
+    template = await store.get_actor_template(template_id)
+
+    if not template:
+        return HTMLResponse(content="<p class='text-red-400 text-sm'>Template not found</p>")
+
+    # Generate a single preview
+    generator = ActorGenerator()
+    try:
+        data = await generator.agenerate_one(template)
+    except Exception as e:
+        logger.error(f"Error previewing actor: {e}")
+        return HTMLResponse(content=f"<p class='text-red-400 text-sm'>Error: {e}</p>")
+
+    return templates.TemplateResponse(
+        "actors/preview.html",
+        {
+            "request": request,
+            "preview": data,
+            "template": template,
+        },
+    )
+
+
+@router.get("/modal/new", response_class=HTMLResponse)
+async def new_actor_modal(request: Request):
+    """Render new actor modal."""
+    store = get_store()
+
+    # Get all categories for dropdown
+    all_actors = await store.list_actors()
+    categories = sorted(set(a.category for a in all_actors if a.category))
+
+    # Get actor templates for generation
+    actor_templates = await store.list_actor_templates()
+
+    return templates.TemplateResponse(
+        "actors/form_modal.html",
+        {
+            "request": request,
+            "actor": None,
+            "categories": categories,
+            "actor_templates": actor_templates,
+        },
+    )
 
 
 @router.get("/{id}", response_class=JSONResponse)

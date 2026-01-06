@@ -35,7 +35,7 @@
     </td>
 
     <!-- Background (truncated) -->
-    <td class="p-4">
+    <td class="p-4" data-column="background">
         <div class="max-w-[250px]">
             <p class="text-sm text-slate-400 truncate" title="{{ actor.background }}">
                 {{ actor.background[:60] }}{% if actor.background|length > 60 %}...{% endif %}
@@ -44,7 +44,7 @@
     </td>
 
     <!-- Goal (truncated) -->
-    <td class="p-4">
+    <td class="p-4" data-column="goal">
         <div class="max-w-[250px]">
             <p class="text-sm text-slate-400 truncate" title="{{ actor.goal }}">
                 {{ actor.goal[:60] }}{% if actor.goal|length > 60 %}...{% endif %}
@@ -53,7 +53,7 @@
     </td>
 
     <!-- Category Badge -->
-    <td class="p-4 text-center">
+    <td class="p-4 text-center" data-column="category">
         {% if actor.category %}
         <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-blue-500/10 text-blue-500 border border-blue-500/20">
             {{ actor.category }}
@@ -63,8 +63,25 @@
         {% endif %}
     </td>
 
+    <!-- Group Badge -->
+    <td class="p-4 text-center" data-column="group">
+        {% if actor.group_id and actor_groups and actor.group_id in actor_groups %}
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
+            <i data-lucide="folder" class="w-3 h-3"></i>
+            {{ actor_groups[actor.group_id].name }}
+        </span>
+        {% elif actor.group_id %}
+        <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs text-slate-500">
+            <i data-lucide="folder" class="w-3 h-3"></i>
+            Batch
+        </span>
+        {% else %}
+        <span class="text-slate-600">--</span>
+        {% endif %}
+    </td>
+
     <!-- Created Date -->
-    <td class="p-4 text-center">
+    <td class="p-4 text-center" data-column="created">
         <span class="text-sm text-slate-400">
             {{ actor.created_at.strftime('%Y-%m-%d') }}
         </span>

@@ -9,7 +9,6 @@ from ymir.functions.schemas import FunctionDefinition, ScenarioTemplate
 from ymir.pipeline import TrajectoryGenerator
 from ymir.pipeline.llm import get_available_models
 from ymir.pipeline.personas import get_personas_for_category
-from ymir.pipeline.actor_generator import ActorGenerator
 from ymir.data import get_store, get_database
 from ymir.data.scenario_store import get_scenario_store
 from ymir.core.scenario_schemas import ScenarioWithTools
@@ -362,29 +361,3 @@ async def get_stepper(request: Request, step_num: int):
         "generation/wizard/stepper.html",
         {"request": request, "step": step_num},
     )
-
-
-@router.post("/generate-actor-from-template", response_class=JSONResponse)
-async def generate_actor_from_template(
-    request: Request,
-    template_id: str = Form(...),
-):
-    """Generate an actor from a template and return the data."""
-    scenario_store = get_scenario_store()
-    template = await scenario_store.get_actor_template(template_id)
-
-    if not template:
-        return JSONResponse({"error": "Template not found"}, status_code=404)
-
-    try:
-        generator = ActorGenerator()
-        actor_data = await generator.agenerate_one(template)
-
-        return JSONResponse({
-            "success": True,
-            "situation": actor_data.situation,
-            "background": actor_data.background,
-            "goal": actor_data.goal,
-        })
-    except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)

@@ -185,6 +185,25 @@ class Database:
             "CREATE INDEX IF NOT EXISTS idx_scenario_tools_order ON scenario_tools(scenario_id, display_order)"
         )
 
+        # Actor Groups table (for organizing batch-generated actors)
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS actor_groups (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT,
+                template_id TEXT,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                FOREIGN KEY (template_id) REFERENCES actor_templates(id) ON DELETE SET NULL
+            )
+        """)
+
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_actor_groups_name ON actor_groups(name)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_actor_groups_template_id ON actor_groups(template_id)"
+        )
+
         # Actors table
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS actors (
@@ -195,9 +214,11 @@ class Database:
                 goal TEXT,
                 tags TEXT,
                 category TEXT,
+                group_id TEXT,
                 is_active INTEGER DEFAULT 1,
                 created_at TEXT NOT NULL DEFAULT (datetime('now')),
-                updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                FOREIGN KEY (group_id) REFERENCES actor_groups(id) ON DELETE SET NULL
             )
         """)
 
@@ -212,6 +233,18 @@ class Database:
         )
         await conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_actors_category_active ON actors(category, is_active)"
+        )
+
+        # Migration: Add group_id column to actors table if it doesn't exist
+        cursor = await conn.execute("PRAGMA table_info(actors)")
+        columns = await cursor.fetchall()
+        column_names = [col[1] for col in columns]
+        if "group_id" not in column_names:
+            logger.info("Migrating actors table: adding group_id column")
+            await conn.execute("ALTER TABLE actors ADD COLUMN group_id TEXT")
+
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_actors_group_id ON actors(group_id)"
         )
 
         # Scenario-Actors junction table

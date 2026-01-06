@@ -1,0 +1,123 @@
+{% if errors %}
+<!-- Error State -->
+<div class="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+    <div class="flex items-start gap-3">
+        <i data-lucide="alert-circle" class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"></i>
+        <div>
+            <h4 class="text-sm font-bold text-red-500 mb-1">Template Errors</h4>
+            <ul class="text-xs text-red-400 space-y-1">
+                {% for error in errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+{% elif previews %}
+<!-- Preview from raw text -->
+<div class="space-y-3">
+    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+        Generated Previews ({{ previews | length }})
+    </h4>
+    {% for preview in previews %}
+    <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
+        <pre class="text-xs text-slate-300 whitespace-pre-wrap font-mono">{{ preview }}</pre>
+    </div>
+    {% endfor %}
+</div>
+
+{% elif actors %}
+<!-- Preview from saved template -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    id="preview-modal"
+    _="on click if event.target == me then remove me">
+
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col"
+        _="on click halt">
+
+        <!-- Header -->
+        <div class="p-6 border-b border-slate-700 flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold text-white">Preview Generated Actors</h2>
+                <p class="text-sm text-slate-400 mt-1">
+                    {% if template %}From: {{ template.name }}{% else %}Template Preview{% endif %}
+                </p>
+            </div>
+            <button class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                _="on click remove #preview-modal">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-4">
+            {% for actor in actors %}
+            <div class="bg-slate-800 border border-slate-700 rounded-xl p-4">
+                <div class="flex items-start gap-3 mb-3">
+                    <div class="w-8 h-8 rounded-full bg-ymir-500/10 flex items-center justify-center text-ymir-500 font-bold text-sm">
+                        {{ loop.index }}
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="text-sm font-bold text-slate-200">Generated Actor {{ loop.index }}</h4>
+                    </div>
+                </div>
+
+                <!-- Situation -->
+                <div class="mb-3">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Situation</label>
+                    <div class="mt-1 bg-slate-900 rounded-lg p-3">
+                        <pre class="text-xs text-slate-300 whitespace-pre-wrap font-mono">{{ actor.situation }}</pre>
+                    </div>
+                </div>
+
+                <!-- Background -->
+                {% if actor.background %}
+                <div class="mb-3">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Background</label>
+                    <div class="mt-1 bg-slate-900 rounded-lg p-3">
+                        <pre class="text-xs text-slate-300 whitespace-pre-wrap font-mono">{{ actor.background }}</pre>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Goal -->
+                {% if actor.goal %}
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Goal</label>
+                    <div class="mt-1 bg-slate-900 rounded-lg p-3">
+                        <pre class="text-xs text-slate-300 whitespace-pre-wrap font-mono">{{ actor.goal }}</pre>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Footer -->
+        <div class="p-6 border-t border-slate-700 flex items-center justify-between">
+            <p class="text-xs text-slate-500">
+                <i data-lucide="info" class="w-3 h-3 inline mr-1"></i>
+                Each preview shows a unique generated actor
+            </p>
+            <button class="btn-secondary px-4 py-2"
+                _="on click remove #preview-modal">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- Empty State -->
+<div class="text-center py-6 text-slate-500 text-sm">
+    <i data-lucide="eye-off" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+    <p>No preview available</p>
+</div>
+{% endif %}
+
+<script>
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>

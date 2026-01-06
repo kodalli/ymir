@@ -1,0 +1,122 @@
+<div class="w-full">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h1 class="text-xl font-bold tracking-tight">Actor Templates</h1>
+            <p class="text-slate-400 text-sm">Create templates to generate diverse actors with XML-style placeholders</p>
+        </div>
+        <div class="flex gap-3">
+            <button class="btn-primary flex items-center gap-2"
+                hx-get="/actor-templates/new"
+                hx-target="#modal-container"
+                hx-swap="innerHTML">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                New Template
+            </button>
+            <button class="btn-secondary flex items-center gap-2"
+                hx-get="/actor-templates/" hx-target="#main-content" hx-swap="innerHTML">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="card p-4 mb-4">
+        <form id="templates-filter-form"
+            hx-get="/actor-templates/list"
+            hx-target="#templates-table"
+            hx-trigger="input delay:300ms from:#search-input, change from:select"
+            hx-swap="innerHTML">
+
+            <div class="flex flex-wrap items-center gap-4">
+                <!-- Search -->
+                <div class="flex-1 min-w-[200px]">
+                    <div class="relative">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                        <input type="text"
+                            id="search-input"
+                            name="search"
+                            placeholder="Search templates..."
+                            class="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500">
+                    </div>
+                </div>
+
+                <!-- Category Filter -->
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase">Category:</label>
+                    <select name="category" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ymir-500">
+                        <option value="all">All Categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat }}">{{ cat | title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Scenario Filter -->
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase">Scenario:</label>
+                    <select name="scenario_id" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ymir-500">
+                        <option value="all">All Scenarios</option>
+                        {% for scenario in scenarios %}
+                        <option value="{{ scenario.id }}">{{ scenario.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Clear Filters -->
+                <button type="button" class="text-xs text-slate-500 hover:text-ymir-500 underline"
+                    _="on click
+                       set #search-input.value to ''
+                       set document.querySelector('select[name=category]').value to 'all'
+                       set document.querySelector('select[name=scenario_id]').value to 'all'
+                       then trigger input on #search-input">
+                    Clear Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Syntax Help Card -->
+    <div class="card p-4 mb-4 border-l-4 border-ymir-500">
+        <div class="flex items-start gap-3">
+            <div class="p-2 bg-ymir-500/10 rounded-lg text-ymir-500">
+                <i data-lucide="info" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h3 class="text-sm font-bold text-slate-200 mb-1">Template Syntax</h3>
+                <p class="text-xs text-slate-400 mb-2">Use XML-style tags to generate dynamic values:</p>
+                <div class="flex flex-wrap gap-2 text-xs">
+                    <code class="bg-slate-800 px-2 py-1 rounded text-ymir-400">&lt;random:name/&gt;</code>
+                    <code class="bg-slate-800 px-2 py-1 rounded text-ymir-400">&lt;random:phone/&gt;</code>
+                    <code class="bg-slate-800 px-2 py-1 rounded text-ymir-400">&lt;random:email/&gt;</code>
+                    <code class="bg-slate-800 px-2 py-1 rounded text-ymir-400">&lt;random:date min="..." max="..."/&gt;</code>
+                    <code class="bg-slate-800 px-2 py-1 rounded text-ymir-400">&lt;random:choice&gt;opt1|opt2&lt;/random:choice&gt;</code>
+                    <code class="bg-slate-800 px-2 py-1 rounded text-purple-400">&lt;rule&gt;natural language&lt;/rule&gt;</code>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Templates Table Container -->
+    <div id="templates-table"
+        hx-get="/actor-templates/list"
+        hx-trigger="load"
+        hx-swap="innerHTML">
+        <!-- Initial load spinner -->
+        <div class="card p-12 text-center">
+            <div class="animate-spin w-8 h-8 border-2 border-ymir-500 border-t-transparent rounded-full mx-auto"></div>
+            <p class="text-slate-400 text-sm mt-4">Loading templates...</p>
+        </div>
+    </div>
+
+    <!-- Modal Container -->
+    <div id="modal-container"></div>
+</div>
+
+<script>
+// Re-initialize Lucide icons after page load
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>

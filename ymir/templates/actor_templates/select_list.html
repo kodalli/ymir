@@ -1,0 +1,48 @@
+{% if actor_templates %}
+<div class="space-y-2">
+    {% for template in actor_templates %}
+    <div class="template-option p-3 bg-slate-800 border border-slate-700 rounded-lg cursor-pointer hover:border-ymir-500 transition-colors"
+        data-template-id="{{ template.id }}"
+        data-template-name="{{ template.name }}"
+        _="on click
+           remove .border-ymir-500 from .template-option
+           add .border-ymir-500 to me
+           set #selected-template-id.value to '{{ template.id }}'
+           set #selected-template-name.textContent to '{{ template.name }}'">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="font-medium text-sm text-slate-200">{{ template.name }}</div>
+                <p class="text-xs text-slate-500 mt-0.5 line-clamp-1">{{ template.description }}</p>
+            </div>
+            <div class="flex items-center gap-2">
+                {% set random_count = template.template_text.count('<random:') %}
+                {% set rule_count = template.template_text.count('<rule>') %}
+                {% if random_count > 0 %}
+                <span class="px-1.5 py-0.5 bg-ymir-500/10 rounded text-xs font-bold text-ymir-400">
+                    {{ random_count }}
+                </span>
+                {% endif %}
+                {% if rule_count > 0 %}
+                <span class="px-1.5 py-0.5 bg-purple-500/10 rounded text-xs font-bold text-purple-400">
+                    {{ rule_count }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-6 text-slate-500 text-sm">
+    <p>No templates available for this scenario</p>
+    <a href="/actor-templates/" class="text-ymir-500 hover:underline text-xs mt-2 inline-block">
+        Create a template
+    </a>
+</div>
+{% endif %}
+
+<script>
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>

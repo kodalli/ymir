@@ -10,6 +10,9 @@ from loguru import logger
 from ymir.core.scenario_schemas import (
     Actor,
     ActorCreate,
+    ActorTemplate,
+    ActorTemplateCreate,
+    ActorTemplateUpdate,
     ActorUpdate,
     GenerationTemplate,
     GenerationTemplateCreate,
@@ -682,6 +685,188 @@ class ScenarioStore:
             return []
 
     # ========================================================================
+    # ActorTemplate Methods
+    # ========================================================================
+
+    async def create_actor_template(self, data: ActorTemplateCreate) -> ActorTemplate:
+        """Create a new actor template."""
+        try:
+            template = ActorTemplate(
+                id=str(uuid4()),
+                name=data.name,
+                description=data.description,
+                template_text=data.template_text,
+                background_template=data.background_template,
+                goal_template=data.goal_template,
+                category=data.category,
+                scenario_id=data.scenario_id,
+                is_active=True,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
+            )
+
+            await self.db.execute(
+                """
+                INSERT INTO actor_templates (
+                    id, name, description, template_text, background_template,
+                    goal_template, category, scenario_id, is_active,
+                    created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    template.id,
+                    template.name,
+                    template.description,
+                    template.template_text,
+                    template.background_template,
+                    template.goal_template,
+                    template.category,
+                    template.scenario_id,
+                    1 if template.is_active else 0,
+                    template.created_at.isoformat(),
+                    template.updated_at.isoformat(),
+                ),
+            )
+
+            logger.debug(f"Created actor template {template.id}: {template.name}")
+            return template
+        except Exception as e:
+            logger.error(f"Error creating actor template: {e}")
+            raise
+
+    async def get_actor_template(self, id: str) -> ActorTemplate | None:
+        """Get an actor template by ID."""
+        try:
+            row = await self.db.fetchone(
+                "SELECT * FROM actor_templates WHERE id = ?", (id,)
+            )
+            if row is None:
+                return None
+            return self._parse_actor_template(row)
+        except Exception as e:
+            logger.error(f"Error getting actor template {id}: {e}")
+            return None
+
+    async def update_actor_template(
+        self, id: str, updates: ActorTemplateUpdate
+    ) -> ActorTemplate | None:
+        """Update an actor template."""
+        try:
+            # Get existing template
+            template = await self.get_actor_template(id)
+            if template is None:
+                return None
+
+            # Build update query dynamically
+            fields = []
+            params = []
+
+            if updates.name is not None:
+                fields.append("name = ?")
+                params.append(updates.name)
+            if updates.description is not None:
+                fields.append("description = ?")
+                params.append(updates.description)
+            if updates.template_text is not None:
+                fields.append("template_text = ?")
+                params.append(updates.template_text)
+            if updates.background_template is not None:
+                fields.append("background_template = ?")
+                params.append(updates.background_template)
+            if updates.goal_template is not None:
+                fields.append("goal_template = ?")
+                params.append(updates.goal_template)
+            if updates.category is not None:
+                fields.append("category = ?")
+                params.append(updates.category)
+            if updates.scenario_id is not None:
+                fields.append("scenario_id = ?")
+                params.append(updates.scenario_id)
+            if updates.is_active is not None:
+                fields.append("is_active = ?")
+                params.append(1 if updates.is_active else 0)
+
+            # Always update updated_at
+            fields.append("updated_at = ?")
+            params.append(datetime.utcnow().isoformat())
+
+            # Add ID to params
+            params.append(id)
+
+            await self.db.execute(
+                f"UPDATE actor_templates SET {', '.join(fields)} WHERE id = ?",
+                tuple(params),
+            )
+
+            logger.debug(f"Updated actor template {id}")
+            return await self.get_actor_template(id)
+        except Exception as e:
+            logger.error(f"Error updating actor template {id}: {e}")
+            return None
+
+    async def delete_actor_template(self, id: str) -> bool:
+        """Delete an actor template."""
+        try:
+            await self.db.execute(
+                "DELETE FROM actor_templates WHERE id = ?", (id,)
+            )
+            logger.debug(f"Deleted actor template {id}")
+            return True
+        except Exception as e:
+            logger.error(f"Error deleting actor template {id}: {e}")
+            return False
+
+    async def list_actor_templates(
+        self,
+        category: str | None = None,
+        scenario_id: str | None = None,
+    ) -> list[ActorTemplate]:
+        """List actor templates, optionally filtered by category or scenario."""
+        try:
+            conditions = []
+            params = []
+
+            if category is not None:
+                conditions.append("category = ?")
+                params.append(category)
+            if scenario_id is not None:
+                conditions.append("scenario_id = ?")
+                params.append(scenario_id)
+
+            where_clause = (
+                f"WHERE {' AND '.join(conditions)}" if conditions else ""
+            )
+
+            query = f"""
+                SELECT * FROM actor_templates
+                {where_clause}
+                ORDER BY name
+            """
+
+            rows = await self.db.fetchall(query, tuple(params) if params else None)
+            return [self._parse_actor_template(row) for row in rows]
+        except Exception as e:
+            logger.error(f"Error listing actor templates: {e}")
+            return []
+
+    async def search_actor_templates(self, text: str) -> list[ActorTemplate]:
+        """Search actor templates using FTS5 full-text search."""
+        try:
+            rows = await self.db.fetchall(
+                """
+                SELECT at.* FROM actor_templates at
+                INNER JOIN actor_templates_fts fts ON at.id = fts.id
+                WHERE actor_templates_fts MATCH ?
+                ORDER BY rank
+                """,
+                (text,),
+            )
+            return [self._parse_actor_template(row) for row in rows]
+        except Exception as e:
+            logger.error(f"Error searching actor templates: {e}")
+            return []
+
+    # ========================================================================
     # ToolPreset Methods
     # ========================================================================
 
@@ -1240,6 +1425,22 @@ class ScenarioStore:
             goal=row["goal"] or "",
             tags=json.loads(row["tags"]) if row["tags"] else [],
             category=row["category"],
+            is_active=bool(row["is_active"]),
+            created_at=datetime.fromisoformat(row["created_at"]),
+            updated_at=datetime.fromisoformat(row["updated_at"]),
+        )
+
+    def _parse_actor_template(self, row: dict) -> ActorTemplate:
+        """Parse an actor template from a database row."""
+        return ActorTemplate(
+            id=row["id"],
+            name=row["name"],
+            description=row["description"] or "",
+            template_text=row["template_text"] or "",
+            background_template=row["background_template"],
+            goal_template=row["goal_template"],
+            category=row["category"],
+            scenario_id=row["scenario_id"],
             is_active=bool(row["is_active"]),
             created_at=datetime.fromisoformat(row["created_at"]),
             updated_at=datetime.fromisoformat(row["updated_at"]),

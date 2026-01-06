@@ -9,7 +9,8 @@ from ymir.functions.schemas import FunctionDefinition, ScenarioTemplate
 from ymir.pipeline import TrajectoryGenerator
 from ymir.pipeline.llm import get_available_models
 from ymir.pipeline.personas import get_personas_for_category
-from ymir.data import get_store
+from ymir.pipeline.actor_generator import ActorGenerator
+from ymir.data import get_store, get_database
 from ymir.data.scenario_store import get_scenario_store
 from ymir.core.scenario_schemas import ScenarioWithTools
 from ymir.api.shared import render_page, templates
@@ -266,6 +267,7 @@ async def wizard_step(request: Request, step_num: int, scenario_id: str = None):
     scenario = None
     actors = []
     tool_presets = []
+    actor_templates = []
     if scenario_id:
         scenario = await scenario_store.get_scenario_with_tools(scenario_id)
         if scenario:
@@ -273,6 +275,15 @@ async def wizard_step(request: Request, step_num: int, scenario_id: str = None):
             actors = await scenario_store.get_actors_for_category(scenario.category or "general")
             # Get tool presets for this scenario
             tool_presets = await scenario_store.list_scenario_presets(scenario_id)
+            # Get actor templates for this scenario
+            actor_templates = await scenario_store.list_actor_templates(scenario_id=scenario_id)
+            # Also include templates for the scenario's category
+            if scenario.category:
+                category_templates = await scenario_store.list_actor_templates(category=scenario.category)
+                existing_ids = {t.id for t in actor_templates}
+                for t in category_templates:
+                    if t.id not in existing_ids:
+                        actor_templates.append(t)
 
     template_map = {
         1: "generation/wizard/step_scenario.html",
@@ -293,6 +304,7 @@ async def wizard_step(request: Request, step_num: int, scenario_id: str = None):
             "models": models,
             "actors": actors,
             "tool_presets": tool_presets,
+            "actor_templates": actor_templates,
         },
     )
 
@@ -327,9 +339,19 @@ async def get_persona_presets(request: Request, scenario_id: str):
     # Get actors from database for this scenario's category
     actors = await scenario_store.get_actors_for_category(scenario.category or "general")
 
+    # Get actor templates for this scenario
+    actor_templates = await scenario_store.list_actor_templates(scenario_id=scenario_id)
+    # Also include templates for the scenario's category
+    if scenario.category:
+        category_templates = await scenario_store.list_actor_templates(category=scenario.category)
+        existing_ids = {t.id for t in actor_templates}
+        for t in category_templates:
+            if t.id not in existing_ids:
+                actor_templates.append(t)
+
     return templates.TemplateResponse(
         "generation/wizard/step_actor.html",
-        {"request": request, "scenario": scenario, "actors": actors, "step": 3},
+        {"request": request, "scenario": scenario, "actors": actors, "actor_templates": actor_templates, "step": 3},
     )
 
 
@@ -340,3 +362,29 @@ async def get_stepper(request: Request, step_num: int):
         "generation/wizard/stepper.html",
         {"request": request, "step": step_num},
     )
+
+
+@router.post("/generate-actor-from-template", response_class=JSONResponse)
+async def generate_actor_from_template(
+    request: Request,
+    template_id: str = Form(...),
+):
+    """Generate an actor from a template and return the data."""
+    scenario_store = get_scenario_store()
+    template = await scenario_store.get_actor_template(template_id)
+
+    if not template:
+        return JSONResponse({"error": "Template not found"}, status_code=404)
+
+    try:
+        generator = ActorGenerator()
+        actor_data = await generator.agenerate_one(template)
+
+        return JSONResponse({
+            "success": True,
+            "situation": actor_data.situation,
+            "background": actor_data.background,
+            "goal": actor_data.goal,
+        })
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)

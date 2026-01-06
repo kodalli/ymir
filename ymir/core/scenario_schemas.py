@@ -154,6 +154,71 @@ class ActorUpdate(BaseModel):
 
 
 # ============================================================================
+# ActorTemplate Models
+# ============================================================================
+
+
+class ActorTemplate(BaseModel):
+    """Template for generating actors with XML-style placeholders.
+
+    Supports placeholders like:
+    - <random:name/> - Random person name
+    - <random:phone/> - Random phone number
+    - <random:email/> - Random email address
+    - <random:date min="1950-01-01" max="2000-12-31"/> - Random date in range
+    - <random:choice>opt1|opt2|opt3</random:choice> - Random from options
+    - <random:sentence topic="..."/> - Generated contextual sentence
+    - <rule>natural language constraint</rule> - LLM-interpreted rule
+    """
+
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    name: str
+    description: str
+    template_text: str  # XML template with placeholders
+    background_template: str | None = None  # Optional template for actor background
+    goal_template: str | None = None  # Optional template for actor goal
+    category: str | None = None
+    scenario_id: str | None = None
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ActorTemplateCreate(BaseModel):
+    """Schema for creating a new actor template."""
+
+    name: str
+    description: str
+    template_text: str
+    background_template: str | None = None
+    goal_template: str | None = None
+    category: str | None = None
+    scenario_id: str | None = None
+
+
+class ActorTemplateUpdate(BaseModel):
+    """Schema for updating an actor template."""
+
+    name: str | None = None
+    description: str | None = None
+    template_text: str | None = None
+    background_template: str | None = None
+    goal_template: str | None = None
+    category: str | None = None
+    scenario_id: str | None = None
+    is_active: bool | None = None
+
+
+class GeneratedActorData(BaseModel):
+    """Data for a generated actor from a template (before saving)."""
+
+    situation: str  # The filled template (situation details)
+    background: str  # Actor background/personality
+    goal: str  # Actor goal
+    template_id: str  # Source template ID
+
+
+# ============================================================================
 # ToolPreset Models
 # ============================================================================
 

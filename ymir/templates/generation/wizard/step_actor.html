@@ -20,13 +20,55 @@
             <div class="text-sm text-theme-secondary space-y-1">
                 <p><strong class="text-theme-primary">ACTOR:</strong> The simulated user who will interact with the agent.</p>
                 <p>In a medical scenario, this might be a patient calling to schedule an appointment.</p>
-                <p>Select a saved actor or customize the details below.</p>
+                <p>Generate from a template, select a saved actor, or customize the details below.</p>
             </div>
         </div>
     </div>
 
     <!-- Hidden input to maintain mode as simulated -->
     <input type="hidden" name="mode_toggle" value="simulated">
+
+    <!-- Actor Templates Section -->
+    {% if actor_templates and actor_templates|length > 0 %}
+    <div class="space-y-3 mb-6">
+        <div class="flex items-center justify-between">
+            <label class="block text-sm font-medium text-theme-secondary">
+                <i data-lucide="file-text" class="w-4 h-4 inline mr-1"></i>
+                Generate from Template
+            </label>
+            <a href="/actor-templates/" class="text-xs text-ymir-500 hover:underline">Manage Templates</a>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            {% for template in actor_templates %}
+            <button type="button"
+                class="template-btn px-3 py-2 bg-surface-sidebar hover:bg-purple-500/10 border border-theme hover:border-purple-500/50 rounded-lg transition-colors text-left"
+                data-template-id="{{ template.id }}"
+                _="on click
+                   add .opacity-50 to me
+                   set my.innerHTML to '<i data-lucide=\"loader-2\" class=\"w-4 h-4 animate-spin inline mr-1\"></i>Generating...'
+                   fetch /generation/generate-actor-from-template with {method: 'POST', body: new URLSearchParams({template_id: my @data-template-id})}
+                   then js(it) return it.json() end
+                   then if it.success
+                     set #persona-situation.value to it.situation
+                     set #persona-background.value to it.background
+                     set #persona-goal.value to it.goal
+                   else
+                     alert('Error: ' + it.error)
+                   end
+                   then remove .opacity-50 from me
+                   then set my.innerHTML to '<div class=\"flex items-center gap-2\"><i data-lucide=\"sparkles\" class=\"w-4 h-4 text-purple-400\"></i><span>{{ template.name }}</span></div>'
+                   then call lucide.createIcons()">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-purple-400"></i>
+                    <span class="text-sm text-white">{{ template.name }}</span>
+                </div>
+                <p class="text-xs text-theme-muted mt-0.5 line-clamp-1">{{ template.description }}</p>
+            </button>
+            {% endfor %}
+        </div>
+        <p class="text-xs text-theme-muted">Click a template to generate a unique actor with randomized details</p>
+    </div>
+    {% endif %}
 
     <!-- Actor Presets (if available) -->
     {% if actors and actors|length > 0 %}

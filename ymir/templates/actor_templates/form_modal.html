@@ -1,0 +1,241 @@
+<!-- Modal Backdrop -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    id="template-modal"
+    _="on click if event.target == me then remove me
+       on closeModal remove me">
+
+    <!-- Modal Content -->
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+        _="on click halt">
+
+        <!-- Modal Header -->
+        <div class="p-6 border-b border-slate-700 flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold text-white">
+                    {% if template %}Edit Actor Template{% else %}Create Actor Template{% endif %}
+                </h2>
+                <p class="text-sm text-slate-400 mt-1">
+                    {% if template %}Update template with XML placeholders{% else %}Define a template to generate diverse actors{% endif %}
+                </p>
+            </div>
+            <button class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                _="on click remove #template-modal">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body (scrollable) -->
+        <div class="flex-1 overflow-y-auto p-6">
+            <!-- Error Display -->
+            {% if errors %}
+            <div class="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <div class="flex items-start gap-3">
+                    <i data-lucide="alert-circle" class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <h4 class="text-sm font-bold text-red-500 mb-1">Template Validation Errors</h4>
+                        <ul class="text-xs text-red-400 space-y-1">
+                            {% for error in errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <form id="template-form"
+                {% if template %}
+                hx-put="/actor-templates/{{ template.id }}"
+                {% else %}
+                hx-post="/actor-templates/"
+                {% endif %}
+                hx-target="#templates-table"
+                hx-swap="innerHTML">
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Left Column -->
+                    <div class="space-y-4">
+                        <!-- Name -->
+                        <div>
+                            <label class="block text-sm font-bold text-slate-300 mb-2">
+                                Template Name <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text"
+                                name="name"
+                                required
+                                value="{{ template.name if template else '' }}"
+                                placeholder="e.g., Healthcare Patient Caller"
+                                class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500">
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label class="block text-sm font-bold text-slate-300 mb-2">
+                                Description
+                            </label>
+                            <textarea name="description"
+                                rows="2"
+                                placeholder="Brief description of this template..."
+                                class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500 resize-none">{{ template.description if template else '' }}</textarea>
+                        </div>
+
+                        <!-- Category & Scenario Row -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <!-- Category -->
+                            <div>
+                                <label class="block text-sm font-bold text-slate-300 mb-2">
+                                    Category
+                                </label>
+                                <select name="category"
+                                    class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-ymir-500">
+                                    <option value="">Select...</option>
+                                    <option value="healthcare" {% if template and template.category == 'healthcare' %}selected{% endif %}>Healthcare</option>
+                                    <option value="finance" {% if template and template.category == 'finance' %}selected{% endif %}>Finance</option>
+                                    <option value="retail" {% if template and template.category == 'retail' %}selected{% endif %}>Retail</option>
+                                    <option value="education" {% if template and template.category == 'education' %}selected{% endif %}>Education</option>
+                                    <option value="other" {% if template and template.category == 'other' %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+
+                            <!-- Scenario -->
+                            <div>
+                                <label class="block text-sm font-bold text-slate-300 mb-2">
+                                    Linked Scenario
+                                </label>
+                                <select name="scenario_id"
+                                    class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-ymir-500">
+                                    <option value="">None</option>
+                                    {% for scenario in scenarios %}
+                                    <option value="{{ scenario.id }}" {% if template and template.scenario_id == scenario.id %}selected{% endif %}>
+                                        {{ scenario.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Background Template -->
+                        <div>
+                            <label class="block text-sm font-bold text-slate-300 mb-2">
+                                Background Template
+                                <span class="font-normal text-slate-500">(optional)</span>
+                            </label>
+                            <textarea name="background_template"
+                                rows="3"
+                                placeholder="Actor background with placeholders..."
+                                class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500 font-mono text-sm resize-y">{{ template.background_template if template else '' }}</textarea>
+                        </div>
+
+                        <!-- Goal Template -->
+                        <div>
+                            <label class="block text-sm font-bold text-slate-300 mb-2">
+                                Goal Template
+                                <span class="font-normal text-slate-500">(optional)</span>
+                            </label>
+                            <textarea name="goal_template"
+                                rows="2"
+                                placeholder="Actor goal with placeholders..."
+                                class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500 font-mono text-sm resize-y">{{ template.goal_template if template else '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="space-y-4">
+                        <!-- Main Template Text -->
+                        <div>
+                            <label class="block text-sm font-bold text-slate-300 mb-2">
+                                Situation Template <span class="text-red-500">*</span>
+                            </label>
+                            <textarea name="template_text"
+                                id="template-text-input"
+                                required
+                                rows="12"
+                                placeholder="Patient Name: <random:name/>
+Phone Number: <random:phone/>
+Date of Birth: <random:date min=&quot;1950-01-01&quot; max=&quot;2000-12-31&quot;/>
+Reason for Visit: <random:choice>Checkup|Leg pain|Back pain</random:choice>
+Preferred Date: <rule>next monday or wednesday</rule>"
+                                class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500 font-mono text-sm resize-y">{{ template.template_text if template else '' }}</textarea>
+                        </div>
+
+                        <!-- Syntax Reference -->
+                        <div class="bg-slate-800/50 rounded-lg p-4">
+                            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Available Tags</h4>
+                            <div class="space-y-2 text-xs">
+                                <div class="flex items-start gap-2">
+                                    <code class="bg-slate-900 px-2 py-0.5 rounded text-ymir-400 whitespace-nowrap">&lt;random:name/&gt;</code>
+                                    <span class="text-slate-500">Random full name</span>
+                                </div>
+                                <div class="flex items-start gap-2">
+                                    <code class="bg-slate-900 px-2 py-0.5 rounded text-ymir-400 whitespace-nowrap">&lt;random:phone/&gt;</code>
+                                    <span class="text-slate-500">Random phone number</span>
+                                </div>
+                                <div class="flex items-start gap-2">
+                                    <code class="bg-slate-900 px-2 py-0.5 rounded text-ymir-400 whitespace-nowrap">&lt;random:email/&gt;</code>
+                                    <span class="text-slate-500">Random email address</span>
+                                </div>
+                                <div class="flex items-start gap-2">
+                                    <code class="bg-slate-900 px-2 py-0.5 rounded text-ymir-400 whitespace-nowrap">&lt;random:int min="1" max="100"/&gt;</code>
+                                    <span class="text-slate-500">Random integer</span>
+                                </div>
+                                <div class="flex items-start gap-2">
+                                    <code class="bg-slate-900 px-2 py-0.5 rounded text-ymir-400 whitespace-nowrap">&lt;random:date .../&gt;</code>
+                                    <span class="text-slate-500">Random date (min/max/format)</span>
+                                </div>
+                                <div class="flex items-start gap-2">
+                                    <code class="bg-slate-900 px-2 py-0.5 rounded text-ymir-400 whitespace-nowrap">&lt;random:choice&gt;a|b|c&lt;/random:choice&gt;</code>
+                                    <span class="text-slate-500">Random from options</span>
+                                </div>
+                                <div class="flex items-start gap-2">
+                                    <code class="bg-slate-900 px-2 py-0.5 rounded text-purple-400 whitespace-nowrap">&lt;rule&gt;...&lt;/rule&gt;</code>
+                                    <span class="text-slate-500">LLM-interpreted rule</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preview Button -->
+                        <button type="button"
+                            class="w-full btn-secondary flex items-center justify-center gap-2"
+                            hx-post="/actor-templates/preview-text"
+                            hx-include="#template-text-input"
+                            hx-target="#preview-container"
+                            hx-swap="innerHTML">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                            Preview Template
+                        </button>
+
+                        <!-- Preview Container -->
+                        <div id="preview-container"></div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="p-6 border-t border-slate-700 flex items-center justify-end gap-3">
+            <button type="button"
+                class="btn-secondary px-6 py-2.5"
+                _="on click remove #template-modal">
+                Cancel
+            </button>
+            <button type="submit"
+                form="template-form"
+                class="btn-primary px-6 py-2.5 flex items-center gap-2">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                {% if template %}Update Template{% else %}Create Template{% endif %}
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Re-initialize Lucide icons in modal
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+
+// Focus first input
+setTimeout(function() {
+    document.querySelector('#template-form input[name="name"]')?.focus();
+}, 100);
+</script>

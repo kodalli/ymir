@@ -417,6 +417,68 @@ class Database:
             END
         """)
 
+        # Actor Templates table
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS actor_templates (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT,
+                template_text TEXT NOT NULL,
+                background_template TEXT,
+                goal_template TEXT,
+                category TEXT,
+                scenario_id TEXT,
+                is_active INTEGER DEFAULT 1,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                FOREIGN KEY (scenario_id) REFERENCES scenarios(id) ON DELETE SET NULL
+            )
+        """)
+
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_actor_templates_name ON actor_templates(name)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_actor_templates_category ON actor_templates(category)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_actor_templates_scenario_id ON actor_templates(scenario_id)"
+        )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_actor_templates_is_active ON actor_templates(is_active)"
+        )
+
+        # FTS5 for actor templates
+        await conn.execute("""
+            CREATE VIRTUAL TABLE IF NOT EXISTS actor_templates_fts USING fts5(
+                id UNINDEXED,
+                name,
+                description,
+                template_text
+            )
+        """)
+
+        await conn.execute("""
+            CREATE TRIGGER IF NOT EXISTS actor_templates_ai AFTER INSERT ON actor_templates BEGIN
+                INSERT INTO actor_templates_fts(id, name, description, template_text)
+                VALUES (new.id, new.name, new.description, new.template_text);
+            END
+        """)
+
+        await conn.execute("""
+            CREATE TRIGGER IF NOT EXISTS actor_templates_ad AFTER DELETE ON actor_templates BEGIN
+                DELETE FROM actor_templates_fts WHERE id = old.id;
+            END
+        """)
+
+        await conn.execute("""
+            CREATE TRIGGER IF NOT EXISTS actor_templates_au AFTER UPDATE ON actor_templates BEGIN
+                DELETE FROM actor_templates_fts WHERE id = old.id;
+                INSERT INTO actor_templates_fts(id, name, description, template_text)
+                VALUES (new.id, new.name, new.description, new.template_text);
+            END
+        """)
+
         await conn.commit()
         logger.info(f"Database initialized at {self.db_path}")
 

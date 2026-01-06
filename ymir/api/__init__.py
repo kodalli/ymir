@@ -12,6 +12,7 @@ from .datasets import router as datasets_router
 from .actors import router as actors_router
 from .scenarios import router as scenarios_router
 from .templates_api import router as templates_router
+from .actor_templates import router as actor_templates_router
 from ymir.data import get_database
 
 routers = [
@@ -24,6 +25,7 @@ routers = [
     actors_router,
     scenarios_router,
     templates_router,
+    actor_templates_router,
 ]
 
 

@@ -1,11 +1,11 @@
 {% if errors %}
 <!-- Error State -->
-<div class="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
-    <div class="flex items-start gap-3">
-        <i data-lucide="alert-circle" class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"></i>
+<div class="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+    <div class="flex items-start gap-2">
+        <i data-lucide="alert-circle" class="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5"></i>
         <div>
-            <h4 class="text-sm font-bold text-red-500 mb-1">Template Errors</h4>
-            <ul class="text-xs text-red-400 space-y-1">
+            <h4 class="text-xs font-bold text-red-500 mb-1">Template Errors</h4>
+            <ul class="text-xs text-red-400 space-y-0.5">
                 {% for error in errors %}
                 <li>{{ error }}</li>
                 {% endfor %}
@@ -13,16 +13,91 @@
         </div>
     </div>
 </div>
+{% endif %}
+
+{% if results %}
+<!-- Multi-template Preview Grid -->
+{% set has_situation = results.situation | length > 0 %}
+{% set has_background = results.background | length > 0 %}
+{% set has_goal = results.goal | length > 0 %}
+{% set total_sections = (1 if has_situation else 0) + (1 if has_background else 0) + (1 if has_goal else 0) %}
+
+{% if total_sections > 0 %}
+<div class="space-y-3">
+    <!-- Grid of template types -->
+    <div class="grid {% if total_sections == 1 %}grid-cols-1{% elif total_sections == 2 %}grid-cols-2{% else %}grid-cols-3{% endif %} gap-3">
+        {% if has_situation %}
+        <!-- Situation Column -->
+        <div>
+            <div class="flex items-center gap-1.5 mb-2">
+                <i data-lucide="file-text" class="w-3 h-3 text-ymir-500"></i>
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Situation</h4>
+                <span class="text-xs text-slate-600">({{ results.situation | length }})</span>
+            </div>
+            <div class="space-y-2">
+                {% for preview in results.situation %}
+                <div class="bg-slate-800/50 border border-slate-700 rounded p-2">
+                    <pre class="text-[11px] text-slate-300 whitespace-pre-wrap font-mono leading-relaxed">{{ preview }}</pre>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if has_background %}
+        <!-- Background Column -->
+        <div>
+            <div class="flex items-center gap-1.5 mb-2">
+                <i data-lucide="user" class="w-3 h-3 text-blue-500"></i>
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Background</h4>
+                <span class="text-xs text-slate-600">({{ results.background | length }})</span>
+            </div>
+            <div class="space-y-2">
+                {% for preview in results.background %}
+                <div class="bg-slate-800/50 border border-slate-700 rounded p-2">
+                    <pre class="text-[11px] text-slate-300 whitespace-pre-wrap font-mono leading-relaxed">{{ preview }}</pre>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if has_goal %}
+        <!-- Goal Column -->
+        <div>
+            <div class="flex items-center gap-1.5 mb-2">
+                <i data-lucide="target" class="w-3 h-3 text-green-500"></i>
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Goal</h4>
+                <span class="text-xs text-slate-600">({{ results.goal | length }})</span>
+            </div>
+            <div class="space-y-2">
+                {% for preview in results.goal %}
+                <div class="bg-slate-800/50 border border-slate-700 rounded p-2">
+                    <pre class="text-[11px] text-slate-300 whitespace-pre-wrap font-mono leading-relaxed">{{ preview }}</pre>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+<!-- No templates provided -->
+<div class="text-center py-4 text-slate-500 text-xs">
+    <i data-lucide="edit-3" class="w-6 h-6 mx-auto mb-1.5 opacity-50"></i>
+    <p>Enter template text to preview</p>
+</div>
+{% endif %}
 
 {% elif previews %}
-<!-- Preview from raw text -->
-<div class="space-y-3">
+<!-- Legacy: Preview from raw text (single field) -->
+<div class="space-y-2">
     <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">
-        Generated Previews ({{ previews | length }})
+        Previews ({{ previews | length }})
     </h4>
     {% for preview in previews %}
-    <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
-        <pre class="text-xs text-slate-300 whitespace-pre-wrap font-mono">{{ preview }}</pre>
+    <div class="bg-slate-800/50 border border-slate-700 rounded p-2">
+        <pre class="text-[11px] text-slate-300 whitespace-pre-wrap font-mono">{{ preview }}</pre>
     </div>
     {% endfor %}
 </div>
@@ -110,8 +185,8 @@
 
 {% else %}
 <!-- Empty State -->
-<div class="text-center py-6 text-slate-500 text-sm">
-    <i data-lucide="eye-off" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+<div class="text-center py-4 text-slate-500 text-xs">
+    <i data-lucide="eye-off" class="w-6 h-6 mx-auto mb-1.5 opacity-50"></i>
     <p>No preview available</p>
 </div>
 {% endif %}

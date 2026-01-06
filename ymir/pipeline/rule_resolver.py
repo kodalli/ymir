@@ -1,15 +1,13 @@
-"""LLM-based rule resolver for natural language constraints.
+"""LLM-based rule resolver for generating varied natural language.
 
-Resolves <rule>...</rule> tags in actor templates using an LLM to interpret
-natural language constraints and generate concrete values.
+Resolves <rule>...</rule> tags in actor templates using an LLM to generate
+natural language phrases that actors would say.
 
 Example rules:
-- "next monday or wednesday" -> "2026-01-12"
-- "morning before 11am" -> "9:30 AM"
-- "this week or next week on tuesday" -> "2026-01-14"
+- "a date preference for scheduling" -> "next Monday or Wednesday"
+- "a time preference" -> "sometime in the morning, before 11 if possible"
+- "a brief note about patient situation" -> "I've had headaches for about a week"
 """
-
-from datetime import datetime
 
 from loguru import logger
 
@@ -20,41 +18,40 @@ from ymir.pipeline.template_parser import ParsedTag
 class RuleResolver:
     """Resolves natural language rules using LLM."""
 
-    SYSTEM_PROMPT = """You are a data generation assistant that converts natural language rules into specific concrete values.
+    SYSTEM_PROMPT = """You are a data generation assistant creating varied natural language for actor personas.
 
-Given a rule describing a constraint (like a date preference, time slot, or other requirement), generate ONE specific value that satisfies the constraint.
+Given a rule describing what type of text to generate, create ONE natural-sounding phrase that an actor would say.
 
 Rules:
-1. Return ONLY the generated value, nothing else
+1. Return ONLY the generated phrase, nothing else
 2. No explanations, no quotes, no formatting
-3. Be creative but realistic
-4. For dates, use format MM/DD/YYYY
-5. For times, use format like "9:30 AM" or "2:00 PM"
-6. For text choices, just return the chosen text
-
-Current date context: {current_date}
-Day of week: {day_of_week}
+3. Be creative and varied - each generation should be different
+4. Sound natural, like something a real person would say
+5. Match the tone and context described in the rule
 
 Examples:
-- Rule: "next monday or wednesday" -> 01/13/2026
-- Rule: "morning before 11am" -> 9:30 AM
-- Rule: "afternoon after 2pm but before 5pm" -> 3:15 PM
-- Rule: "any weekday this week" -> 01/08/2026
-- Rule: "prefers email contact" -> email"""
+- Rule: "a date preference for scheduling" -> next Monday or Wednesday
+- Rule: "a time preference for appointments" -> sometime in the morning, before 11 if possible
+- Rule: "a reason for calling about health" -> I've been having persistent headaches
+- Rule: "how urgent the request is" -> it's not super urgent but I'd like to be seen soon
+- Rule: "a brief note about special requirements" -> I'll need wheelchair access"""
 
     def __init__(
         self,
-        model: str = "qwen3:4b",
-        temperature: float = 0.5,  # Lower temp for more consistent outputs
+        model: str = "mistral-small:latest",
+        temperature: float = 0.7,
+        num_predict: int = 128,
     ):
         """Initialize the rule resolver.
 
         Args:
             model: Ollama model name to use
-            temperature: Temperature for generation (lower = more deterministic)
+            temperature: Temperature for generation (higher = more varied)
+            num_predict: Max tokens to generate
         """
         self.model = model
         self.temperature = temperature
+        self.num_predict = num_predict
         self._llm: OllamaLLM | None = None
 
     def _get_llm(self) -> OllamaLLM:
@@ -63,30 +60,21 @@ Examples:
             self._llm = OllamaLLM(
                 model=self.model,
                 temperature=self.temperature,
-                num_predict=64,  # Short responses only
-                num_ctx=1024,  # Small context needed
+                num_predict=self.num_predict,
+                num_ctx=1024,
             )
         return self._llm
 
-    def _get_context(self) -> dict[str, str]:
-        """Get current date context for the LLM."""
-        now = datetime.now()
-        return {
-            "current_date": now.strftime("%B %d, %Y"),
-            "day_of_week": now.strftime("%A"),
-        }
-
     def resolve(self, rule: str) -> str:
-        """Resolve a single natural language rule to a concrete value.
+        """Resolve a single rule to a natural language phrase.
 
         Args:
-            rule: Natural language rule string (e.g., "next monday or wednesday")
+            rule: Rule describing what type of text to generate
 
         Returns:
-            Concrete value that satisfies the rule
+            Natural language phrase that an actor would say
         """
-        context = self._get_context()
-        system = self.SYSTEM_PROMPT.format(**context)
+        system = self.SYSTEM_PROMPT
 
         messages = [{"role": "user", "content": f"Rule: {rule}"}]
 
@@ -101,24 +89,29 @@ Examples:
 
                 result = re.sub(r"<think>.*?</think>", "", result, flags=re.IGNORECASE | re.DOTALL)
             result = result.strip()
+
+            # If result is empty after cleaning, return a fallback
+            if not result:
+                logger.warning(f"Empty result for rule '{rule}', using fallback")
+                return f"[{rule}]"
+
             logger.debug(f"Resolved rule '{rule}' -> '{result}'")
             return result
         except Exception as e:
             logger.error(f"Error resolving rule '{rule}': {e}")
             # Return a placeholder on error
-            return f"[rule: {rule}]"
+            return f"[{rule}]"
 
     async def aresolve(self, rule: str) -> str:
         """Resolve a single rule asynchronously.
 
         Args:
-            rule: Natural language rule string
+            rule: Rule describing what type of text to generate
 
         Returns:
-            Concrete value that satisfies the rule
+            Natural language phrase that an actor would say
         """
-        context = self._get_context()
-        system = self.SYSTEM_PROMPT.format(**context)
+        system = self.SYSTEM_PROMPT
 
         messages = [{"role": "user", "content": f"Rule: {rule}"}]
 
@@ -132,11 +125,17 @@ Examples:
 
                 result = re.sub(r"<think>.*?</think>", "", result, flags=re.IGNORECASE | re.DOTALL)
             result = result.strip()
+
+            # If result is empty after cleaning, return a fallback
+            if not result:
+                logger.warning(f"Empty result for rule '{rule}', using fallback")
+                return f"[{rule}]"
+
             logger.debug(f"Resolved rule '{rule}' -> '{result}'")
             return result
         except Exception as e:
             logger.error(f"Error resolving rule '{rule}': {e}")
-            return f"[rule: {rule}]"
+            return f"[{rule}]"
 
     def resolve_batch(self, rules: list[str]) -> dict[str, str]:
         """Resolve multiple rules synchronously.

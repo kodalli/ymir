@@ -21,17 +21,21 @@ class ActorGenerator:
 
     def __init__(
         self,
-        model: str = "qwen3:4b",
-        temperature: float = 0.5,
+        model: str = "mistral-small:latest",
+        temperature: float = 0.7,
+        num_predict: int = 128,
     ):
         """Initialize the actor generator.
 
         Args:
             model: Ollama model name for rule resolution
-            temperature: Temperature for LLM generation
+            temperature: Temperature for LLM generation (higher = more varied)
+            num_predict: Max tokens to generate for rule responses
         """
         self.parser = TemplateParser()
-        self.resolver = RuleResolver(model=model, temperature=temperature)
+        self.resolver = RuleResolver(
+            model=model, temperature=temperature, num_predict=num_predict
+        )
 
     def generate_one(
         self,

@@ -6,6 +6,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from ymir.core.scenario_schemas import ActorTemplateCreate, ActorTemplateUpdate
 from ymir.data import get_database, get_scenario_store
 from ymir.pipeline.actor_generator import ActorGenerator
+from ymir.pipeline.llm.ollama import get_available_models
 from ymir.api.shared import render_page, templates
 
 router = APIRouter(prefix="/actor-templates", tags=["actor-templates"])
@@ -90,6 +91,7 @@ async def new_template_form(request: Request):
     """Render create form modal."""
     store = get_store()
     scenarios = await store.list_scenarios()
+    models = get_available_models()
 
     return templates.TemplateResponse(
         "actor_templates/form_modal.html",
@@ -98,6 +100,7 @@ async def new_template_form(request: Request):
             "template": None,
             "scenarios": scenarios,
             "mode": "create",
+            "ollama_models": models,
         },
     )
 
@@ -182,6 +185,7 @@ async def edit_template_form(request: Request, id: str):
         return HTMLResponse(content="Template not found", status_code=404)
 
     scenarios = await store.list_scenarios()
+    models = get_available_models()
 
     return templates.TemplateResponse(
         "actor_templates/form_modal.html",
@@ -190,6 +194,7 @@ async def edit_template_form(request: Request, id: str):
             "template": template,
             "scenarios": scenarios,
             "mode": "edit",
+            "ollama_models": models,
         },
     )
 
@@ -305,36 +310,67 @@ async def preview_actor_template(
 @router.post("/preview-text", response_class=HTMLResponse)
 async def preview_template_text(
     request: Request,
-    template_text: str = Form(...),
+    template_text: str = Form(""),
+    background_template: str = Form(""),
+    goal_template: str = Form(""),
     count: int = Form(3),
+    model: str = Form("mistral-small:latest"),
+    temperature: float = Form(0.7),
+    num_predict: int = Form(128),
 ):
-    """Preview raw template text without saving."""
-    generator = ActorGenerator()
+    """Preview all template fields without saving."""
+    generator = ActorGenerator(
+        model=model,
+        temperature=temperature,
+        num_predict=num_predict,
+    )
 
-    # Validate first
-    is_valid, errors = generator.validate_template(template_text)
-    if not is_valid:
-        return templates.TemplateResponse(
-            "actor_templates/preview.html",
-            {
-                "request": request,
-                "template": None,
-                "actors": [],
-                "errors": errors,
-            },
-        )
+    all_errors = []
+    results = {
+        "situation": [],
+        "background": [],
+        "goal": [],
+    }
 
-    # Generate previews
-    previews = await generator.apreview(template_text, count)
+    # Generate situation previews
+    if template_text.strip():
+        is_valid, errors = generator.validate_template(template_text)
+        if not is_valid:
+            all_errors.extend([f"Situation: {e}" for e in errors])
+        else:
+            results["situation"] = await generator.apreview(template_text, count)
+
+    # Generate background previews
+    if background_template.strip():
+        is_valid, errors = generator.validate_template(background_template)
+        if not is_valid:
+            all_errors.extend([f"Background: {e}" for e in errors])
+        else:
+            results["background"] = await generator.apreview(background_template, count)
+
+    # Generate goal previews
+    if goal_template.strip():
+        is_valid, errors = generator.validate_template(goal_template)
+        if not is_valid:
+            all_errors.extend([f"Goal: {e}" for e in errors])
+        else:
+            results["goal"] = await generator.apreview(goal_template, count)
 
     return templates.TemplateResponse(
         "actor_templates/preview.html",
         {
             "request": request,
-            "template": None,
-            "previews": previews,
+            "results": results,
+            "errors": all_errors if all_errors else None,
         },
     )
+
+
+@router.get("/models", response_class=JSONResponse)
+async def list_ollama_models():
+    """Get list of available Ollama models."""
+    models = get_available_models()
+    return JSONResponse({"models": models})
 
 
 @router.post("/validate", response_class=JSONResponse)

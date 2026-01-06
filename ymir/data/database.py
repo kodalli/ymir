@@ -247,6 +247,19 @@ class Database:
             "CREATE INDEX IF NOT EXISTS idx_actors_group_id ON actors(group_id)"
         )
 
+        # Migration: Add situation and template_id columns to actors table
+        if "situation" not in column_names:
+            logger.info("Migrating actors table: adding situation column")
+            await conn.execute("ALTER TABLE actors ADD COLUMN situation TEXT")
+
+        if "template_id" not in column_names:
+            logger.info("Migrating actors table: adding template_id column")
+            await conn.execute("ALTER TABLE actors ADD COLUMN template_id TEXT")
+
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_actors_template_id ON actors(template_id)"
+        )
+
         # Scenario-Actors junction table
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS scenario_actors (

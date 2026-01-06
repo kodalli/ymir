@@ -66,6 +66,26 @@
     <p class="text-xs text-slate-500 mt-1">Provide context about who this person is</p>
 </div>
 
+<!-- Situation (editable, shown in edit mode) -->
+{% if actor %}
+<div>
+    <label for="situation" class="block text-sm font-bold text-slate-300 mb-2">
+        <span class="flex items-center gap-2">
+            Situation Details
+            {% if actor.template_id %}
+            <span class="text-xs font-normal text-slate-500">(generated from template)</span>
+            {% endif %}
+        </span>
+    </label>
+    <textarea id="situation"
+        name="situation"
+        rows="5"
+        placeholder="Specific situation details, contact info, preferences..."
+        class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-ymir-500 resize-y font-mono">{{ actor.situation if actor.situation else '' }}</textarea>
+    <p class="text-xs text-slate-500 mt-1">Additional context and details for this actor's situation</p>
+</div>
+{% endif %}
+
 <!-- Goal Textarea -->
 <div>
     <label for="goal" class="block text-sm font-bold text-slate-300 mb-2">

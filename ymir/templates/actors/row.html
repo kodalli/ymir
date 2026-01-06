@@ -17,7 +17,15 @@
                 <i data-lucide="{{ actor.icon or 'user' }}" class="w-5 h-5"></i>
             </div>
             <div>
-                <div class="font-medium text-sm text-slate-200">{{ actor.name }}</div>
+                <div class="font-medium text-sm text-slate-200 flex items-center gap-2">
+                    {{ actor.name }}
+                    {% if actor.situation %}
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-ymir-500/10 text-ymir-400 border border-ymir-500/20"
+                        title="Generated from template - has situation details">
+                        <i data-lucide="file-text" class="w-3 h-3"></i>
+                    </span>
+                    {% endif %}
+                </div>
                 {% if actor.tags %}
                 <div class="flex gap-1 mt-1">
                     {% for tag in actor.tags[:3] %}

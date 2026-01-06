@@ -467,11 +467,13 @@ class ScenarioStore:
                 id=data.id if data.id else str(uuid4()),
                 name=data.name,
                 icon=data.icon,
+                situation=data.situation,
                 background=data.background,
                 goal=data.goal,
                 tags=data.tags,
                 category=data.category,
                 group_id=data.group_id,
+                template_id=data.template_id,
                 is_active=True,
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow(),
@@ -480,19 +482,21 @@ class ScenarioStore:
             await self.db.execute(
                 """
                 INSERT INTO actors (
-                    id, name, icon, background, goal, tags, category, group_id,
-                    is_active, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    id, name, icon, situation, background, goal, tags, category,
+                    group_id, template_id, is_active, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     actor.id,
                     actor.name,
                     actor.icon,
+                    actor.situation,
                     actor.background,
                     actor.goal,
                     json.dumps(actor.tags),
                     actor.category,
                     actor.group_id,
+                    actor.template_id,
                     1 if actor.is_active else 0,
                     actor.created_at.isoformat(),
                     actor.updated_at.isoformat(),
@@ -534,6 +538,9 @@ class ScenarioStore:
             if updates.icon is not None:
                 fields.append("icon = ?")
                 params.append(updates.icon)
+            if updates.situation is not None:
+                fields.append("situation = ?")
+                params.append(updates.situation)
             if updates.background is not None:
                 fields.append("background = ?")
                 params.append(updates.background)
@@ -549,6 +556,9 @@ class ScenarioStore:
             if updates.group_id is not None:
                 fields.append("group_id = ?")
                 params.append(updates.group_id)
+            if updates.template_id is not None:
+                fields.append("template_id = ?")
+                params.append(updates.template_id)
             if updates.is_active is not None:
                 fields.append("is_active = ?")
                 params.append(1 if updates.is_active else 0)
@@ -1507,17 +1517,21 @@ class ScenarioStore:
 
     def _parse_actor(self, row: dict) -> Actor:
         """Parse an actor from a database row."""
-        # Handle group_id which may not exist in older databases
+        # Handle fields which may not exist in older databases
         group_id = row["group_id"] if "group_id" in row.keys() else None
+        situation = row["situation"] if "situation" in row.keys() else None
+        template_id = row["template_id"] if "template_id" in row.keys() else None
         return Actor(
             id=row["id"],
             name=row["name"],
             icon=row["icon"],
+            situation=situation,
             background=row["background"] or "",
             goal=row["goal"] or "",
             tags=json.loads(row["tags"]) if row["tags"] else [],
             category=row["category"],
             group_id=group_id,
+            template_id=template_id,
             is_active=bool(row["is_active"]),
             created_at=datetime.fromisoformat(row["created_at"]),
             updated_at=datetime.fromisoformat(row["updated_at"]),

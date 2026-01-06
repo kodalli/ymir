@@ -120,11 +120,13 @@ class Actor(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
     name: str
     icon: str | None = None
+    situation: str | None = None  # Generated situation from template
     background: str
     goal: str
     tags: list[str] = Field(default_factory=list)
     category: str | None = None
     group_id: str | None = None  # Reference to actor group for batch organization
+    template_id: str | None = None  # Source template if generated
     is_active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -136,11 +138,13 @@ class ActorCreate(BaseModel):
     id: str | None = None  # Optional override
     name: str
     icon: str | None = None
+    situation: str | None = None
     background: str
     goal: str
     tags: list[str] = Field(default_factory=list)
     category: str | None = None
     group_id: str | None = None
+    template_id: str | None = None
 
 
 class ActorUpdate(BaseModel):
@@ -148,11 +152,13 @@ class ActorUpdate(BaseModel):
 
     name: str | None = None
     icon: str | None = None
+    situation: str | None = None
     background: str | None = None
     goal: str | None = None
     tags: list[str] | None = None
     category: str | None = None
     group_id: str | None = None
+    template_id: str | None = None
     is_active: bool | None = None
 
 

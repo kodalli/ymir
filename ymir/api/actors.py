@@ -83,6 +83,7 @@ async def list_actors(
             if search_lower in actor.name.lower()
             or search_lower in actor.background.lower()
             or search_lower in actor.goal.lower()
+            or (actor.situation and search_lower in actor.situation.lower())
             or any(search_lower in tag.lower() for tag in actor.tags)
         ]
 
@@ -205,11 +206,13 @@ async def generate_actors_from_template(
             ActorCreate(
                 name=f"{template.name} #{i}",
                 icon="user",
+                situation=data.situation,
                 background=data.background,
                 goal=data.goal,
                 tags=[template.category] if template.category else [],
                 category=category or template.category,
                 group_id=group.id,
+                template_id=data.template_id,
             )
         )
         actors.append(actor)
@@ -348,6 +351,7 @@ async def update_actor(
     id: str,
     name: str = Form(...),
     icon: str = Form(""),
+    situation: str = Form(""),
     background: str = Form(...),
     goal: str = Form(...),
     tags: str = Form("[]"),
@@ -368,6 +372,7 @@ async def update_actor(
         ActorUpdate(
             name=name,
             icon=icon if icon else None,
+            situation=situation if situation else None,
             background=background,
             goal=goal,
             tags=tags_list,

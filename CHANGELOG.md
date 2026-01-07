@@ -1,6 +1,129 @@
 # CHANGELOG
 
 
+## v0.0.0-alpha.14 (2026-01-07)
+
+### Bug Fixes
+
+- **actor-templates**: Fix form submission for create/edit modal
+  ([`bfe13e2`](https://github.com/kodalli/ymir/commit/bfe13e2fed28384b878db1425e5d76a0d37856ed))
+
+Move HTMX attributes from form element to submit button with hx-include to properly trigger form
+  submission. Fix closeModal event listener to listen from body. Add ollama_models to error response
+  context.
+
+- **actors**: Add modal edit route and improve list endpoint
+  ([`bf38155`](https://github.com/kodalli/ymir/commit/bf38155444eb3e5a5970bc3d554f0f384b2d5420))
+
+Add /modal/edit/{id} route for frontend compatibility. Enhance list endpoint with sorting,
+  pagination params, and fix template context.
+
+- **scenarios**: Fix edit/tools dialogs and form handling
+  ([`c858c62`](https://github.com/kodalli/ymir/commit/c858c627e9fd18af3754ca3bcb685ec8ec6b44b0))
+
+- Fix edit button URL: /scenarios/form/{id} → /scenarios/{id}/edit - Fix new button URL:
+  /scenarios/form → /scenarios/new - Add missing /scenarios/new endpoint for create modal - Fix
+  tools panel to pass all_tools and selected_tools variables - Fix tool update endpoint to accept
+  list of tool IDs with replace mode - Fix preset creation to return full tools panel for modal
+  refresh - Fix preset form target from #tools-modal to #modal-container - Handle example_queries as
+  newline-separated text (not just JSON) - Fix create/update to return full table instead of single
+  row - Fix SCHEDULING_PERSONAS import (was MEDICAL_SCHEDULING_PERSONAS)
+
+### Chores
+
+- **dependencies**: Remove ipykernel from development dependencies
+  ([`032e0ca`](https://github.com/kodalli/ymir/commit/032e0caf55909aa4b1667a03427b4a168e87d4b3))
+
+### Features
+
+- **actor-templates**: Add template-based actor generation system
+  ([`041cee0`](https://github.com/kodalli/ymir/commit/041cee066ee5b60b06ad2a37c9bf564202cbbcd1))
+
+Implement a meta-prompt system for generating diverse actors from XML-style templates with
+  placeholders for random values and LLM-interpreted rules.
+
+New pipeline modules: - template_parser.py: XML tag parsing with generators (name, phone, date,
+  etc.) - rule_resolver.py: LLM-based natural language constraint interpretation -
+  actor_generator.py: Batch actor generation orchestrator
+
+New API and UI: - actor_templates.py: REST endpoints for template CRUD and preview - UI templates
+  for template management with syntax help - Generation wizard integration for one-click actor
+  generation
+
+Template syntax supports: - <random:name/>, <random:phone/>, <random:email/> - <random:date
+  min="..." max="..."/>, <random:choice>a|b|c</random:choice> - <rule>natural language
+  constraint</rule> for LLM interpretation
+
+- **actor-templates**: Improve rule resolver and add preview config
+  ([`ab29837`](https://github.com/kodalli/ymir/commit/ab29837cf4aba968cdc0fee996d3c5cfcfce63a1))
+
+- Switch rule resolver from qwen3 to mistral-small for reliable output - Change rule tags to
+  generate natural language phrases instead of exact values - Add LLM configuration options (model,
+  temperature, tokens) to preview - Preview all three template fields (situation, background, goal)
+  in grid - Add loading spinner during preview generation - Add Load Example button with hidden data
+  elements - Reorganize modal layout with full-width preview section
+
+- **actors**: Add actor groups and centralize actor workflow
+  ([`9fb9849`](https://github.com/kodalli/ymir/commit/9fb9849156e162ff62f3ab04700f717cd176bf7e))
+
+- Add actor_groups table for batch organization of generated actors - Add group_id column to actors
+  with migration for existing databases - Add ActorGroup/ActorGroupCreate models and CRUD methods -
+  Add batch generation endpoints (/generate-batch, /preview-batch) - Redesign form_modal with
+  unified template/manual creation workflow - Add column toggle selector with localStorage
+  persistence - Remove actor template generation from generation wizard - Display group badges in
+  actors table with filtering support
+
+- **actors**: Add situation and template_id fields to actors
+  ([`caccc78`](https://github.com/kodalli/ymir/commit/caccc78fd67ffa1bc85aca5559a3e514d8355f2d))
+
+Previously, generated actors from templates lost the situation data. Now actors store the full
+  situation text and link back to their source template. Added editable situation field in edit form
+  and indicator badge in table rows.
+
+- **data**: Add database-backed scenarios, actors, and templates
+  ([`923918f`](https://github.com/kodalli/ymir/commit/923918f9cfd8c46d12f2fae33a2011f90aee02eb))
+
+Add SQLite storage for scenarios, actors, tool presets, and generation templates replacing hardcoded
+  data with flexible database-backed management.
+
+- Add 7 new database tables (scenarios, tools, actors, presets, templates) - Create ScenarioStore
+  data access layer with full CRUD operations - Add Pydantic models for all new entities in
+  scenario_schemas.py - Create API endpoints for /scenarios/, /actors/, /templates/ - Build
+  table-first UI pages for managing all entities - Update wizard to use DB entities with preset
+  selection and template saving - Add auto-seeding of medical scheduling scenario and personas on
+  first run - Update sidebar navigation with new Scenarios, Actors, Templates links
+
+- **generation**: Add multi-actor selection for trajectory generation
+  ([`7456306`](https://github.com/kodalli/ymir/commit/7456306befdd6b06cf966f91f9396d5201ed2349))
+
+Replace inline actor editing with table-based multi-select UI in wizard step 3. Each selected actor
+  generates a separate trajectory during batch generation.
+
+- Add actor table with expandable rows showing background, goal, situation - Add search and filter
+  controls (category, group) - Update generate endpoint to accept actor_ids array - Update
+  trajectory preview to display multiple results
+
+- **templates**: Add UI templates and modal endpoints for generation templates
+  ([`06bc169`](https://github.com/kodalli/ymir/commit/06bc169a1ae17ae4262744a7d3be22f3307e8dcb))
+
+Implements the missing Jinja2 templates for the Templates page in the sidebar. The backend API
+  already existed but the page threw TemplateNotFound errors.
+
+Added: - index.html, table.html, row.html for main page layout - form_modal.html for create/edit
+  with dynamic actor/preset dropdowns - generate_modal.html and clone_modal.html for quick actions -
+  Modal endpoints and dynamic dropdown API routes - Fixed delete/clone to properly refresh table
+  after operations
+
+### Refactoring
+
+- **generation**: Simplify actor workflow and standardize wizard headers
+  ([`8f01ea4`](https://github.com/kodalli/ymir/commit/8f01ea4af7abdececf6f53c3ee14064fb2f90dca))
+
+Remove single query mode in favor of always using simulated actor mode. Add search/filter for saved
+  actors and compact Background/Goal layout. Standardize step headers across all wizard pages with
+  'Step X of 4' badge.
+
+
 ## v0.0.0-alpha.13 (2025-12-25)
 
 ### Bug Fixes
